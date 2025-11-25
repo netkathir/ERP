@@ -36,7 +36,7 @@
                         <tr style="border-bottom: 1px solid #dee2e6;">
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $quotation->quotation_no }}</td>
                             <td style="padding: 12px; color: #666;">{{ $quotation->date }}</td>
-                            <td style="padding: 12px; color: #666;">{{ $quotation->customer->name }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $quotation->customer->company_name }}</td>
                             <td style="padding: 12px; text-align: right; color: #666;">₹{{ number_format($quotation->total_amount, 2) }}</td>
                             <td style="padding: 12px; text-align: right; color: #333; font-weight: 500;">₹{{ number_format($quotation->net_amount, 2) }}</td>
                             <td style="padding: 12px;">

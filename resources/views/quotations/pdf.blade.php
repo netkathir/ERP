@@ -271,7 +271,7 @@
             <tr>
                 <td class="billed-to">
                     <div class="section-title">Billed To</div>
-                    <div style="font-weight: bold; margin-bottom: 8px;">{{ $quotation->customer->name }}</div>
+                    <div style="font-weight: bold; margin-bottom: 8px;">{{ $quotation->customer->company_name }}</div>
                     <div class="address-line">{{ $quotation->billing_address_line_1 ?? '' }}</div>
                     @if($quotation->billing_address_line_2)
                         <div class="address-line">{{ $quotation->billing_address_line_2 }}</div>
@@ -285,7 +285,7 @@
                 </td>
                 <td class="shipped-to">
                     <div class="section-title">Shipped To</div>
-                    <div style="font-weight: bold; margin-bottom: 8px;">{{ $quotation->customer->name }}</div>
+                    <div style="font-weight: bold; margin-bottom: 8px;">{{ $quotation->customer->company_name }}</div>
                     @if($quotation->customer->shipping_address_line_1)
                         <div class="address-line">{{ $quotation->customer->shipping_address_line_1 }}</div>
                         @if($quotation->customer->shipping_address_line_2)

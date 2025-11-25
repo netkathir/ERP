@@ -52,7 +52,7 @@
                 <div>
                     <h3 style="color: #667eea; font-size: 18px; font-weight: 600; margin-bottom: 15px;">Customer Details</h3>
                     <p style="margin: 8px 0; color: #666;">
-                        <strong style="color: #333;">Name:</strong> {{ $invoice->customer->name }}
+                        <strong style="color: #333;">Company Name:</strong> {{ $invoice->customer->company_name }}
                     </p>
                     <p style="margin: 8px 0; color: #666;">
                         <strong style="color: #333;">GST No:</strong> {{ $invoice->customer->gst_no ?? 'N/A' }}

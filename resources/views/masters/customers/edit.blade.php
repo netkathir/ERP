@@ -26,10 +26,19 @@
         @csrf
         @method('PUT')
         <div style="margin-bottom: 20px;">
-            <label for="name" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Customer Name <span style="color: red;">*</span></label>
-            <input type="text" name="name" id="name" value="{{ old('name', $customer->name) }}" required
+            <label for="company_name" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Company Name <span style="color: red;">*</span></label>
+            <input type="text" name="company_name" id="company_name" value="{{ old('company_name', $customer->company_name) }}" required
                 style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-            @error('name')
+            @error('company_name')
+                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="contact_name" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Contact Name</label>
+            <input type="text" name="contact_name" id="contact_name" value="{{ old('contact_name', $customer->contact_name) }}"
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            @error('contact_name')
                 <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
             @enderror
         </div>

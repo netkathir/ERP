@@ -27,7 +27,8 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'contact_name' => 'nullable|string|max:255',
             'gst_no' => 'nullable|string|max:20',
             'billing_address_line_1' => 'nullable|string|max:255',
             'billing_address_line_2' => 'nullable|string|max:255',
@@ -68,7 +69,8 @@ class CustomerController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'contact_name' => 'nullable|string|max:255',
             'gst_no' => 'nullable|string|max:20',
             'billing_address_line_1' => 'nullable|string|max:255',
             'billing_address_line_2' => 'nullable|string|max:255',

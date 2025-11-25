@@ -36,7 +36,7 @@
                         <tr style="border-bottom: 1px solid #dee2e6;">
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $invoice->invoice_no }}</td>
                             <td style="padding: 12px; color: #666;">{{ $invoice->date }}</td>
-                            <td style="padding: 12px; color: #666;">{{ $invoice->customer->name }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $invoice->customer->company_name }}</td>
                             <td style="padding: 12px; text-align: right; color: #666;">₹{{ number_format($invoice->gross_amount, 2) }}</td>
                             <td style="padding: 12px; text-align: right; color: #333; font-weight: 500;">₹{{ number_format($invoice->net_amount, 2) }}</td>
                             <td style="padding: 12px;">
