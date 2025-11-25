@@ -18,10 +18,10 @@ jobs:
         echo "Starting Deployment..."
 
         # Local directory containing files to upload
-        LOCAL_DIR="public_html"
+        LOCAL_DIR="/home2/whyceffy/public_html"
 
         # Remote directory path on server
-        REMOTE_DIR="/public_html/custom_erp/"
+        REMOTE_DIR="/custom_erp"
 
         # Loop through all files under public_html
         for FILE in $(find "$LOCAL_DIR" -type f); do
