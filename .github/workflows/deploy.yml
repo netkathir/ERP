@@ -1,36 +1,23 @@
-name: FTP Deploy (cURL)
+name: Deploy to Web Server
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger deployment on pushes to the `main` branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Upload Files via Curl
-      run: |
-        echo "Starting Deployment..."
-
-        # Local directory containing files to upload
-        LOCAL_DIR="./public"
-        REMOTE_DIR="/home2/whyceffy/public_html/custom_erp/"
-
-        # Debugging output
-        echo "FTP Server: ${{ secrets.FTP_SERVER }}"
-        echo "FTP Username: ${{ secrets.FTP_USERNAME }}"
-        echo "Remote Directory: $REMOTE_DIR"
-
-        find "$LOCAL_DIR" -type f | while read FILE; do
-            REMOTE_PATH="$REMOTE_DIR${FILE#$LOCAL_DIR/}"
-            echo "Uploading: $FILE → $REMOTE_PATH"
-            curl -v -T "$FILE" "ftps://${{ secrets.FTP_SERVER }}$REMOTE_PATH" \
-                --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
-                --ssl-reqd \
-                --ftp-pasv
-        done
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup FTP deploy action
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          ftp-server: ${{ secrets.FTP_SERVER }}  # Your FTP server address
+          ftp-username: ${{ secrets.FTP_USERNAME }}  # Your FTP username
+          ftp-password: ${{ secrets.FTP_PASSWORD }}  # Your FTP password
+          local-dir: ./  # Path to your code (use `./` to deploy the whole repo)
+          remote-dir: /public_html/custom_erp/  # Your remote directory on the server
