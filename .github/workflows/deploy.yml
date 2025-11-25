@@ -35,7 +35,7 @@ jobs:
 
           # Local and remote directories
           local_dir = './'  # Path to your code (use `./` for the whole repo)
-          remote_dir = '/custom_erp/'  # Direct remote directory path
+          remote_dir = '/custom_erp/'  # Direct remote directory path (adjust if necessary)
 
           # Function to create remote directories if they don't exist
           def create_directory_if_not_exists(remote_path):
@@ -73,11 +73,12 @@ jobs:
                   # Get the relative path of the file to create the same structure on the server
                   relative_path = os.path.relpath(local_file, local_dir)
 
-                  # Remove the top-level "custom_erp" from the relative path
+                  # Remove the top-level "custom_erp" from the relative path (so it doesn't get duplicated)
+                  # Only remove 'custom_erp/' from the start of the relative path, if it exists
                   if relative_path.startswith('custom_erp/'):
                       relative_path = relative_path[len('custom_erp/'):]
 
-                  # Construct the remote file path
+                  # Construct the remote file path, ensuring that files are placed inside /custom_erp/
                   remote_file = os.path.join(remote_dir, relative_path)
                   print(f"Uploading {local_file} to {remote_file}")
                   upload_file(local_file, remote_file)
