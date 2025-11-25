@@ -1,0 +1,180 @@
+@extends('layouts.dashboard')
+
+@section('title', 'Add Customer - ERP System')
+
+@section('content')
+<div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 style="color: #333; font-size: 24px; margin: 0;">Add Customer</h2>
+        <a href="{{ route('customers.index') }}" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    @if($errors->any())
+        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+            <strong>Please fix the following errors:</strong>
+            <ul style="margin: 10px 0 0 20px; padding: 0;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('customers.store') }}" method="POST">
+        @csrf
+        <div style="margin-bottom: 20px;">
+            <label for="name" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Customer Name <span style="color: red;">*</span></label>
+            <input type="text" name="name" id="name" value="{{ old('name') }}" required
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            @error('name')
+                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="gst_no" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">GST Number</label>
+            <input type="text" name="gst_no" id="gst_no" value="{{ old('gst_no') }}"
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                placeholder="e.g., 27AABCU9603R1ZX">
+            @error('gst_no')
+                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h3 style="color: #667eea; font-size: 16px; margin-bottom: 15px;">Billing Address</h3>
+            <div style="margin-bottom: 15px;">
+                <label for="billing_address_line_1" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Address Line 1</label>
+                <input type="text" name="billing_address_line_1" id="billing_address_line_1" value="{{ old('billing_address_line_1') }}"
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                @error('billing_address_line_1')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="billing_address_line_2" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Address Line 2 (Optional)</label>
+                <input type="text" name="billing_address_line_2" id="billing_address_line_2" value="{{ old('billing_address_line_2') }}"
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                @error('billing_address_line_2')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="billing_city" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">City</label>
+                    <input type="text" name="billing_city" id="billing_city" value="{{ old('billing_city') }}"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    @error('billing_city')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="billing_state" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">State</label>
+                    <input type="text" name="billing_state" id="billing_state" value="{{ old('billing_state') }}"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    @error('billing_state')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="billing_pincode" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Pincode</label>
+                    <input type="text" name="billing_pincode" id="billing_pincode" value="{{ old('billing_pincode') }}"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                        pattern="[0-9]{6}" maxlength="6" placeholder="123456">
+                    @error('billing_pincode')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #667eea; font-size: 16px; margin: 0;">Shipping Address</h3>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #667eea; font-weight: 500;">
+                    <input type="checkbox" id="copy_billing_address" onchange="copyBillingToShipping()"
+                        style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>Copy from Billing Address</span>
+                </label>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="shipping_address_line_1" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Address Line 1</label>
+                <input type="text" name="shipping_address_line_1" id="shipping_address_line_1" value="{{ old('shipping_address_line_1') }}"
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                @error('shipping_address_line_1')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="shipping_address_line_2" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Address Line 2 (Optional)</label>
+                <input type="text" name="shipping_address_line_2" id="shipping_address_line_2" value="{{ old('shipping_address_line_2') }}"
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                @error('shipping_address_line_2')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="shipping_city" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">City</label>
+                    <input type="text" name="shipping_city" id="shipping_city" value="{{ old('shipping_city') }}"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    @error('shipping_city')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="shipping_state" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">State</label>
+                    <input type="text" name="shipping_state" id="shipping_state" value="{{ old('shipping_state') }}"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    @error('shipping_state')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="shipping_pincode" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Pincode</label>
+                    <input type="text" name="shipping_pincode" id="shipping_pincode" value="{{ old('shipping_pincode') }}"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                        pattern="[0-9]{6}" maxlength="6" placeholder="123456">
+                    @error('shipping_pincode')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="contact_info" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Contact Information</label>
+            <input type="text" name="contact_info" id="contact_info" value="{{ old('contact_info') }}"
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                placeholder="Phone, Email, etc.">
+            @error('contact_info')
+                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <a href="{{ route('customers.index') }}" style="padding: 12px 24px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-weight: 500;">
+                Cancel
+            </a>
+            <button type="submit" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 5px; font-weight: 500; cursor: pointer;">
+                Save Customer
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function copyBillingToShipping() {
+        const checkbox = document.getElementById('copy_billing_address');
+        if (checkbox.checked) {
+            document.getElementById('shipping_address_line_1').value = document.getElementById('billing_address_line_1').value;
+            document.getElementById('shipping_address_line_2').value = document.getElementById('billing_address_line_2').value;
+            document.getElementById('shipping_city').value = document.getElementById('billing_city').value;
+            document.getElementById('shipping_state').value = document.getElementById('billing_state').value;
+            document.getElementById('shipping_pincode').value = document.getElementById('billing_pincode').value;
+        }
+    }
+</script>
+@endsection
