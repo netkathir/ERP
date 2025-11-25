@@ -19,6 +19,6 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./public
+        local-dir: ./
         server-dir: /public_html/custom_erp/
         dangerous-clean-slate: true
