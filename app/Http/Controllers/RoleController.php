@@ -38,7 +38,7 @@ class RoleController extends Controller
     {
         $permissions = Permission::where('is_active', true)
             ->orderBy('module')
-            ->orderBy('action')
+            ->orderByRaw('action IS NULL, action')
             ->get()
             ->groupBy('module');
         return view('roles.create', compact('permissions'));
@@ -91,7 +91,7 @@ class RoleController extends Controller
         $role = Role::with('permissions')->findOrFail($id);
         $permissions = Permission::where('is_active', true)
             ->orderBy('module')
-            ->orderBy('action')
+            ->orderByRaw('action IS NULL, action')
             ->get()
             ->groupBy('module');
         return view('roles.edit', compact('role', 'permissions'));
