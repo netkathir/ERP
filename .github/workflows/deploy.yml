@@ -11,22 +11,31 @@ jobs:
 
     steps:
 
-    # Checkout code
-    - name: Checkout Code
+    # Checkout Code
+    - name: Checkout Repository
       uses: actions/checkout@v3
 
     # Upload files via FTP using curl
-   - name: FTP Upload via curl
-  run: |
-    echo "Starting deployment..."
+    - name: FTP Upload via curl
+      run: |
+        echo "Starting deployment..."
 
-    for f in $(find public -type f); do
-      REMOTE_PATH=${f#public/}
-      echo "Uploading $f -> /home2/whyceffy/public_html/custom_erp/$REMOTE_PATH"
+        # Go through all files inside /public
+        for f in $(find public -type f); do
 
-      curl --ftp-create-dirs --ftp-pasv -T "$f" \
-        ftp://${{ secrets.FTP_SERVER }}/public_html/custom_erp/$REMOTE_PATH \
-        --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
-    done
+          # remote path (remove "public/" prefix)
+          REMOTE_PATH=${f#public/}
 
-    echo "Deployment completed successfully!"
+          echo "Uploading $f -> public_html/custom_erp/$REMOTE_PATH"
+
+          curl --ftp-create-dirs --ftp-pasv -T "$f" \
+            ftp://${{ secrets.FTP_SERVER }}/public_html/custom_erp/$REMOTE_PATH \
+            --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+            --silent --show-error --fail || {
+                echo "Upload failed for $f"
+                exit 1
+            }
+
+        done
+
+        echo "Deployment completed successfully!"
