@@ -59,8 +59,7 @@ jobs:
           def upload_file(local_file, remote_file):
               # Create the necessary directories on the remote server if they don't exist
               remote_folder = os.path.dirname(remote_file)
-              if remote_folder != remote_dir:
-                  create_directory_if_not_exists(remote_folder)
+              create_directory_if_not_exists(remote_folder)
 
               # Upload the file to the FTP server
               with open(local_file, 'rb') as f:
@@ -72,6 +71,11 @@ jobs:
                   local_file = os.path.join(root, file)
                   # Get the relative path of the file to create the same structure on the server
                   relative_path = os.path.relpath(local_file, local_dir)
+
+                  # Remove the "custom_erp" from the relative path (if it exists) to prevent duplication
+                  relative_path = relative_path.replace('custom_erp/', '')
+
+                  # Now construct the remote file path
                   remote_file = os.path.join(remote_dir, relative_path)
                   print(f"Uploading {local_file} to {remote_file}")
                   upload_file(local_file, remote_file)
