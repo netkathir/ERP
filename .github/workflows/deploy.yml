@@ -12,15 +12,25 @@ jobs:
     steps:
 
     # Checkout code
-    - name: Checkout
+    - name: Checkout Code
       uses: actions/checkout@v3
 
-    # Upload files via curl
+    # Upload files via FTP using curl
     - name: FTP Upload via curl
       run: |
+        echo "Starting deployment..."
+
+        # Find all files inside public directory
         for f in $(find public -type f); do
-          echo "Uploading $f"
+
+          # Remove leading 'public/' from file path
+          REMOTE_PATH=${f#public/}
+
+          echo "Uploading $f -> /home2/whyceffy/public_html/custom_erp/$REMOTE_PATH"
+
           curl --ftp-create-dirs -T "$f" \
-          ftp://${{ secrets.FTP_SERVER }}/home2/whyceffy/public_html/custom_erp/${f#public/} \
-          --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
+            ftp://${{ secrets.FTP_SERVER }}/public_html/custom_erp/$REMOTE_PATH \
+            --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
         done
+
+        echo "Deployment completed successfully!"
