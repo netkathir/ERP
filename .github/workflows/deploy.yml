@@ -31,5 +31,5 @@ jobs:
             echo "Uploading: $FILE → $REMOTE_PATH"
             curl -v -T "$FILE" "ftps://${{ secrets.FTP_SERVER }}$REMOTE_PATH" \
                 --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
-                --ftp-ssl --ssl-reqd
+                --ssl-reqd
         done
