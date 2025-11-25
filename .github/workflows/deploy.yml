@@ -15,12 +15,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    # Upload files using curl
+    # Upload files via curl
     - name: FTP Upload via curl
       run: |
         for f in $(find public -type f); do
           echo "Uploading $f"
           curl --ftp-create-dirs -T "$f" \
-          ftp://${{ secrets.FTP_SERVER }}/public_html/custom_erp/${f#public/} \
+          ftp://${{ secrets.FTP_SERVER }}/home2/whyceffy/public_html/custom_erp/${f#public/} \
           --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
         done
