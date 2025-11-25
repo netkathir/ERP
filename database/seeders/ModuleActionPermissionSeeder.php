@@ -17,7 +17,6 @@ class ModuleActionPermissionSeeder extends Seeder
             'users' => ['View', 'Create', 'Edit', 'Delete'],
             'roles' => ['View', 'Create', 'Edit', 'Delete'],
             'permissions' => ['View', 'Create', 'Edit', 'Delete'],
-            'organizations' => ['View', 'Create', 'Edit', 'Delete'],
             'products' => ['View', 'Create', 'Edit', 'Delete', 'Export'],
             'units' => ['View', 'Create', 'Edit', 'Delete'],
             'customers' => ['View', 'Create', 'Edit', 'Delete', 'Export'],

@@ -16,12 +16,6 @@ class PermissionSeeder extends Seeder
             ['name' => 'Edit Users', 'slug' => 'edit-users', 'module' => 'users', 'description' => 'Edit existing users'],
             ['name' => 'Delete Users', 'slug' => 'delete-users', 'module' => 'users', 'description' => 'Delete users'],
             
-            // Organization Management
-            ['name' => 'View Organizations', 'slug' => 'view-organizations', 'module' => 'organizations', 'description' => 'View organizations list'],
-            ['name' => 'Create Organizations', 'slug' => 'create-organizations', 'module' => 'organizations', 'description' => 'Create new organizations'],
-            ['name' => 'Edit Organizations', 'slug' => 'edit-organizations', 'module' => 'organizations', 'description' => 'Edit existing organizations'],
-            ['name' => 'Delete Organizations', 'slug' => 'delete-organizations', 'module' => 'organizations', 'description' => 'Delete organizations'],
-            
             // Branch Management
             ['name' => 'View Branches', 'slug' => 'view-branches', 'module' => 'branches', 'description' => 'View branches list'],
             ['name' => 'Create Branches', 'slug' => 'create-branches', 'module' => 'branches', 'description' => 'Create new branches'],

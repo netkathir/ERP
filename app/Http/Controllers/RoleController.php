@@ -37,6 +37,7 @@ class RoleController extends Controller
     public function create(): View
     {
         $permissions = Permission::where('is_active', true)
+            ->where('module', '!=', 'organizations')
             ->orderBy('module')
             ->orderByRaw('action IS NULL, action')
             ->get()
@@ -90,6 +91,7 @@ class RoleController extends Controller
     {
         $role = Role::with('permissions')->findOrFail($id);
         $permissions = Permission::where('is_active', true)
+            ->where('module', '!=', 'organizations')
             ->orderBy('module')
             ->orderByRaw('action IS NULL, action')
             ->get()
