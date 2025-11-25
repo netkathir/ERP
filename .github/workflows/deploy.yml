@@ -37,19 +37,43 @@ jobs:
           local_dir = './'  # Path to your code (use `./` for the whole repo)
           remote_dir = '/custom_erp/'  # Direct remote directory (no intermediate dirs)
 
-          # Function to upload files directly to the root custom_erp folder
-          def upload_file(file_path):
-              with open(file_path, 'rb') as f:
-                  ftp.storbinary('STOR ' + os.path.basename(file_path), f)
+          # Function to create remote directories if they don't exist
+          def create_directory_if_not_exists(remote_path):
+              dirs = remote_path.strip('/').split('/')
+              path = '/'
+              for dir in dirs:
+                  path = os.path.join(path, dir)
+                  try:
+                      # Try changing to the directory
+                      ftp.cwd(path)
+                  except error_perm as e:
+                      # If directory doesn't exist, create it
+                      if '550' in str(e):
+                          print(f"Directory {path} does not exist. Creating it.")
+                          ftp.mkd(path)
+                          ftp.cwd(path)
+                      else:
+                          raise
 
-          # Upload all files in the local directory (skip directories if present)
+          # Function to upload files, preserving directory structure
+          def upload_file(local_file, remote_file):
+              # Create the necessary directories on the remote server if they don't exist
+              remote_folder = os.path.dirname(remote_file)
+              create_directory_if_not_exists(remote_folder)
+
+              # Upload the file to the FTP server
+              with open(local_file, 'rb') as f:
+                  ftp.storbinary('STOR ' + remote_file, f)
+
+          # Walk through the local directory and upload files, preserving the folder structure
           for root, dirs, files in os.walk(local_dir):
               for file in files:
-                  # Construct file path relative to the root
                   local_file = os.path.join(root, file)
-                  remote_file = os.path.join(remote_dir, file)  # Place files in /custom_erp
-                  print(f"Uploading {file} to {remote_file}")
-                  upload_file(local_file)
+                  # Get the relative path of the file to create the same structure on the server
+                  relative_path = os.path.relpath(local_file, local_dir)
+                  remote_file = os.path.join(remote_dir, relative_path)
+                  print(f"Uploading {local_file} to {remote_file}")
+                  upload_file(local_file, remote_file)
 
           # Close the FTP connection
           ftp.quit()
