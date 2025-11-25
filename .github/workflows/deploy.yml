@@ -1,5 +1,3 @@
-name: FTP Deploy
-
 on:
   push:
     branches:
@@ -10,14 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out code
+    - name: Checkout
       uses: actions/checkout@v3
 
     - name: FTP Deploy
-      uses: SamKirkland/FTP-Deploy-Action@v4
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./
+        local-dir: ./public
         server-dir: /public_html/custom_erp/
+        dangerous-clean-slate: true
