@@ -22,7 +22,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">ID</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Symbol</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Description</th>
@@ -32,7 +32,7 @@
                 <tbody>
                     @foreach($units as $unit)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px; color: #666;">{{ $unit->id }}</td>
+                            <td style="padding: 12px; color: #666;">{{ ($units->currentPage() - 1) * $units->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $unit->name }}</td>
                             <td style="padding: 12px; color: #666;">{{ $unit->symbol }}</td>
                             <td style="padding: 12px; color: #666;">{{ $unit->description ?? 'N/A' }}</td>

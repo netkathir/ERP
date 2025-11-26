@@ -22,7 +22,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left;">ID</th>
+                        <th style="padding: 12px; text-align: left;">S.No</th>
                         <th style="padding: 12px; text-align: left;">Name</th>
                         <th style="padding: 12px; text-align: left;">Slug</th>
                         <th style="padding: 12px; text-align: left;">Module</th>
@@ -32,7 +32,7 @@
                 <tbody>
                     @foreach($permissions as $permission)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px;">{{ $permission->id }}</td>
+                            <td style="padding: 12px;">{{ ($permissions->currentPage() - 1) * $permissions->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; font-weight: 500;">{{ $permission->name }}</td>
                             <td style="padding: 12px;">{{ $permission->slug }}</td>
                             <td style="padding: 12px;">{{ $permission->module ?? 'N/A' }}</td>

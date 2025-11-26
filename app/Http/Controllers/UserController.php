@@ -84,9 +84,21 @@ class UserController extends Controller
             'branches' => 'nullable|array',
             'branches.*' => 'exists:branches,id',
             'send_email' => 'nullable|boolean',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
+            ],
         ];
         
-        $request->validate($rules);
+        $request->validate($rules, [
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            'password.confirmed' => 'Password confirmation does not match.',
+        ]);
         
         // Get selected role
         $role = \App\Models\Role::findOrFail($request->role_id);
@@ -97,8 +109,8 @@ class UserController extends Controller
         }
         
         try {
-            // Generate random password
-            $password = Str::random(12);
+            // Use password from form
+            $password = $request->password;
             
             $data = [
                 'name' => $request->name,
@@ -216,9 +228,11 @@ class UserController extends Controller
         // Only validate password if it's provided
         if ($request->filled('password')) {
             $rules['password'] = [
+                'required',
                 'string',
                 'min:8',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
             ];
         }
         
@@ -277,5 +291,108 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'User deactivated successfully.');
+    }
+
+    /**
+     * Show the form for changing user's own password.
+     *
+     * @return View
+     */
+    public function showChangePasswordForm(): View
+    {
+        return view('account.change-password');
+    }
+
+    /**
+     * Change the authenticated user's password.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function changePassword(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
+            ],
+        ], [
+            'current_password.required' => 'Current password is required.',
+            'new_password.required' => 'New password is required.',
+            'new_password.min' => 'New password must be at least 8 characters.',
+            'new_password.regex' => 'New password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            'new_password.confirmed' => 'New password confirmation does not match.',
+        ]);
+
+        // Verify current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.'])->withInput();
+        }
+
+        // Check if new password is different from current password
+        if (Hash::check($request->new_password, $user->password)) {
+            return back()->withErrors(['new_password' => 'New password must be different from your current password.'])->withInput();
+        }
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        // Logout user after password change
+        auth()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Your password has been successfully changed. Please log in with your new password.');
+    }
+
+    /**
+     * Admin change user password (without requiring current password).
+     *
+     * @param Request $request
+     * @param int $id
+     * @return RedirectResponse
+     */
+    public function adminChangePassword(Request $request, int $id): RedirectResponse
+    {
+        $currentUser = auth()->user();
+        
+        // Only Super Admin can change user passwords
+        if (!$currentUser->isSuperAdmin()) {
+            abort(403, 'Only Super Admin can change user passwords.');
+        }
+
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
+            ],
+        ], [
+            'new_password.required' => 'New password is required.',
+            'new_password.min' => 'New password must be at least 8 characters.',
+            'new_password.regex' => 'New password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            'new_password.confirmed' => 'New password confirmation does not match.',
+        ]);
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        return redirect()->route('users.edit', $user->id)
+            ->with('success', 'User password has been successfully changed.');
     }
 }

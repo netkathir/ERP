@@ -22,7 +22,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">ID</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Email</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Mobile</th>
@@ -34,7 +34,7 @@
                 <tbody>
                     @foreach($users as $user)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px; color: #666;">{{ $user->id }}</td>
+                            <td style="padding: 12px; color: #666;">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $user->name }}</td>
                             <td style="padding: 12px; color: #666;">{{ $user->email }}</td>
                             <td style="padding: 12px; color: #666;">{{ $user->mobile ?? 'N/A' }}</td>

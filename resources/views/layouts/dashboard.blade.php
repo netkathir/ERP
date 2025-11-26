@@ -312,6 +312,12 @@
                     <span>Dashboard</span>
                 </a>
                 
+                {{-- Account Settings --}}
+                <a href="{{ route('account.change-password') }}" class="menu-item" title="Change Password">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Account Settings</span>
+                </a>
+                
                 {{-- Super Admin Menu --}}
                 @if(auth()->user()->isSuperAdmin())
                     <a href="{{ route('branches.index') }}" class="menu-item" title="Branches">
@@ -393,6 +399,30 @@
                     <a href="{{ route('raw-material-categories.index') }}" class="menu-item" title="Raw Material Categories">
                         <i class="fas fa-layer-group"></i>
                         <span>Raw Material Categories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('raw-material-sub-categories', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-material-sub-categories.index') }}" class="menu-item" title="Raw Material SubCategories">
+                        <i class="fas fa-sitemap"></i>
+                        <span>Raw Material SubCategories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('product-categories', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('product-categories.index') }}" class="menu-item" title="Product Categories">
+                        <i class="fas fa-tags"></i>
+                        <span>Product Categories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('processes', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('processes.index') }}" class="menu-item" title="Processes">
+                        <i class="fas fa-cogs"></i>
+                        <span>Processes</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('raw-materials', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-materials.index') }}" class="menu-item" title="Raw Materials">
+                        <i class="fas fa-cube"></i>
+                        <span>Raw Materials</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->isSuperAdmin())

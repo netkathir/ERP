@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RawMaterialCategory extends Model
+class ProductCategory extends Model
 {
     use HasFactory;
 
@@ -20,8 +20,8 @@ class RawMaterialCategory extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function subCategories()
+    public function products()
     {
-        return $this->hasMany(RawMaterialSubCategory::class);
+        return $this->hasMany(Product::class);
     }
 }

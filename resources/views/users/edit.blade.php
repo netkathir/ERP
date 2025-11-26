@@ -91,17 +91,39 @@
             @enderror
         </div>
 
-        {{-- Password update (optional) --}}
-        <div style="margin-bottom: 20px;">
-            <label for="password" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">New Password (leave blank to keep current)</label>
-            <input type="password" name="password" id="password" value=""
-                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
-                class="@error('password') border-red-500 @enderror"
-                autocomplete="new-password">
-            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Leave blank to keep current password. If changing, min 8 chars, 1 uppercase, 1 lowercase, 1 number</small>
-            @error('password')
-                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
-            @enderror
+        {{-- Password Change Section for Admin --}}
+        <div style="margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+            <h3 style="color: #333; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-key"></i> Change Password
+            </h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Leave password fields blank to keep the current password.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label for="password" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">New Password</label>
+                    <input type="password" name="password" id="password" value=""
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                        class="@error('password') border-red-500 @enderror"
+                        autocomplete="new-password"
+                        onchange="togglePasswordConfirmation()">
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Min 8 chars, 1 uppercase, 1 lowercase, 1 number</small>
+                    @error('password')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="password_confirmation" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Confirm New Password</label>
+                    <input type="password" name="password_confirmation" id="password_confirmation" value=""
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                        class="@error('password_confirmation') border-red-500 @enderror"
+                        autocomplete="new-password"
+                        disabled>
+                    @error('password_confirmation')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
         </div>
 
         <div style="display: flex; gap: 15px; margin-top: 30px;">
@@ -133,9 +155,24 @@ function toggleBranchSelection() {
     }
 }
 
+function togglePasswordConfirmation() {
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('password_confirmation');
+    
+    if (passwordField.value.trim() !== '') {
+        confirmPasswordField.disabled = false;
+        confirmPasswordField.setAttribute('required', 'required');
+    } else {
+        confirmPasswordField.disabled = true;
+        confirmPasswordField.removeAttribute('required');
+        confirmPasswordField.value = '';
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     toggleBranchSelection();
+    togglePasswordConfirmation();
 });
 </script>
 @endsection

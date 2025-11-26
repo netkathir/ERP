@@ -53,6 +53,31 @@
             @enderror
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <label for="password" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Password <span style="color: red;">*</span></label>
+                <input type="password" name="password" id="password" value="{{ old('password') }}" required
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                    class="@error('password') border-red-500 @enderror"
+                    autocomplete="new-password">
+                <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number</small>
+                @error('password')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="password_confirmation" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Confirm Password <span style="color: red;">*</span></label>
+                <input type="password" name="password_confirmation" id="password_confirmation" value="{{ old('password_confirmation') }}" required
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                    class="@error('password_confirmation') border-red-500 @enderror"
+                    autocomplete="new-password">
+                @error('password_confirmation')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
         <div style="margin-bottom: 20px;">
             <label for="role_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Role <span style="color: red;">*</span></label>
             <select name="role_id" id="role_id" required
@@ -96,12 +121,12 @@
 
         <div style="margin-bottom: 20px;">
             <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" name="send_email" id="send_email" value="1" {{ old('send_email') ? 'checked' : 'checked' }}
+                <input type="checkbox" name="send_email" id="send_email" value="1" {{ old('send_email') ? 'checked' : '' }}
                     style="margin-right: 8px; width: 18px; height: 18px;">
                 <span style="color: #333; font-weight: 500;">Send welcome email with login credentials</span>
             </label>
             <small style="color: #666; font-size: 12px; display: block; margin-top: 5px; margin-left: 26px;">
-                A system-generated password will be created and sent via email. User can change it after first login.
+                User will receive an email with their login credentials. User can change their password after first login.
             </small>
         </div>
 

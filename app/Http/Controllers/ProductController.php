@@ -13,7 +13,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $query = \App\Models\Product::with('unit');
+        $query = \App\Models\Product::with(['unit', 'productCategory']);
         $query = $this->applyBranchFilter($query, \App\Models\Product::class);
         $products = $query->latest()->paginate(15);
         return view('masters.products.index', compact('products'));
@@ -21,8 +21,16 @@ class ProductController extends Controller
 
     public function create()
     {
-        $units = \App\Models\Unit::all();
-        return view('masters.products.create', compact('units'));
+        $unitQuery = \App\Models\Unit::query();
+        $unitQuery = $this->applyBranchFilter($unitQuery, \App\Models\Unit::class);
+        $units = $unitQuery->get();
+
+        // Load Product Categories with branch filtering
+        $categoryQuery = \App\Models\ProductCategory::query();
+        $categoryQuery = $this->applyBranchFilter($categoryQuery, \App\Models\ProductCategory::class);
+        $categories = $categoryQuery->orderBy('name')->get();
+
+        return view('masters.products.create', compact('units', 'categories'));
     }
 
     public function store(Request $request)
@@ -34,6 +42,7 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'gst_rate' => 'required|numeric|min:0',
             'category' => 'nullable|string',
+            'product_category_id' => 'nullable|exists:product_categories,id',
         ]);
 
         $data = $request->all();
@@ -57,7 +66,13 @@ class ProductController extends Controller
         $unitQuery = \App\Models\Unit::query();
         $unitQuery = $this->applyBranchFilter($unitQuery, \App\Models\Unit::class);
         $units = $unitQuery->get();
-        return view('masters.products.edit', compact('product', 'units'));
+
+        // Load Product Categories with branch filtering
+        $categoryQuery = \App\Models\ProductCategory::query();
+        $categoryQuery = $this->applyBranchFilter($categoryQuery, \App\Models\ProductCategory::class);
+        $categories = $categoryQuery->orderBy('name')->get();
+
+        return view('masters.products.edit', compact('product', 'units', 'categories'));
     }
 
     public function update(Request $request, $id)
@@ -69,6 +84,7 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'gst_rate' => 'required|numeric|min:0',
             'category' => 'nullable|string',
+            'product_category_id' => 'nullable|exists:product_categories,id',
         ]);
 
         $query = \App\Models\Product::query();

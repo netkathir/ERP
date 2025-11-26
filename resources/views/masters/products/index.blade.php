@@ -22,24 +22,24 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">ID</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Unit</th>
                         <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Price</th>
                         <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">GST Rate (%)</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Category</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Product Category</th>
                         <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($products as $product)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px; color: #666;">{{ $product->id }}</td>
+                            <td style="padding: 12px; color: #666;">{{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $product->name }}</td>
                             <td style="padding: 12px; color: #666;">{{ $product->unit->symbol ?? 'N/A' }}</td>
                             <td style="padding: 12px; text-align: right; color: #666;">₹{{ number_format($product->price, 2) }}</td>
                             <td style="padding: 12px; text-align: right; color: #666;">{{ $product->gst_rate }}%</td>
-                            <td style="padding: 12px; color: #666;">{{ $product->category ?? 'N/A' }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $product->productCategory->name ?? ($product->category ?? 'N/A') }}</td>
                             <td style="padding: 12px; text-align: center;">
                                 <div style="display: flex; gap: 8px; justify-content: center;">
                                     <a href="{{ route('products.edit', $product->id) }}" style="padding: 6px 12px; background: #ffc107; color: #333; text-decoration: none; border-radius: 4px; font-size: 12px;">

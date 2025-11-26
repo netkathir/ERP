@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RawMaterialCategory extends Model
+class Process extends Model
 {
     use HasFactory;
 
@@ -18,10 +18,5 @@ class RawMaterialCategory extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function subCategories()
-    {
-        return $this->hasMany(RawMaterialSubCategory::class);
     }
 }

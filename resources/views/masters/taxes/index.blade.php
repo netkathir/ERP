@@ -22,7 +22,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">ID</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Type</th>
                         <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Rate (%)</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Effective Date</th>
@@ -32,7 +32,7 @@
                 <tbody>
                     @foreach($taxes as $tax)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px; color: #666;">{{ $tax->id }}</td>
+                            <td style="padding: 12px; color: #666;">{{ ($taxes->currentPage() - 1) * $taxes->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $tax->type }}</td>
                             <td style="padding: 12px; text-align: right; color: #666;">{{ $tax->rate }}%</td>
                             <td style="padding: 12px; color: #666;">{{ $tax->effective_date }}</td>

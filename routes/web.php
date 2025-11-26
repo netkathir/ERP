@@ -36,6 +36,13 @@ Route::middleware(['auth'])->group(function () {
     // User Management Routes
     Route::resource('users', App\Http\Controllers\UserController::class);
     
+    // Account Settings Routes (for users to change their own password)
+    Route::get('/account/change-password', [App\Http\Controllers\UserController::class, 'showChangePasswordForm'])->name('account.change-password');
+    Route::post('/account/change-password', [App\Http\Controllers\UserController::class, 'changePassword']);
+    
+    // Admin Password Change Route (for admins to change any user's password)
+    Route::post('/users/{id}/change-password', [App\Http\Controllers\UserController::class, 'adminChangePassword'])->name('users.change-password');
+    
     // Organization Switching Routes (Super Admin only) - Must come before resource routes
     Route::get('/organizations/switch/clear', [App\Http\Controllers\OrganizationSwitchController::class, 'clear'])->name('organization.switch.clear');
     Route::get('/organizations/{organization}/switch', [App\Http\Controllers\OrganizationSwitchController::class, 'switch'])->name('organization.switch');
@@ -64,6 +71,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', App\Http\Controllers\CustomerController::class);
     Route::resource('products', App\Http\Controllers\ProductController::class);
     Route::resource('raw-material-categories', App\Http\Controllers\RawMaterialCategoryController::class);
+    Route::resource('raw-material-sub-categories', App\Http\Controllers\RawMaterialSubCategoryController::class);
+    Route::resource('product-categories', App\Http\Controllers\ProductCategoryController::class);
+    Route::resource('processes', App\Http\Controllers\ProcessController::class);
+    // Custom route must come before resource route to avoid conflicts
+    Route::get('raw-materials/sub-categories', [App\Http\Controllers\RawMaterialController::class, 'getSubCategories'])->name('raw-materials.sub-categories');
+    Route::resource('raw-materials', App\Http\Controllers\RawMaterialController::class);
     Route::resource('departments', App\Http\Controllers\DepartmentController::class);
     Route::resource('designations', App\Http\Controllers\DesignationController::class);
 

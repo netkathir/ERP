@@ -28,7 +28,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">ID</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Company Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Contact Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">GST No</th>
@@ -39,7 +39,7 @@
                 <tbody>
                     @foreach($customers as $customer)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px; color: #666;">{{ $customer->id }}</td>
+                            <td style="padding: 12px; color: #666;">{{ ($customers->currentPage() - 1) * $customers->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $customer->company_name }}</td>
                             <td style="padding: 12px; color: #666;">{{ $customer->contact_name ?? 'N/A' }}</td>
                             <td style="padding: 12px; color: #666;">{{ $customer->gst_no ?? 'N/A' }}</td>

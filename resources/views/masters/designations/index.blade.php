@@ -28,7 +28,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">ID</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Department Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Designation Name</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Description</th>
@@ -38,7 +38,7 @@
                 <tbody>
                     @foreach($designations as $designation)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px; color: #666;">{{ $designation->id }}</td>
+                            <td style="padding: 12px; color: #666;">{{ ($designations->currentPage() - 1) * $designations->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $designation->department->name ?? 'N/A' }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $designation->name }}</td>
                             <td style="padding: 12px; color: #666;">{{ $designation->description ?? 'N/A' }}</td>

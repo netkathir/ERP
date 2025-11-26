@@ -24,7 +24,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left;">ID</th>
+                        <th style="padding: 12px; text-align: left;">S.No</th>
                         <th style="padding: 12px; text-align: left;">Name</th>
                         <th style="padding: 12px; text-align: left;">Location</th>
                         <th style="padding: 12px; text-align: left;">Users</th>
@@ -34,7 +34,7 @@
                 <tbody>
                     @foreach($branches as $branch)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px;">{{ $branch->id }}</td>
+                            <td style="padding: 12px;">{{ ($branches->currentPage() - 1) * $branches->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; font-weight: 500;">{{ $branch->name }}</td>
                             <td style="padding: 12px;">
                                 @if($branch->address_line_1)
