@@ -12,8 +12,33 @@
     </div>
 
     @if(session('success'))
-        <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
-            {{ session('success') }}
+        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
+            <div style="margin-bottom: 10px;">
+                <strong><i class="fas fa-check-circle"></i> {{ session('success') }}</strong>
+            </div>
+            @if(session('user_password') && session('user_email'))
+                <div style="background: #fff; padding: 15px; border-radius: 5px; margin-top: 10px; border: 1px solid #c3e6cb;">
+                    <strong style="color: #004085; display: block; margin-bottom: 10px;">
+                        <i class="fas fa-key"></i> User Login Credentials (Please share these externally):
+                    </strong>
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 15px; font-size: 14px;">
+                        <strong style="color: #666;">Name:</strong>
+                        <span style="color: #333;">{{ session('user_name') }}</span>
+                        <strong style="color: #666;">Email:</strong>
+                        <span style="color: #333; font-family: monospace;">{{ session('user_email') }}</span>
+                        <strong style="color: #666;">Password:</strong>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="userPassword" style="color: #333; font-family: monospace; font-weight: bold; font-size: 16px; letter-spacing: 1px;">{{ session('user_password') }}</span>
+                            <button type="button" onclick="copyPassword()" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #c3e6cb; color: #856404; font-size: 12px;">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong> Please share these credentials with the user externally. Email will not be sent automatically.
+                    </div>
+                </div>
+            @endif
         </div>
     @endif
 
@@ -96,4 +121,24 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function copyPassword() {
+        const password = document.getElementById('userPassword').textContent;
+        navigator.clipboard.writeText(password).then(function() {
+            alert('Password copied to clipboard!');
+        }, function(err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = password;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Password copied to clipboard!');
+        });
+    }
+</script>
+@endpush
 

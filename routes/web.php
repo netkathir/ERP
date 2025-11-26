@@ -74,11 +74,17 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('raw-material-sub-categories', App\Http\Controllers\RawMaterialSubCategoryController::class);
     Route::resource('product-categories', App\Http\Controllers\ProductCategoryController::class);
     Route::resource('processes', App\Http\Controllers\ProcessController::class);
+    Route::resource('bom-processes', App\Http\Controllers\BOMProcessController::class);
     // Custom route must come before resource route to avoid conflicts
     Route::get('raw-materials/sub-categories', [App\Http\Controllers\RawMaterialController::class, 'getSubCategories'])->name('raw-materials.sub-categories');
     Route::resource('raw-materials', App\Http\Controllers\RawMaterialController::class);
     Route::resource('departments', App\Http\Controllers\DepartmentController::class);
     Route::resource('designations', App\Http\Controllers\DesignationController::class);
+    Route::resource('production-departments', App\Http\Controllers\ProductionDepartmentController::class);
+    Route::resource('employees', App\Http\Controllers\EmployeeController::class);
+    Route::get('employees/designations', [App\Http\Controllers\EmployeeController::class, 'getDesignations'])->name('employees.designations');
+    Route::resource('billing-addresses', App\Http\Controllers\BillingAddressController::class);
+    Route::post('billing-addresses/bulk-delete', [App\Http\Controllers\BillingAddressController::class, 'bulkDelete'])->name('billing-addresses.bulk-delete');
 
     // Quotation Routes
     Route::resource('quotations', App\Http\Controllers\QuotationController::class);

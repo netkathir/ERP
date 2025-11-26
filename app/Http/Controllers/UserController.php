@@ -83,7 +83,6 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id',
             'branches' => 'nullable|array',
             'branches.*' => 'exists:branches,id',
-            'send_email' => 'nullable|boolean',
             'password' => [
                 'required',
                 'string',
@@ -132,16 +131,7 @@ class UserController extends Controller
                 $user->branches()->sync($request->branches);
             }
             
-            // Send welcome email
-            if ($request->has('send_email') && $request->send_email) {
-                try {
-                    $loginUrl = route('login');
-                    Mail::to($user->email)->send(new UserWelcomeMail($user, $password, $loginUrl));
-                } catch (\Exception $e) {
-                    // Log error but don't fail user creation
-                    \Log::error('Failed to send welcome email: ' . $e->getMessage());
-                }
-            }
+            // Email is not sent - Admin will share credentials externally
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()])->withInput();
         }
@@ -151,9 +141,11 @@ class UserController extends Controller
             $message .= ' and assigned to ' . count($request->branches) . ' branch(es)';
         }
         $message .= '.';
-        if ($request->has('send_email') && $request->send_email) {
-            $message .= ' Welcome email sent.';
-        }
+        
+        // Store password in session to display to admin
+        session()->flash('user_password', $password);
+        session()->flash('user_email', $user->email);
+        session()->flash('user_name', $user->name);
 
         return redirect()->route('users.index')->with('success', $message);
     }

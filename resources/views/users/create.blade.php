@@ -119,15 +119,12 @@
             @enderror
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" name="send_email" id="send_email" value="1" {{ old('send_email') ? 'checked' : '' }}
-                    style="margin-right: 8px; width: 18px; height: 18px;">
-                <span style="color: #333; font-weight: 500;">Send welcome email with login credentials</span>
-            </label>
-            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px; margin-left: 26px;">
-                User will receive an email with their login credentials. User can change their password after first login.
-            </small>
+        <div style="background: #e7f3ff; color: #004085; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #b3d7ff;">
+            <strong><i class="fas fa-info-circle"></i> Note:</strong>
+            <p style="margin: 8px 0 0 0; font-size: 14px;">
+                Email will not be sent to the user. Please share the login credentials (email and password) with the user externally. 
+                The user can change their password after first login.
+            </p>
         </div>
 
         <div style="display: flex; gap: 15px; margin-top: 30px;">

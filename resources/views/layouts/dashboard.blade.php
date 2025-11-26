@@ -419,6 +419,12 @@
                         <span>Processes</span>
                     </a>
                     @endif
+                    @if(auth()->user()->hasPermission('bom-processes', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('bom-processes.index') }}" class="menu-item" title="BOM Processes">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>BOM Processes</span>
+                    </a>
+                    @endif
                     @if(auth()->user()->hasPermission('raw-materials', 'view') || auth()->user()->isSuperAdmin())
                     <a href="{{ route('raw-materials.index') }}" class="menu-item" title="Raw Materials">
                         <i class="fas fa-cube"></i>
@@ -435,6 +441,24 @@
                     <a href="{{ route('designations.index') }}" class="menu-item" title="Designations">
                         <i class="fas fa-user-tie"></i>
                         <span>Designations</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('production-departments', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('production-departments.index') }}" class="menu-item" title="Production Departments">
+                        <i class="fas fa-industry"></i>
+                        <span>Production Departments</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('employees', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('employees.index') }}" class="menu-item" title="Employees">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Employees</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('billing-addresses', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('billing-addresses.index') }}" class="menu-item" title="Billing Addresses">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Billing Addresses</span>
                     </a>
                     @endif
                 </div>
