@@ -127,6 +127,37 @@
         .sidebar-menu::-webkit-scrollbar-thumb:hover {
             background: rgba(255,255,255,0.3);
         }
+        .menu-item-header {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: background 0.3s;
+        }
+        .menu-item-header:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .menu-item-header .arrow {
+            transition: transform 0.3s ease;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .menu-item-header.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+        .menu-sub-items {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            max-height: 1000px;
+        }
+        .menu-sub-items.collapsed {
+            max-height: 0;
+        }
         .menu-item {
             padding: 14px 20px;
             color: rgba(255,255,255,0.8);
@@ -323,59 +354,73 @@
 
                 {{-- Tender Sales Module --}}
                 @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('tenders', 'view'))
-                <div class="menu-item-header" style="padding: 10px 20px; font-size: 12px; color: #888; text-transform: uppercase; margin-top: 10px;">Tender Sales</div>
-                <a href="{{ route('tenders.index') }}" class="menu-item" title="Tenders">
-                    <i class="fas fa-gavel"></i>
-                    <span>Tenders</span>
-                </a>
+                <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;">
+                    <span>Tender Sales</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <div class="menu-sub-items" id="tenderSalesMenu">
+                    <a href="{{ route('tenders.index') }}" class="menu-item" title="Tenders">
+                        <i class="fas fa-gavel"></i>
+                        <span>Tenders</span>
+                    </a>
+                </div>
                 @endif
 
-                <div class="menu-item-header" style="padding: 10px 20px; font-size: 12px; color: #888; text-transform: uppercase;">Masters</div>
-
-                @if(auth()->user()->hasPermission('units', 'view'))
-                <a href="{{ route('units.index') }}" class="menu-item" title="Units">
-                    <i class="fas fa-balance-scale"></i>
-                    <span>Units</span>
-                </a>
-                @endif
-                @if(auth()->user()->hasPermission('customers', 'view'))
-                <a href="{{ route('customers.index') }}" class="menu-item" title="Customers">
-                    <i class="fas fa-users"></i>
-                    <span>Customers</span>
-                </a>
-                @endif
-                @if(auth()->user()->hasPermission('products', 'view'))
-                <a href="{{ route('products.index') }}" class="menu-item" title="Products">
-                    <i class="fas fa-box"></i>
-                    <span>Products</span>
-                </a>
-                @endif
-                @if(auth()->user()->hasPermission('raw-material-categories', 'view') || auth()->user()->isSuperAdmin())
-                <a href="{{ route('raw-material-categories.index') }}" class="menu-item" title="Raw Material Categories">
-                    <i class="fas fa-layer-group"></i>
-                    <span>Raw Material Categories</span>
-                </a>
-                @endif
-                @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->isSuperAdmin())
-                <a href="{{ route('departments.index') }}" class="menu-item" title="Departments">
-                    <i class="fas fa-building"></i>
-                    <span>Departments</span>
-                </a>
-                @endif
-                @if(auth()->user()->hasPermission('designations', 'view') || auth()->user()->isSuperAdmin())
-                <a href="{{ route('designations.index') }}" class="menu-item" title="Designations">
-                    <i class="fas fa-user-tie"></i>
-                    <span>Designations</span>
-                </a>
-                @endif
+                <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader">
+                    <span>Masters</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <div class="menu-sub-items" id="mastersMenu">
+                    @if(auth()->user()->hasPermission('units', 'view'))
+                    <a href="{{ route('units.index') }}" class="menu-item" title="Units">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Units</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('customers', 'view'))
+                    <a href="{{ route('customers.index') }}" class="menu-item" title="Customers">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('products', 'view'))
+                    <a href="{{ route('products.index') }}" class="menu-item" title="Products">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('raw-material-categories', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-material-categories.index') }}" class="menu-item" title="Raw Material Categories">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Raw Material Categories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('departments.index') }}" class="menu-item" title="Departments">
+                        <i class="fas fa-building"></i>
+                        <span>Departments</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('designations', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('designations.index') }}" class="menu-item" title="Designations">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Designations</span>
+                    </a>
+                    @endif
+                </div>
 
                 {{-- Settings Menu (Super Admin only) --}}
                 @if(auth()->user()->isSuperAdmin())
-                    <div class="menu-item-header" style="padding: 10px 20px; font-size: 12px; color: #888; text-transform: uppercase; margin-top: 10px;">Settings</div>
-                    <a href="{{ route('company-information.index') }}" class="menu-item" title="Company Information">
-                        <i class="fas fa-building"></i>
-                        <span>Company Information</span>
-                    </a>
+                    <div class="menu-item-header" onclick="toggleSettingsMenu()" id="settingsHeader" style="margin-top: 10px;">
+                        <span>Settings</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+                    <div class="menu-sub-items" id="settingsMenu">
+                        <a href="{{ route('company-information.index') }}" class="menu-item" title="Company Information">
+                            <i class="fas fa-building"></i>
+                            <span>Company Information</span>
+                        </a>
+                    </div>
                 @endif
             </nav>
         </aside>
@@ -469,6 +514,84 @@
         // Check on load and resize
         window.addEventListener('load', handleMobileSidebar);
         window.addEventListener('resize', handleMobileSidebar);
+
+        // Toggle Masters menu
+        function toggleMastersMenu() {
+            const mastersMenu = document.getElementById('mastersMenu');
+            const mastersHeader = document.getElementById('mastersHeader');
+            
+            if (mastersMenu && mastersHeader) {
+                mastersMenu.classList.toggle('collapsed');
+                mastersHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('mastersMenuCollapsed', mastersMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle Tender Sales menu
+        function toggleTenderSalesMenu() {
+            const tenderSalesMenu = document.getElementById('tenderSalesMenu');
+            const tenderSalesHeader = document.getElementById('tenderSalesHeader');
+            
+            if (tenderSalesMenu && tenderSalesHeader) {
+                tenderSalesMenu.classList.toggle('collapsed');
+                tenderSalesHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('tenderSalesMenuCollapsed', tenderSalesMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle Settings menu
+        function toggleSettingsMenu() {
+            const settingsMenu = document.getElementById('settingsMenu');
+            const settingsHeader = document.getElementById('settingsHeader');
+            
+            if (settingsMenu && settingsHeader) {
+                settingsMenu.classList.toggle('collapsed');
+                settingsHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('settingsMenuCollapsed', settingsMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Initialize all collapsible menus state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Masters menu
+            const mastersSavedState = localStorage.getItem('mastersMenuCollapsed');
+            if (mastersSavedState === 'true') {
+                const mastersMenu = document.getElementById('mastersMenu');
+                const mastersHeader = document.getElementById('mastersHeader');
+                if (mastersMenu && mastersHeader) {
+                    mastersMenu.classList.add('collapsed');
+                    mastersHeader.classList.add('collapsed');
+                }
+            }
+
+            // Tender Sales menu
+            const tenderSalesSavedState = localStorage.getItem('tenderSalesMenuCollapsed');
+            if (tenderSalesSavedState === 'true') {
+                const tenderSalesMenu = document.getElementById('tenderSalesMenu');
+                const tenderSalesHeader = document.getElementById('tenderSalesHeader');
+                if (tenderSalesMenu && tenderSalesHeader) {
+                    tenderSalesMenu.classList.add('collapsed');
+                    tenderSalesHeader.classList.add('collapsed');
+                }
+            }
+
+            // Settings menu
+            const settingsSavedState = localStorage.getItem('settingsMenuCollapsed');
+            if (settingsSavedState === 'true') {
+                const settingsMenu = document.getElementById('settingsMenu');
+                const settingsHeader = document.getElementById('settingsHeader');
+                if (settingsMenu && settingsHeader) {
+                    settingsMenu.classList.add('collapsed');
+                    settingsHeader.classList.add('collapsed');
+                }
+            }
+        });
     </script>
     @stack('scripts')
 </body>
