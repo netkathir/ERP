@@ -3,6 +3,7 @@ node_modules/
 
 # Vendor folder
 /vendor/
+/public/
 
 # Laravel environment files
 .env
