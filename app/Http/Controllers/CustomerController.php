@@ -101,8 +101,34 @@ class CustomerController extends Controller
         $query = \App\Models\Customer::query();
         $query = $this->applyBranchFilter($query, \App\Models\Customer::class);
         $customer = $query->findOrFail($id);
-        $customer->delete();
 
-        return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+        // Check if customer has related quotations
+        $quotationsCount = \App\Models\Quotation::where('customer_id', $customer->id)->count();
+        if ($quotationsCount > 0) {
+            return redirect()->route('customers.index')
+                ->with('error', 'Cannot delete customer. This customer has ' . $quotationsCount . ' quotation(s) associated with it.');
+        }
+
+        // Check if customer has related proforma invoices
+        $proformaInvoicesCount = \App\Models\ProformaInvoice::where('customer_id', $customer->id)->count();
+        if ($proformaInvoicesCount > 0) {
+            return redirect()->route('customers.index')
+                ->with('error', 'Cannot delete customer. This customer has ' . $proformaInvoicesCount . ' proforma invoice(s) associated with it.');
+        }
+
+        // Check if customer is used in tenders
+        $tendersCount = \App\Models\Tender::where('company_id', $customer->id)->count();
+        if ($tendersCount > 0) {
+            return redirect()->route('customers.index')
+                ->with('error', 'Cannot delete customer. This customer has ' . $tendersCount . ' tender(s) associated with it.');
+        }
+
+        try {
+            $customer->delete();
+            return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('customers.index')
+                ->with('error', 'Error deleting customer: ' . $e->getMessage());
+        }
     }
 }

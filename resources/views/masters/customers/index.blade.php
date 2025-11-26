@@ -17,6 +17,12 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if($customers->count() > 0)
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse;">
