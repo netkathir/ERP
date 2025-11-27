@@ -23,8 +23,11 @@ class UserController extends Controller
         $user = auth()->user();
         
         if ($user->isSuperAdmin()) {
-            // Super Admin can see all users
-            $users = User::with(['role', 'branches'])->latest()->paginate(15);
+            // Super Admin can see all ACTIVE users
+            $users = User::where('status', 'active')
+                ->with(['role', 'branches'])
+                ->latest()
+                ->paginate(15);
         } elseif ($user->isBranchUser()) {
             // Branch User can only see themselves
             $users = User::where('id', $user->id)
