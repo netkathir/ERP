@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\RolePermissionAudit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
@@ -38,7 +39,22 @@ class RoleController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $role = Role::create($request->all());
+        // Generate slug from name
+        $slug = Str::slug($request->name);
+        
+        // Ensure slug is unique
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Role::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        $role = Role::create([
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+        ]);
 
         // Log audit trail
         RolePermissionAudit::log('created', $role->id, null, null, null, json_encode($request->all()), "Role '{$role->name}' created");
@@ -61,12 +77,34 @@ class RoleController extends Controller
         // Store old values for audit
         $oldName = $role->name;
         $oldDescription = $role->description;
+        $oldSlug = $role->slug;
 
-        $role->update($request->all());
+        // Generate slug from name if name changed
+        $slug = $role->slug;
+        if ($oldName != $request->name) {
+            $slug = Str::slug($request->name);
+            
+            // Ensure slug is unique (excluding current role)
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Role::where('slug', $slug)->where('id', '!=', $role->id)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+        }
+
+        $role->update([
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+        ]);
 
         // Log audit trail for each changed field
         if ($oldName != $request->name) {
             RolePermissionAudit::log('updated', $role->id, null, 'name', $oldName, $request->name, "Role name changed");
+        }
+        if ($oldSlug != $slug) {
+            RolePermissionAudit::log('updated', $role->id, null, 'slug', $oldSlug, $slug, "Role slug changed");
         }
         if ($oldDescription != $request->description) {
             RolePermissionAudit::log('updated', $role->id, null, 'description', $oldDescription, $request->description, "Role description changed");
