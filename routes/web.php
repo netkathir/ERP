@@ -121,4 +121,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Tender Evaluation Routes
     Route::resource('tender-evaluations', App\Http\Controllers\TenderEvaluationController::class);
+
+    // Customer Complaint Register (Tender Sales Master)
+    Route::resource('customer-complaints', App\Http\Controllers\CustomerComplaintController::class);
 });

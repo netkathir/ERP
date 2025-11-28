@@ -366,24 +366,28 @@
 
                 {{-- Tender Sales Module --}}
                 @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('tenders', 'view'))
-                <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;">
-                    <span>Tender Sales</span>
-                    <i class="fas fa-chevron-down arrow"></i>
-                </div>
-                <div class="menu-sub-items" id="tenderSalesMenu">
-                    <a href="{{ route('tenders.index') }}" class="menu-item" title="Tenders">
-                        <i class="fas fa-gavel"></i>
-                        <span>Tenders</span>
-                    </a>
-                    <a href="{{ route('customer-orders.index') }}" class="menu-item" title="Customer Orders">
-                        <i class="fas fa-file-contract"></i>
-                        <span>Customer Orders</span>
-                    </a>
-                    <a href="{{ route('tender-evaluations.index') }}" class="menu-item" title="Tender Evaluation">
-                        <i class="fas fa-clipboard-check"></i>
-                        <span>Tender Evaluation</span>
-                    </a>
-                </div>
+                    <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;">
+                        <span>Tender Sales</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+                    <div class="menu-sub-items" id="tenderSalesMenu">
+                        <a href="{{ route('tenders.index') }}" class="menu-item" title="Tenders">
+                            <i class="fas fa-gavel"></i>
+                            <span>Tenders</span>
+                        </a>
+                        <a href="{{ route('customer-orders.index') }}" class="menu-item" title="Customer Orders">
+                            <i class="fas fa-file-contract"></i>
+                            <span>Customer Orders</span>
+                        </a>
+                        <a href="{{ route('tender-evaluations.index') }}" class="menu-item" title="Tender Evaluation">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Tender Evaluation</span>
+                        </a>
+                        <a href="{{ route('customer-complaints.index') }}" class="menu-item" title="Customer Complaint Register">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Customer Complaint Register</span>
+                        </a>
+                    </div>
                 @endif
 
                 <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader">

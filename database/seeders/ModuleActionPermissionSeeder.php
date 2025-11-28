@@ -41,6 +41,7 @@ class ModuleActionPermissionSeeder extends Seeder
             'employees',
             'billing-addresses',
             'tenders',
+            'customer-complaints',
             'discounts',
         ];
 

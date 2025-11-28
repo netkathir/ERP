@@ -144,6 +144,11 @@
                 'tender-evaluation'         => 'Tender Sales',
                 'Tender Evaluations'        => 'Tender Sales',
                 'Tender Evaluation'         => 'Tender Sales',
+                // Customer Complaint Register forms
+                'customer-complaints'       => 'Tender Sales',
+                'customer-complaint'        => 'Tender Sales',
+                'Customer Complaints'       => 'Tender Sales',
+                'Customer Complaint'        => 'Tender Sales',
 
                 // Transactions / Sales
                 'transactions'          => 'Transactions',
