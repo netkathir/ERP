@@ -121,14 +121,29 @@
                 'branches'                  => 'System Admin',
                 'users'                     => 'System Admin',
                 'roles'                     => 'System Admin',
+                // Role Permissions / Permission form (support multiple name variants)
                 'role-permissions'          => 'System Admin',
+                'Role Permissions'          => 'System Admin',
+                'permission'                => 'System Admin',
+                'Permission'                => 'System Admin',
+                'permissions'               => 'System Admin',
+                'Permissions'               => 'System Admin',
                 // Explicit mapping for the Assign Roles‑Permissions page
-                'assign-roles-permissions' => 'System Admin',
+                'assign-roles-permissions'  => 'System Admin',
 
-                // Tender Sales
-                'tenders'               => 'Tender Sales',
-                'customer-orders'       => 'Tender Sales',
-                'tender-evaluations'    => 'Tender Sales',
+                // Tender Sales (map all known variants of form names)
+                'tenders'                   => 'Tender Sales',
+                'Tenders'                   => 'Tender Sales',
+                // Customer Order forms
+                'customer-orders'           => 'Tender Sales',
+                'customer-order'            => 'Tender Sales',
+                'Customer Orders'           => 'Tender Sales',
+                'Customer Order'            => 'Tender Sales',
+                // Tender Evaluation forms
+                'tender-evaluations'        => 'Tender Sales',
+                'tender-evaluation'         => 'Tender Sales',
+                'Tender Evaluations'        => 'Tender Sales',
+                'Tender Evaluation'         => 'Tender Sales',
 
                 // Transactions / Sales
                 'transactions'          => 'Transactions',
@@ -153,6 +168,7 @@
 
                 // Settings
                 'company-information'   => 'Settings',
+                'company-info'          => 'Settings',
             ];
 
             // Group permissions by sidebar section (Menu)
