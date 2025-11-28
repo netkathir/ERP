@@ -390,6 +390,24 @@
                     </div>
                 @endif
 
+                {{-- Supplier Master Module --}}
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('suppliers', 'view'))
+                    <div class="menu-item-header" onclick="toggleSupplierMenu()" id="supplierHeader" style="margin-top: 10px;">
+                        <span>Supplier</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+                    <div class="menu-sub-items" id="supplierMenu">
+                        <a href="{{ route('suppliers.index') }}" class="menu-item" title="Suppliers">
+                            <i class="fas fa-truck"></i>
+                            <span>Suppliers</span>
+                        </a>
+                        <a href="{{ route('supplier-evaluations.index') }}" class="menu-item" title="Supplier Evaluation">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Supplier Evaluation</span>
+                        </a>
+                    </div>
+                @endif
+
                 <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader">
                     <span>Masters</span>
                     <i class="fas fa-chevron-down arrow"></i>
@@ -629,6 +647,20 @@
             }
         }
 
+        // Toggle Supplier menu
+        function toggleSupplierMenu() {
+            const supplierMenu = document.getElementById('supplierMenu');
+            const supplierHeader = document.getElementById('supplierHeader');
+            
+            if (supplierMenu && supplierHeader) {
+                supplierMenu.classList.toggle('collapsed');
+                supplierHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('supplierMenuCollapsed', supplierMenu.classList.contains('collapsed'));
+            }
+        }
+
         // Toggle Settings menu
         function toggleSettingsMenu() {
             const settingsMenu = document.getElementById('settingsMenu');
@@ -678,6 +710,17 @@
                 if (tenderSalesMenu && tenderSalesHeader) {
                     tenderSalesMenu.classList.add('collapsed');
                     tenderSalesHeader.classList.add('collapsed');
+                }
+            }
+
+            // Supplier menu
+            const supplierSavedState = localStorage.getItem('supplierMenuCollapsed');
+            if (supplierSavedState === 'true') {
+                const supplierMenu = document.getElementById('supplierMenu');
+                const supplierHeader = document.getElementById('supplierHeader');
+                if (supplierMenu && supplierHeader) {
+                    supplierMenu.classList.add('collapsed');
+                    supplierHeader.classList.add('collapsed');
                 }
             }
 

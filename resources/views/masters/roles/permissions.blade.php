@@ -158,6 +158,7 @@
                 // Masters
                 'units'                     => 'Masters',
                 'customers'                 => 'Masters',
+                'suppliers'                 => 'Masters',
                 'products'                  => 'Masters',
                 'raw-material-categories'   => 'Masters',
                 'raw-material-sub-categories' => 'Masters',

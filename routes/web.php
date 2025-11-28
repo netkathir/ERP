@@ -96,6 +96,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('employees/designations', [App\Http\Controllers\EmployeeController::class, 'getDesignations'])->name('employees.designations');
     Route::resource('billing-addresses', App\Http\Controllers\BillingAddressController::class);
     Route::post('billing-addresses/bulk-delete', [App\Http\Controllers\BillingAddressController::class, 'bulkDelete'])->name('billing-addresses.bulk-delete');
+    Route::resource('suppliers', App\Http\Controllers\SupplierController::class);
+    Route::resource('supplier-evaluations', App\Http\Controllers\SupplierEvaluationController::class);
 
     // Quotation Routes
     Route::resource('quotations', App\Http\Controllers\QuotationController::class);

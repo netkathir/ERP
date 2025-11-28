@@ -24,6 +24,7 @@ class ModuleActionPermissionSeeder extends Seeder
             'products',
             'units',
             'customers',
+            'suppliers',
             'quotations',
             'proforma-invoices',
             'tax',
