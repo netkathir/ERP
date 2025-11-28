@@ -42,28 +42,109 @@
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Title</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">PO SR No</th>
-                        <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Ordered Qty</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Description</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">PL Code</th>
+                        <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Quantity</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Unit</th>
+                        <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Price per Qty</th>
+                        <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Installation</th>
+                        <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Amount</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">PO SR No</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($order->items as $item)
                         <tr style="border-bottom: 1px solid #dee2e6;">
                             <td style="padding: 10px; color: #333;">{{ optional($item->tenderItem)->title }}</td>
-                            <td style="padding: 10px; color: #555;">{{ $item->po_sr_no }}</td>
-                            <td style="padding: 10px; text-align: right; color: #333;">{{ $item->ordered_qty }}</td>
+                            <td style="padding: 10px; color: #555; max-width: 200px; word-wrap: break-word;">{{ $item->description }}</td>
+                            <td style="padding: 10px; color: #555;">{{ $item->pl_code ?? optional($item->tenderItem)->pl_code }}</td>
+                            <td style="padding: 10px; text-align: right; color: #333;">{{ number_format($item->ordered_qty, 2) }}</td>
                             <td style="padding: 10px; color: #333;">{{ optional(optional($item->tenderItem)->unit)->symbol }}</td>
+                            <td style="padding: 10px; text-align: right; color: #333;">₹ {{ number_format($item->unit_price ?? 0, 2) }}</td>
+                            <td style="padding: 10px; text-align: right; color: #333;">₹ {{ number_format($item->installation_charges ?? 0, 2) }}</td>
+                            <td style="padding: 10px; text-align: right; color: #333; font-weight: 600;">₹ {{ number_format($item->line_amount ?? 0, 2) }}</td>
+                            <td style="padding: 10px; color: #555;">{{ $item->po_sr_no }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" style="padding: 12px; text-align: center; color: #777;">
+                            <td colspan="9" style="padding: 12px; text-align: center; color: #777;">
                                 No items found.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- GST / Tax and Amount Summary Section -->
+    <div style="background: white; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <!-- Left: Tax Type and Additional Charges -->
+            <div>
+                <div style="margin-bottom: 20px;">
+                    <div style="color: #333; font-weight: 500; margin-bottom: 15px;">
+                        Tax Type: <strong>{{ $order->tax_type == 'igst' ? 'IGST' : 'CGST and SGST' }}</strong>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="color: #777; font-size: 13px; margin-bottom: 4px;">Freight</div>
+                        <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->freight ?? 0, 2) }}</div>
+                    </div>
+                    <div>
+                        <div style="color: #777; font-size: 13px; margin-bottom: 4px;">Inspection Charges</div>
+                        <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->inspection_charges ?? 0, 2) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Amount Summary -->
+            <div>
+                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600;">Amount</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="color: #333; font-weight: 500;">Total:</label>
+                        <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->total_amount ?? 0, 2) }}</div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="color: #333; font-weight: 500;">GST %:</label>
+                        <div style="color: #333; font-weight: 600;">{{ number_format($order->gst_percent ?? 0, 2) }}%</div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="color: #333; font-weight: 500;">GST Amount:</label>
+                        <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->gst_amount ?? 0, 2) }}</div>
+                    </div>
+                    
+                    @if($order->tax_type == 'cgst_sgst')
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="color: #333; font-weight: 500;">CGST:</label>
+                            <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->cgst_amount ?? 0, 2) }}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label style="color: #333; font-weight: 500;">SGST:</label>
+                            <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->sgst_amount ?? 0, 2) }}</div>
+                        </div>
+                    @else
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label style="color: #333; font-weight: 500;">IGST:</label>
+                            <div style="color: #333; font-weight: 600;">₹ {{ number_format($order->igst_amount ?? 0, 2) }}</div>
+                        </div>
+                    @endif
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #eee;">
+                        <label style="color: #333; font-weight: 600; font-size: 15px;">Net Amount:</label>
+                        <div style="color: #667eea; font-weight: 700; font-size: 18px;">₹ {{ number_format($order->net_amount ?? 0, 2) }}</div>
+                    </div>
+                    
+                    @if($order->amount_note)
+                        <div style="margin-top: 10px;">
+                            <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Note:</label>
+                            <div style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; white-space: pre-wrap;">{{ $order->amount_note }}</div>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 

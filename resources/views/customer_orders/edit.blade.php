@@ -66,9 +66,13 @@
                     <thead>
                         <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Title</th>
-                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">PO SR No</th>
-                            <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Ordered Qty</th>
+                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Description</th>
+                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">PL Code</th>
+                            <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Quantity</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Unit</th>
+                            <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Price per Qty <span style="color:red;">*</span></th>
+                            <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Installation</th>
+                            <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Amount</th>
                             <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Select</th>
                         </tr>
                     </thead>
@@ -78,16 +82,46 @@
                         @endphp
                         @foreach($items as $index => $orderItem)
                             <tr style="border-bottom: 1px solid #dee2e6;">
-                                <td style="padding: 10px; color: #333;">{{ optional($orderItem->tenderItem)->title }}</td>
                                 <td style="padding: 10px;">
-                                    <input type="text" name="items[{{ $index }}][po_sr_no]" value="{{ $orderItem->po_sr_no }}"
+                                    <input type="text" name="items[{{ $index }}][title]" value="{{ optional($orderItem->tenderItem)->title }}" 
                                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px;">
+                                    <a href="#" onclick="toggleShowMore('title_{{ $index }}'); return false;" 
+                                       style="font-size: 12px; color: #667eea; text-decoration: none; margin-top: 4px; display: block;">Show More</a>
+                                    <div id="title_{{ $index }}_full" style="display: none; margin-top: 5px; padding: 8px; background: #f8f9fa; border-radius: 5px; font-size: 13px;">{{ optional($orderItem->tenderItem)->title }}</div>
+                                </td>
+                                <td style="padding: 10px;">
+                                    <textarea name="items[{{ $index }}][description]" rows="2" placeholder="Enter text here"
+                                              style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px;">{{ $orderItem->description }}</textarea>
+                                    <a href="#" onclick="toggleShowMore('desc_{{ $index }}'); return false;" 
+                                       style="font-size: 12px; color: #667eea; text-decoration: none; margin-top: 4px; display: block;">Show More</a>
+                                    <div id="desc_{{ $index }}_full" style="display: none; margin-top: 5px; padding: 8px; background: #f8f9fa; border-radius: 5px; font-size: 13px; white-space: pre-wrap;">{{ $orderItem->description }}</div>
+                                </td>
+                                <td style="padding: 10px;">
+                                    <input type="text" name="items[{{ $index }}][pl_code]" value="{{ $orderItem->pl_code ?? optional($orderItem->tenderItem)->pl_code }}"
+                                           readonly
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; background:#f8f9fa;">
                                 </td>
                                 <td style="padding: 10px; text-align: right;">
                                     <input type="number" name="items[{{ $index }}][ordered_qty]" value="{{ $orderItem->ordered_qty }}" step="0.01" min="0"
+                                           oninput="recalcItemAmount({{ $index }})"
                                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; text-align: right;">
                                 </td>
                                 <td style="padding: 10px; color: #333;">{{ optional(optional($orderItem->tenderItem)->unit)->symbol }}</td>
+                                <td style="padding: 10px; text-align: right;">
+                                    <input type="number" name="items[{{ $index }}][unit_price]" value="{{ $orderItem->unit_price }}" step="0.01" min="0"
+                                           oninput="recalcItemAmount({{ $index }})"
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; text-align: right;">
+                                </td>
+                                <td style="padding: 10px; text-align: right;">
+                                    <input type="number" name="items[{{ $index }}][installation_charges]" value="{{ $orderItem->installation_charges }}" step="0.01" min="0"
+                                           oninput="recalcItemAmount({{ $index }})"
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; text-align: right;">
+                                </td>
+                                <td style="padding: 10px; text-align: right; color:#333;">
+                                    @php $amount = $orderItem->line_amount ?? ($orderItem->ordered_qty * $orderItem->unit_price + $orderItem->installation_charges); @endphp
+                                    <span id="item_amount_display_{{ $index }}">{{ number_format($amount, 2) }}</span>
+                                    <input type="hidden" name="items[{{ $index }}][line_amount]" id="item_amount_{{ $index }}" value="{{ $amount }}">
+                                </td>
                                 <td style="padding: 10px; text-align: center;">
                                     <input type="hidden" name="items[{{ $index }}][tender_item_id]" value="{{ $orderItem->tender_item_id }}">
                                     <input type="radio" name="selected_item" value="{{ $index }}" onclick="onItemSelected({{ $index }})">
@@ -96,6 +130,134 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- GST / Tax Selection and Amount Summary -->
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Left: GST/Tax Selection and Additional Charges -->
+                <div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500; margin-bottom: 15px;">
+                            @php
+                                $taxType = old('tax_type', $order->tax_type ?? 'cgst_sgst');
+                                $isCgstSgst = ($taxType == 'cgst_sgst' || $taxType != 'igst');
+                            @endphp
+                            <input type="radio" name="tax_type" value="cgst_sgst" id="tax_type_cgst_sgst" {{ $isCgstSgst ? 'checked' : '' }} onchange="recalculateTax()"
+                                   style="width: 18px; height: 18px; cursor: pointer;">
+                            <span>CGST and SGST</span>
+                        </label>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Freight</label>
+                            <input type="number" name="freight" id="freight" step="0.01" min="0" value="{{ old('freight', $order->freight ?? 0) }}"
+                                   oninput="recalculateTax()"
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Inspection Charges</label>
+                            <input type="number" name="inspection_charges" id="inspection_charges" step="0.01" min="0" value="{{ old('inspection_charges', $order->inspection_charges ?? 0) }}"
+                                   oninput="recalculateTax()"
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: IGST Radio and Amount Summary -->
+                <div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500; margin-bottom: 15px;">
+                            <input type="radio" name="tax_type" value="igst" id="tax_type_igst" {{ old('tax_type', $order->tax_type) == 'igst' ? 'checked' : '' }} onchange="recalculateTax()"
+                                   style="width: 18px; height: 18px; cursor: pointer;">
+                            <span>IGST</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Amount Summary -->
+                    <div>
+                        <h4 style="margin: 0 0 15px 0; color: #333; font-size: 16px; font-weight: 600;">Amount</h4>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label style="color: #333; font-weight: 500;">Total:</label>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span style="color: #333;">₹</span>
+                                    <input type="text" id="total_amount_display" value="{{ number_format(old('total_amount', $order->total_amount ?? 0), 2) }}" readonly
+                                           style="width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right; background: #f8f9fa;">
+                                    <input type="hidden" name="total_amount" id="total_amount" value="{{ old('total_amount', $order->total_amount ?? 0) }}">
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label style="color: #333; font-weight: 500;">GST <span style="color: red;">*</span>:</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="number" name="gst_percent" id="gst_percent" step="0.01" min="0" max="100" value="{{ old('gst_percent', $order->gst_percent ?? 0) }}"
+                                           oninput="recalculateTax()"
+                                           style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right;">
+                                    <span style="color: #333; padding-top: 8px;">%</span>
+                                </div>
+                            </div>
+                            
+                            @php
+                                $cgstAmt = old('cgst_amount', $order->cgst_amount ?? 0);
+                                $sgstAmt = old('sgst_amount', $order->sgst_amount ?? 0);
+                                $igstAmt = old('igst_amount', $order->igst_amount ?? 0);
+                                $totalGstAmt = $cgstAmt + $sgstAmt + $igstAmt;
+                            @endphp
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label style="color: #333; font-weight: 500;">GST Amount:</label>
+                                <input type="text" id="gst_amount_display" value="{{ number_format($totalGstAmt, 2) }}" readonly
+                                       style="width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right; background: #f8f9fa;">
+                                <input type="hidden" name="gst_amount" id="gst_amount" value="{{ $totalGstAmt }}">
+                            </div>
+                            
+                            <div id="cgst_sgst_section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label style="color: #333; font-weight: 500;">CGST:</label>
+                                    <input type="text" id="cgst_amount_display" value="{{ number_format(old('cgst_amount', $order->cgst_amount ?? 0), 2) }}" readonly
+                                           style="width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right; background: #f8f9fa;">
+                                    <input type="hidden" name="cgst_percent" id="cgst_percent" value="{{ old('cgst_percent', $order->cgst_percent ?? 0) }}">
+                                    <input type="hidden" name="cgst_amount" id="cgst_amount" value="{{ old('cgst_amount', $order->cgst_amount ?? 0) }}">
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label style="color: #333; font-weight: 500;">SGST:</label>
+                                    <input type="text" id="sgst_amount_display" value="{{ number_format(old('sgst_amount', $order->sgst_amount ?? 0), 2) }}" readonly
+                                           style="width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right; background: #f8f9fa;">
+                                    <input type="hidden" name="sgst_percent" id="sgst_percent" value="{{ old('sgst_percent', $order->sgst_percent ?? 0) }}">
+                                    <input type="hidden" name="sgst_amount" id="sgst_amount" value="{{ old('sgst_amount', $order->sgst_amount ?? 0) }}">
+                                </div>
+                            </div>
+                            
+                            @php
+                                $showIgst = (old('tax_type', $order->tax_type ?? 'cgst_sgst') == 'igst');
+                            @endphp
+                            <div id="igst_section" style="display: {{ $showIgst ? 'block' : 'none' }}; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="color: #333; font-weight: 500;">IGST:</label>
+                                    <input type="text" id="igst_amount_display" value="{{ number_format(old('igst_amount', $order->igst_amount ?? 0), 2) }}" readonly
+                                           style="width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right; background: #f8f9fa;">
+                                    <input type="hidden" name="igst_percent" id="igst_percent" value="{{ old('igst_percent', $order->igst_percent ?? 0) }}">
+                                    <input type="hidden" name="igst_amount" id="igst_amount" value="{{ old('igst_amount', $order->igst_amount ?? 0) }}">
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #eee;">
+                                <label style="color: #333; font-weight: 600; font-size: 15px;">Net Amount:</label>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span style="color: #333;">₹</span>
+                                    <input type="text" id="net_amount_display" value="{{ number_format(old('net_amount', $order->net_amount ?? 0), 2) }}" readonly
+                                           style="width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right; background: #f8f9fa; font-weight: 600;">
+                                    <input type="hidden" name="net_amount" id="net_amount" value="{{ old('net_amount', $order->net_amount ?? 0) }}">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 10px;">
+                                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Note:</label>
+                                <textarea name="amount_note" id="amount_note" rows="3"
+                                          style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; resize: vertical;">{{ old('amount_note', $order->amount_note) }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -203,23 +365,9 @@
 
 @push('scripts')
 <script>
-    const tendersData = @json(
-        $tenders->mapWithKeys(function ($t) {
-            return [
-                $t->id => $t->items->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'title' => $item->title,
-                        'pl_code' => $item->pl_code,
-                        'qty' => $item->qty,
-                        'unit' => optional($item->unit)->symbol,
-                    ];
-                })->values(),
-            ];
-        })
-    );
+    const tendersData = @json($tendersData);
 
-    const units = @json($units->map(function ($u) { return ['id' => $u->id, 'symbol' => $u->symbol]; }));
+    const units = @json($unitsData);
 
     let selectedItemIndex = null;
     let schedules = [];
@@ -230,35 +378,59 @@
     }
 
     function getSelectedItem() {
-        if (selectedItemIndex === null) {
-            alert('Please select a product row in the Items grid first.');
-            return null;
+        // Option 1: User selected a row - return that item
+        if (selectedItemIndex !== null) {
+            const tenderId = document.getElementById('tender_id').value;
+            if (!tenderId || !tendersData[tenderId]) {
+                alert('Please select a Tender first.');
+                return null;
+            }
+            const item = tendersData[tenderId][selectedItemIndex];
+            if (!item) {
+                alert('Invalid product selection.');
+                return null;
+            }
+            const qtyInput = document.querySelector(`input[name="items[${selectedItemIndex}][ordered_qty]"]`);
+            const poInput = document.querySelector(`input[name="items[${selectedItemIndex}][po_sr_no]"]`);
+            return {
+                index: selectedItemIndex,
+                product_name: item.title,
+                po_sr_no: poInput ? poInput.value : '',
+                ordered_qty: parseFloat(qtyInput ? qtyInput.value : '0') || 0,
+                unit_symbol: item.unit || '',
+            };
         }
+        // Option 2: No row selected - return null to show dropdown in modal
+        return null;
+    }
+
+    function getAvailableItems() {
         const tenderId = document.getElementById('tender_id').value;
         if (!tenderId || !tendersData[tenderId]) {
-            alert('Please select a Tender first.');
-            return null;
+            return [];
         }
-        const item = tendersData[tenderId][selectedItemIndex];
-        if (!item) {
-            alert('Invalid product selection.');
-            return null;
-        }
-        const poInput = document.querySelector(`input[name="items[${selectedItemIndex}][po_sr_no]"]`);
-        const qtyInput = document.querySelector(`input[name="items[${selectedItemIndex}][ordered_qty]"]`);
-        return {
-            index: selectedItemIndex,
-            product_name: item.title,
-            po_sr_no: poInput ? poInput.value : '',
-            ordered_qty: parseFloat(qtyInput ? qtyInput.value : '0') || 0,
-            unit_symbol: item.unit || '',
-        };
+        return tendersData[tenderId].map((item, index) => {
+            const qtyInput = document.querySelector(`input[name="items[${index}][ordered_qty]"]`);
+            const poInput = document.querySelector(`input[name="items[${index}][po_sr_no]"]`);
+            return {
+                index: index,
+                product_name: item.title,
+                po_sr_no: poInput ? poInput.value : '',
+                ordered_qty: parseFloat(qtyInput ? qtyInput.value : '0') || 0,
+                unit_symbol: item.unit || '',
+            };
+        });
     }
 
     function openSchedulePopup() {
-        const item = getSelectedItem();
-        if (!item) return;
-        window.CustomerOrderScheduleModal.open(item, schedules, units, function (updatedSchedules) {
+        const tenderId = document.getElementById('tender_id').value;
+        if (!tenderId) {
+            alert('Please select a Tender first.');
+            return;
+        }
+        const item = getSelectedItem(); // May be null if no row selected
+        const availableItems = getAvailableItems();
+        window.CustomerOrderScheduleModal.open(item, availableItems, schedules, units, function (updatedSchedules) {
             schedules = updatedSchedules;
             renderSchedules();
             syncScheduleHiddenInputs();
@@ -266,9 +438,14 @@
     }
 
     function openAmendmentPopup() {
-        const item = getSelectedItem();
-        if (!item) return;
-        window.CustomerOrderAmendmentModal.open(item, amendments, function (updatedAmendments) {
+        const tenderId = document.getElementById('tender_id').value;
+        if (!tenderId) {
+            alert('Please select a Tender first.');
+            return;
+        }
+        const item = getSelectedItem(); // May be null if no row selected
+        const availableItems = getAvailableItems();
+        window.CustomerOrderAmendmentModal.open(item, availableItems, amendments, function (updatedAmendments) {
             amendments = updatedAmendments;
             renderAmendments();
             syncAmendmentHiddenInputs();
@@ -354,6 +531,122 @@
             `);
         });
     }
+
+    function recalcItemAmount(index) {
+        const qtyInput = document.querySelector(`input[name="items[${index}][ordered_qty]"]`);
+        const priceInput = document.querySelector(`input[name="items[${index}][unit_price]"]`);
+        const instInput = document.querySelector(`input[name="items[${index}][installation_charges]"]`);
+        const qty = parseFloat(qtyInput ? qtyInput.value : '0') || 0;
+        const price = parseFloat(priceInput ? priceInput.value : '0') || 0;
+        const inst = parseFloat(instInput ? instInput.value : '0') || 0;
+        const amount = qty * price + inst;
+        const amountField = document.getElementById(`item_amount_${index}`);
+        const amountDisplay = document.getElementById(`item_amount_display_${index}`);
+        if (amountField) amountField.value = amount.toFixed(2);
+        if (amountDisplay) amountDisplay.textContent = amount.toFixed(2);
+        recalculateTax();
+    }
+
+    function recalculateTax() {
+        // Calculate Total from all items
+        let total = 0;
+        const itemAmountInputs = document.querySelectorAll('input[id^="item_amount_"]');
+        itemAmountInputs.forEach(input => {
+            total += parseFloat(input.value || '0') || 0;
+        });
+        
+        document.getElementById('total_amount').value = total.toFixed(2);
+        document.getElementById('total_amount_display').value = total.toFixed(2);
+        
+        // Get tax type
+        const taxType = document.querySelector('input[name="tax_type"]:checked')?.value || 'cgst_sgst';
+        const gstPercent = parseFloat(document.getElementById('gst_percent').value || '0') || 0;
+        const freight = parseFloat(document.getElementById('freight').value || '0') || 0;
+        const inspectionCharges = parseFloat(document.getElementById('inspection_charges').value || '0') || 0;
+        
+        let cgstPercent = 0;
+        let sgstPercent = 0;
+        let cgstAmount = 0;
+        let sgstAmount = 0;
+        let igstPercent = 0;
+        let igstAmount = 0;
+        
+        if (taxType === 'cgst_sgst') {
+            // Show CGST+SGST section, hide IGST
+            document.getElementById('cgst_sgst_section').style.display = 'block';
+            document.getElementById('igst_section').style.display = 'none';
+            
+            // Split GST% into two halves
+            cgstPercent = gstPercent / 2;
+            sgstPercent = gstPercent / 2;
+            cgstAmount = (total * cgstPercent) / 100;
+            sgstAmount = (total * sgstPercent) / 100;
+            
+            document.getElementById('cgst_percent').value = cgstPercent.toFixed(2);
+            document.getElementById('cgst_amount').value = cgstAmount.toFixed(2);
+            document.getElementById('cgst_amount_display').value = cgstAmount.toFixed(2);
+            
+            document.getElementById('sgst_percent').value = sgstPercent.toFixed(2);
+            document.getElementById('sgst_amount').value = sgstAmount.toFixed(2);
+            document.getElementById('sgst_amount_display').value = sgstAmount.toFixed(2);
+            
+            // Clear IGST
+            document.getElementById('igst_percent').value = '0';
+            document.getElementById('igst_amount').value = '0';
+            document.getElementById('igst_amount_display').value = '0';
+        } else {
+            // Show IGST section, hide CGST+SGST
+            document.getElementById('cgst_sgst_section').style.display = 'none';
+            document.getElementById('igst_section').style.display = 'block';
+            
+            // IGST% = GST%
+            igstPercent = gstPercent;
+            igstAmount = (total * igstPercent) / 100;
+            
+            document.getElementById('igst_percent').value = igstPercent.toFixed(2);
+            document.getElementById('igst_amount').value = igstAmount.toFixed(2);
+            document.getElementById('igst_amount_display').value = igstAmount.toFixed(2);
+            
+            // Clear CGST+SGST
+            document.getElementById('cgst_percent').value = '0';
+            document.getElementById('cgst_amount').value = '0';
+            document.getElementById('cgst_amount_display').value = '0';
+            document.getElementById('sgst_percent').value = '0';
+            document.getElementById('sgst_amount').value = '0';
+            document.getElementById('sgst_amount_display').value = '0';
+        }
+        
+        // Calculate total GST amount (CGST+SGST or IGST)
+        const totalGstAmount = cgstAmount + sgstAmount + igstAmount;
+        document.getElementById('gst_amount').value = totalGstAmount.toFixed(2);
+        document.getElementById('gst_amount_display').value = totalGstAmount.toFixed(2);
+        
+        // Calculate Net Amount = Total + All tax amounts + Freight + Inspection Charges
+        const netAmount = total + cgstAmount + sgstAmount + igstAmount + freight + inspectionCharges;
+        document.getElementById('net_amount').value = netAmount.toFixed(2);
+        document.getElementById('net_amount_display').value = netAmount.toFixed(2);
+    }
+
+    function toggleShowMore(id) {
+        const fullDiv = document.getElementById(id + '_full');
+        if (fullDiv) {
+            fullDiv.style.display = fullDiv.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    // Initialize tax calculation on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set initial display state based on tax type
+        const taxType = document.querySelector('input[name="tax_type"]:checked')?.value || 'cgst_sgst';
+        if (taxType === 'igst') {
+            document.getElementById('cgst_sgst_section').style.display = 'none';
+            document.getElementById('igst_section').style.display = 'block';
+        } else {
+            document.getElementById('cgst_sgst_section').style.display = 'block';
+            document.getElementById('igst_section').style.display = 'none';
+        }
+        recalculateTax();
+    });
 </script>
 @endpush
 @endsection

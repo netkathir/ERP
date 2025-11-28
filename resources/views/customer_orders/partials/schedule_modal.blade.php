@@ -5,8 +5,39 @@
             <button type="button" onclick="CustomerOrderScheduleModal.close()" style="background: transparent; border: none; font-size: 20px; cursor: pointer;">&times;</button>
         </div>
         <div style="padding: 20px;">
-            <div id="scheduleHeader" style="margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 5px; font-size: 14px;">
-                <!-- Filled dynamically -->
+            <!-- Parent Information -->
+            <div style="margin-top: 18px; background: #f1f5f9; border-radius: 8px; padding: 18px 18px 14px 18px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f172a;">Parent Information</h5>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px;">
+                    <div>
+                        <label style="display:block; font-size:13px; font-weight:600; color:#0f172a; margin-bottom:4px;">
+                            Tender No <span style="color:#ef4444;">*</span>
+                        </label>
+                        <input id="schedule_tender_no" type="text" readonly
+                               style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #d1d5db; background:#e5e7eb; font-size:13px; color:#111827;">
+                        <p style="margin:4px 0 0 0; font-size:12px; color:#6b7280;">Inherited from Customer Order</p>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; font-weight:600; color:#0f172a; margin-bottom:4px;">
+                            Product Name <span style="color:#ef4444;">*</span>
+                        </label>
+                        <select id="schedule_product_dropdown" onchange="CustomerOrderScheduleModal.onProductSelect()"
+                                style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #d1d5db; font-size:13px; color:#111827; display:none;">
+                            <option value="">Select Product</option>
+                        </select>
+                        <input id="schedule_product_name" type="text" readonly
+                               style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #d1d5db; background:#e5e7eb; font-size:13px; color:#111827;">
+                        <p id="schedule_ordered_qty_info" style="margin:4px 0 0 0; font-size:12px; color:#6b7280;"></p>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:13px; font-weight:600; color:#0f172a; margin-bottom:4px;">
+                            PO SR No <span style="color:#ef4444;">*</span>
+                        </label>
+                        <input id="schedule_po_sr_no" type="text" readonly
+                               style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #d1d5db; background:#e5e7eb; font-size:13px; color:#111827;">
+                        <p style="margin:4px 0 0 0; font-size:12px; color:#6b7280;">Auto-populated from selected product</p>
+                    </div>
+                </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
@@ -33,10 +64,6 @@
                 </table>
             </div>
 
-            <div style="margin-top: 15px; text-align: right; font-size: 13px;">
-                <span id="scheduleTotalInfo" style="color: #333;"></span>
-            </div>
-
             <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" onclick="CustomerOrderScheduleModal.close()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer;">
                     Cancel
@@ -53,25 +80,88 @@
 <script>
     window.CustomerOrderScheduleModal = (function () {
         let currentItem = null;
+        let availableItems = [];
         let schedulesRef = [];
         let unitsRef = [];
         let onSaveCb = null;
 
-        function open(item, allSchedules, units, onSave) {
-            currentItem = item;
-            schedulesRef = allSchedules.filter(s => s.item_index === item.index);
+        function open(item, availableItemsList, allSchedules, units, onSave) {
+            availableItems = availableItemsList || [];
             unitsRef = units;
             onSaveCb = onSave;
 
-            document.getElementById('scheduleHeader').innerHTML = `
-                <strong>Tender No:</strong> ${document.getElementById('tender_id').selectedOptions[0].text} &nbsp; | &nbsp;
-                <strong>Product:</strong> ${item.product_name} &nbsp; | &nbsp;
-                <strong>PO SR No:</strong> ${item.po_sr_no || '-'} &nbsp; | &nbsp;
-                <strong>Ordered Qty:</strong> ${item.ordered_qty}
-            `;
+            // Parent information header fields
+            const tenderSelect = document.getElementById('tender_id');
+            const tenderText = tenderSelect && tenderSelect.selectedOptions.length
+                ? tenderSelect.selectedOptions[0].text
+                : '';
+
+            document.getElementById('schedule_tender_no').value = tenderText;
+
+            // Option 1: Item pre-selected (from row selection)
+            if (item && item.index !== undefined) {
+                currentItem = item;
+                schedulesRef = allSchedules.filter(s => s.item_index === item.index);
+                
+                // Show readonly input, hide dropdown
+                document.getElementById('schedule_product_dropdown').style.display = 'none';
+                document.getElementById('schedule_product_name').style.display = 'block';
+                document.getElementById('schedule_product_name').value = item.product_name || '';
+                document.getElementById('schedule_po_sr_no').value = item.po_sr_no || '';
+                document.getElementById('schedule_ordered_qty_info').textContent =
+                    item.ordered_qty ? `Ordered Qty: ${item.ordered_qty} ${item.unit_symbol || ''}` : '';
+            } else {
+                // Option 2: No row selected - show dropdown
+                currentItem = null;
+                schedulesRef = [];
+                
+                // Show dropdown, hide readonly input
+                const dropdown = document.getElementById('schedule_product_dropdown');
+                const readonly = document.getElementById('schedule_product_name');
+                dropdown.style.display = 'block';
+                readonly.style.display = 'none';
+                
+                // Populate dropdown
+                dropdown.innerHTML = '<option value="">Select Product</option>' +
+                    availableItems.map((it, idx) => 
+                        `<option value="${idx}" data-index="${it.index}" data-po="${it.po_sr_no || ''}" data-qty="${it.ordered_qty}" data-unit="${it.unit_symbol || ''}">${it.product_name}</option>`
+                    ).join('');
+                
+                document.getElementById('schedule_po_sr_no').value = '';
+                document.getElementById('schedule_ordered_qty_info').textContent = '';
+            }
 
             renderRows();
             document.getElementById('scheduleModal').style.display = 'flex';
+        }
+
+        function onProductSelect() {
+            const dropdown = document.getElementById('schedule_product_dropdown');
+            const selectedOption = dropdown.options[dropdown.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                currentItem = null;
+                document.getElementById('schedule_product_name').value = '';
+                document.getElementById('schedule_po_sr_no').value = '';
+                document.getElementById('schedule_ordered_qty_info').textContent = '';
+                schedulesRef = [];
+                renderRows();
+                return;
+            }
+            
+            const itemIndex = parseInt(selectedOption.dataset.index);
+            const item = availableItems.find(it => it.index === itemIndex);
+            if (item) {
+                currentItem = item;
+                document.getElementById('schedule_product_name').value = item.product_name;
+                document.getElementById('schedule_po_sr_no').value = item.po_sr_no || '';
+                document.getElementById('schedule_ordered_qty_info').textContent =
+                    item.ordered_qty ? `Ordered Qty: ${item.ordered_qty} ${item.unit_symbol || ''}` : '';
+                
+                // Load existing schedules for this item
+                const allSchedules = window.schedules || [];
+                schedulesRef = allSchedules.filter(s => s.item_index === item.index);
+                renderRows();
+            }
         }
 
         function close() {
@@ -81,6 +171,19 @@
         function renderRows() {
             const tbody = document.getElementById('scheduleModalBody');
             tbody.innerHTML = '';
+
+            // When no product is selected yet, just show an info row.
+            // Do NOT call addRow() here, otherwise it will trigger the
+            // "Please select a product first." alert as soon as the modal opens.
+            if (!currentItem) {
+                tbody.innerHTML = `<tr>
+                    <td colspan="6" style="padding: 10px; text-align: center; color: #777;">
+                        Select a product above to add schedule rows.
+                    </td>
+                </tr>`;
+                return;
+            }
+
             if (schedulesRef.length === 0) {
                 addRow();
                 return;
@@ -121,6 +224,10 @@
         }
 
         function addRow() {
+            if (!currentItem) {
+                alert('Please select a product first.');
+                return;
+            }
             const newRow = {
                 item_index: currentItem.index,
                 product_name: currentItem.product_name,
@@ -154,12 +261,17 @@
         }
 
         function updateTotal() {
+            if (!currentItem) return;
             const total = schedulesRef.reduce((sum, s) => sum + (parseFloat(s.quantity || '0') || 0), 0);
-            document.getElementById('scheduleTotalInfo').innerText =
-                `Total scheduled quantity: ${total} / Ordered quantity: ${currentItem.ordered_qty}`;
+            // Optional: You can add a total info display here if needed
         }
 
         function save() {
+            if (!currentItem) {
+                alert('Please select a product first.');
+                return;
+            }
+            
             // Validation: required fields + qty <= ordered
             let total = 0;
             for (const s of schedulesRef) {
@@ -176,7 +288,8 @@
             }
 
             // Merge back into global schedules array
-            const others = window.schedules.filter(s => s.item_index !== currentItem.index);
+            const allSchedules = window.schedules || [];
+            const others = allSchedules.filter(s => s.item_index !== currentItem.index);
             window.schedules = others.concat(schedulesRef);
 
             if (typeof onSaveCb === 'function') {
@@ -192,11 +305,10 @@
             removeRow,
             updateField,
             save,
+            onProductSelect,
         };
     })();
 </script>
 @endpush
-*** End Patch
-``` -->
-*** End PatchEassistant to=functions.apply_patchusseglacommentary 	RTLUassistant to=functions.apply_patchมัครassistant to=functions.apply_patchಮಂತ್ರಿ to=functions.apply_patch_TYPED_ARGUMENTS_DISABLEDCRIPTOR assistant to=functions.apply_patchquotelev_OUTPUT_BOUNDARY_JSON  поскольassistant to=functions.apply_patchзаараassistant to=functions.apply_patchจ๊กassistant to=functions.apply_patch 博悦
+
 

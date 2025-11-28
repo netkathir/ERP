@@ -48,9 +48,12 @@ class CustomerOrderController extends Controller
                     return [
                         'id' => $item->id,
                         'title' => $item->title,
+                        'description' => $item->description,
                         'pl_code' => $item->pl_code,
                         'qty' => $item->qty,
                         'unit' => optional($item->unit)->symbol,
+                        // Use quoted price from tender as default price per qty, if available
+                        'price' => $item->price_quoted,
                     ];
                 })->values(),
             ];
@@ -84,7 +87,12 @@ class CustomerOrderController extends Controller
             'items' => 'required|array',
             'items.*.tender_item_id' => 'required|exists:tender_items,id',
             'items.*.po_sr_no' => 'nullable|string|max:255',
+            'items.*.description' => 'nullable|string',
+            'items.*.pl_code' => 'nullable|string|max:255',
             'items.*.ordered_qty' => 'required|numeric|min:0.01',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.installation_charges' => 'nullable|numeric|min:0',
+            'items.*.line_amount' => 'required|numeric|min:0',
             'schedules' => 'nullable|array',
             'amendments' => 'nullable|array',
         ]);
@@ -97,6 +105,20 @@ class CustomerOrderController extends Controller
                 'order_date' => $request->order_date,
                 'tender_id' => $request->tender_id,
                 'branch_id' => $this->getActiveBranchId(),
+                'tax_type' => $request->tax_type ?? 'cgst_sgst',
+                'total_amount' => $request->total_amount ?? 0,
+                'gst_percent' => $request->gst_percent ?? 0,
+                'gst_amount' => $request->gst_amount ?? 0,
+                'cgst_percent' => $request->cgst_percent ?? 0,
+                'cgst_amount' => $request->cgst_amount ?? 0,
+                'sgst_percent' => $request->sgst_percent ?? 0,
+                'sgst_amount' => $request->sgst_amount ?? 0,
+                'igst_percent' => $request->igst_percent ?? 0,
+                'igst_amount' => $request->igst_amount ?? 0,
+                'freight' => $request->freight ?? 0,
+                'inspection_charges' => $request->inspection_charges ?? 0,
+                'net_amount' => $request->net_amount ?? 0,
+                'amount_note' => $request->amount_note ?? null,
             ]);
 
             $itemMap = [];
@@ -106,6 +128,11 @@ class CustomerOrderController extends Controller
                     'tender_item_id' => $itemData['tender_item_id'],
                     'po_sr_no' => $itemData['po_sr_no'] ?? null,
                     'ordered_qty' => $itemData['ordered_qty'],
+                    'description' => $itemData['description'] ?? null,
+                    'pl_code' => $itemData['pl_code'] ?? null,
+                    'unit_price' => $itemData['unit_price'] ?? 0,
+                    'installation_charges' => $itemData['installation_charges'] ?? 0,
+                    'line_amount' => $itemData['line_amount'] ?? 0,
                 ]);
                 $itemMap[$key] = $item;
             }
@@ -201,9 +228,28 @@ class CustomerOrderController extends Controller
         $tenderQuery = $this->applyBranchFilter($tenderQuery, Tender::class);
         $tenders = $tenderQuery->orderByDesc('created_at')->get();
 
-        $units = Unit::all();
+        $tendersData = $tenders->mapWithKeys(function ($t) {
+            return [
+                $t->id => $t->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'title' => $item->title,
+                        'description' => $item->description,
+                        'pl_code' => $item->pl_code,
+                        'qty' => $item->qty,
+                        'unit' => optional($item->unit)->symbol,
+                        'price' => $item->price_quoted,
+                    ];
+                })->values(),
+            ];
+        });
 
-        return view('customer_orders.edit', compact('order', 'tenders', 'units'));
+        $units = Unit::all();
+        $unitsData = $units->map(function ($u) {
+            return ['id' => $u->id, 'symbol' => $u->symbol];
+        });
+
+        return view('customer_orders.edit', compact('order', 'tenders', 'tendersData', 'units', 'unitsData'));
     }
 
     public function show($id)
@@ -244,7 +290,12 @@ class CustomerOrderController extends Controller
             'items' => 'required|array',
             'items.*.tender_item_id' => 'required|exists:tender_items,id',
             'items.*.po_sr_no' => 'nullable|string|max:255',
+            'items.*.description' => 'nullable|string',
+            'items.*.pl_code' => 'nullable|string|max:255',
             'items.*.ordered_qty' => 'required|numeric|min:0.01',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.installation_charges' => 'nullable|numeric|min:0',
+            'items.*.line_amount' => 'required|numeric|min:0',
             'schedules' => 'nullable|array',
             'amendments' => 'nullable|array',
         ]);
@@ -255,6 +306,20 @@ class CustomerOrderController extends Controller
             $order->update([
                 'order_date' => $request->order_date,
                 'tender_id' => $request->tender_id,
+                'tax_type' => $request->tax_type ?? 'cgst_sgst',
+                'total_amount' => $request->total_amount ?? 0,
+                'gst_percent' => $request->gst_percent ?? 0,
+                'gst_amount' => $request->gst_amount ?? 0,
+                'cgst_percent' => $request->cgst_percent ?? 0,
+                'cgst_amount' => $request->cgst_amount ?? 0,
+                'sgst_percent' => $request->sgst_percent ?? 0,
+                'sgst_amount' => $request->sgst_amount ?? 0,
+                'igst_percent' => $request->igst_percent ?? 0,
+                'igst_amount' => $request->igst_amount ?? 0,
+                'freight' => $request->freight ?? 0,
+                'inspection_charges' => $request->inspection_charges ?? 0,
+                'net_amount' => $request->net_amount ?? 0,
+                'amount_note' => $request->amount_note ?? null,
             ]);
 
             // Rebuild items, schedules and amendments on update for simplicity
@@ -274,6 +339,11 @@ class CustomerOrderController extends Controller
                     'tender_item_id' => $itemData['tender_item_id'],
                     'po_sr_no' => $itemData['po_sr_no'] ?? null,
                     'ordered_qty' => $itemData['ordered_qty'],
+                    'description' => $itemData['description'] ?? null,
+                    'pl_code' => $itemData['pl_code'] ?? null,
+                    'unit_price' => $itemData['unit_price'] ?? 0,
+                    'installation_charges' => $itemData['installation_charges'] ?? 0,
+                    'line_amount' => $itemData['line_amount'] ?? 0,
                 ]);
                 $itemMap[$key] = $item;
             }

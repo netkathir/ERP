@@ -111,20 +111,94 @@
     @endif
 
     @if($permissions->count() > 0)
+        @php
+            /**
+             * Map each form (permission.form_name) to the sidebar menu section.
+             * This ensures the Permissions UI always follows the left sidebar menu structure.
+             */
+            $menuMap = [
+                // System Admin
+                'branches'                  => 'System Admin',
+                'users'                     => 'System Admin',
+                'roles'                     => 'System Admin',
+                'role-permissions'          => 'System Admin',
+                // Explicit mapping for the Assign Roles‑Permissions page
+                'assign-roles-permissions' => 'System Admin',
+
+                // Tender Sales
+                'tenders'               => 'Tender Sales',
+                'customer-orders'       => 'Tender Sales',
+                'tender-evaluations'    => 'Tender Sales',
+
+                // Transactions / Sales
+                'transactions'          => 'Transactions',
+                'quotations'            => 'Sales',
+                'proforma-invoices'     => 'Sales',
+
+                // Masters
+                'units'                     => 'Masters',
+                'customers'                 => 'Masters',
+                'products'                  => 'Masters',
+                'raw-material-categories'   => 'Masters',
+                'raw-material-sub-categories' => 'Masters',
+                'product-categories'        => 'Masters',
+                'processes'                 => 'Masters',
+                'bom-processes'             => 'Masters',
+                'raw-materials'             => 'Masters',
+                'departments'               => 'Masters',
+                'designations'              => 'Masters',
+                'production-departments'    => 'Masters',
+                'employees'                 => 'Masters',
+                'billing-addresses'         => 'Masters',
+
+                // Settings
+                'company-information'   => 'Settings',
+            ];
+
+            // Group permissions by sidebar section (Menu)
+            $groupedPermissions = $permissions->groupBy(function($perm) use ($menuMap) {
+                $formName = $perm->form_name ?? $perm->name ?? '';
+                return $menuMap[$formName] ?? 'Other Forms';
+            });
+
+            // Order modules to match sidebar approximate order
+            $moduleOrder = [
+                'System Admin'      => 1,
+                'Tender Sales'      => 2,
+                'Transactions'      => 3,
+                'Sales'             => 4,
+                'Masters'           => 5,
+                'Settings'          => 6,
+                'Other Forms'       => 999,
+            ];
+
+            $groupedPermissions = $groupedPermissions->sortBy(function ($_, $key) use ($moduleOrder) {
+                return $moduleOrder[$key] ?? 500;
+            });
+        @endphp
+
         <form action="{{ route('role-permissions.update', $role->id) }}" method="POST">
             @csrf
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Form / Resource</th>
+                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Page</th>
                             <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 100px;">Read</th>
                             <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 100px;">Write</th>
                             <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 100px;">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($permissions as $permission)
+                        @foreach($groupedPermissions as $moduleName => $modulePermissions)
+                            {{-- Module header row (like sidebar section title) --}}
+                            <tr>
+                                <td colspan="4" style="padding: 10px 12px; background: #f1f5f9; font-weight: 600; color: #111827; border-top: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                    {{ $moduleName }}
+                                </td>
+                            </tr>
+
+                            @foreach($modulePermissions as $permission)
                             @php
                                 // Check if role has this permission attached
                                 $rolePermission = $role->permissions->find($permission->id);
@@ -133,8 +207,10 @@
                                 $delete = $rolePermission ? ($rolePermission->pivot->delete ?? false) : false;
                             @endphp
                             <tr style="border-bottom: 1px solid #dee2e6;">
-                                <td style="padding: 12px; color: #333; font-weight: 500;">{{ $permission->form_name ?? $permission->name ?? 'N/A' }}</td>
-                                <td style="padding: 12px; text-align: center;">
+                                    <td style="padding: 10px 12px; color: #333;">
+                                        {{ $permission->form_name ?? $permission->name ?? 'N/A' }}
+                                    </td>
+                                    <td style="padding: 10px 12px; text-align: center;">
                                     <input type="checkbox" 
                                         id="read_{{ $permission->id }}" 
                                         name="permissions[{{ $permission->id }}][read]" 
@@ -142,7 +218,7 @@
                                         {{ $read ? 'checked' : '' }}
                                         style="width: 20px; height: 20px; cursor: pointer;">
                                 </td>
-                                <td style="padding: 12px; text-align: center;">
+                                    <td style="padding: 10px 12px; text-align: center;">
                                     <input type="checkbox" 
                                         id="write_{{ $permission->id }}" 
                                         name="permissions[{{ $permission->id }}][write]" 
@@ -150,7 +226,7 @@
                                         {{ $write ? 'checked' : '' }}
                                         style="width: 20px; height: 20px; cursor: pointer;">
                                 </td>
-                                <td style="padding: 12px; text-align: center;">
+                                    <td style="padding: 10px 12px; text-align: center;">
                                     <input type="checkbox" 
                                         id="delete_{{ $permission->id }}" 
                                         name="permissions[{{ $permission->id }}][delete]" 
@@ -159,6 +235,7 @@
                                         style="width: 20px; height: 20px; cursor: pointer;">
                                 </td>
                             </tr>
+                            @endforeach
                         @endforeach
                     </tbody>
                 </table>

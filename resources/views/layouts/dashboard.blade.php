@@ -502,20 +502,30 @@
                         <span class="role-badge">{{ auth()->user()->role->name }}</span>
                     @endif
                     
-                    {{-- Branch Selector for non-Super Admin users with multiple branches --}}
-                    @if(!auth()->user()->isSuperAdmin() && auth()->user()->branches()->where('is_active', true)->count() > 1)
+                    @php
+                        $user = auth()->user();
+                        $activeBranchId = session('active_branch_id');
+                        $activeBranchName = session('active_branch_name');
+                        // For Super Admin show all active branches; for others show only their active branches
+                        $branchesForSelector = $user->isSuperAdmin()
+                            ? \App\Models\Branch::where('is_active', true)->get()
+                            : $user->branches()->where('is_active', true)->get();
+                    @endphp
+
+                    {{-- Branch Selector (top-right) --}}
+                    @if($branchesForSelector->count() > 1)
                         <div style="position: relative;">
                             <select id="branch-selector" onchange="switchBranch(this.value)" 
                                 style="padding: 8px 30px 8px 12px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: white; font-size: 14px; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=\"white\" height=\"20\" viewBox=\"0 0 24 24\" width=\"20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M7 10l5 5 5-5z\"/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
-                                @foreach(auth()->user()->branches()->where('is_active', true)->get() as $branch)
-                                    <option value="{{ $branch->id }}" {{ session('active_branch_id') == $branch->id ? 'selected' : '' }} style="background-color: #2c3e50; color: white;">
+                                @foreach($branchesForSelector as $branch)
+                                    <option value="{{ $branch->id }}" {{ $activeBranchId == $branch->id ? 'selected' : '' }} style="background-color: #2c3e50; color: white;">
                                         {{ $branch->name }} @if($branch->code)({{ $branch->code }})@endif
                                     </option>
                                 @endforeach
                             </select>
                         </div>
-                    @elseif(!auth()->user()->isSuperAdmin() && session('active_branch_name'))
-                        <span class="entity-badge" style="background: #f59e0b;">{{ session('active_branch_name') }}</span>
+                    @elseif($activeBranchName)
+                        <span class="entity-badge" style="background: #f59e0b;">{{ $activeBranchName }}</span>
                     @endif
                     
                     <button class="logout-btn" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" title="Logout">
@@ -528,7 +538,6 @@
                 </div>
             </header>
             
-            @if(!auth()->user()->isSuperAdmin() && auth()->user()->branches()->where('is_active', true)->count() > 1)
             <script>
                 function switchBranch(branchId) {
                     if (branchId) {
@@ -536,7 +545,6 @@
                     }
                 }
             </script>
-            @endif
 
             <!-- Content Area -->
             <main class="content-area">

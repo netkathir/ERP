@@ -14,10 +14,18 @@ class CustomerOrderItem extends Model
         'tender_item_id',
         'po_sr_no',
         'ordered_qty',
+        'description',
+        'pl_code',
+        'unit_price',
+        'installation_charges',
+        'line_amount',
     ];
 
     protected $casts = [
         'ordered_qty' => 'decimal:2',
+        'unit_price' => 'decimal:4',
+        'installation_charges' => 'decimal:2',
+        'line_amount' => 'decimal:2',
     ];
 
     public function customerOrder()
