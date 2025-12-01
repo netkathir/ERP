@@ -422,6 +422,10 @@
                         <i class="fas fa-file-alt"></i>
                         <span>Purchase Indents</span>
                     </a>
+                    <a href="{{ route('purchase-orders.index') }}" class="menu-item" title="Purchase Orders">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Purchase Orders</span>
+                    </a>
                 </div>
 
                 <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader">
@@ -536,6 +540,25 @@
             <!-- Top Header -->
             <header class="top-header">
                 <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
+                    @php
+                        $user = auth()->user();
+                        $notificationCount = 0;
+                        if ($user->isSuperAdmin() || $user->hasPermission('purchase-indents', 'approve')) {
+                            $notificationCount = \App\Models\Notification::getUnreadCountForAdmins();
+                        }
+                    @endphp
+                    
+                    @if($user->isSuperAdmin() || $user->hasPermission('purchase-indents', 'approve'))
+                        <a href="{{ route('notifications.index') }}" style="position: relative; padding: 8px 12px; background: rgba(255,255,255,0.2); border-radius: 5px; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-bell"></i>
+                            @if($notificationCount > 0)
+                                <span style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">
+                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                </span>
+                            @endif
+                        </a>
+                    @endif
+                    
                     @if(auth()->user()->role)
                         <span class="role-badge">{{ auth()->user()->role->name }}</span>
                     @endif

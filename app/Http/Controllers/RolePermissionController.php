@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Menu;
+use App\Models\RoleFormPermission;
 use App\Models\Permission;
 use App\Models\RolePermissionAudit;
 use Illuminate\Http\Request;
@@ -106,55 +108,38 @@ class RolePermissionController extends Controller
         if ($role->slug === 'super-admin') {
             abort(403, 'Super Admin role has access to all forms by default and cannot be modified.');
         }
-        
-        // Get all active permissions
-        // First try with COALESCE, if that fails, use a simpler query
-        try {
-            $permissions = Permission::where('is_active', true)
-                ->orderByRaw('COALESCE(form_name, name) ASC')
-                ->get();
-        } catch (\Exception $e) {
-            // Fallback: order by form_name first, then name
-            $permissions = Permission::where('is_active', true)
-                ->orderBy('form_name', 'asc')
-                ->orderBy('name', 'asc')
-                ->get();
-        }
-        
-        // Ensure we have all permissions - if count is less than expected, log it
-        $expectedCount = Permission::where('is_active', true)->count();
-        if ($permissions->count() < $expectedCount) {
-            \Log::warning('Permission count mismatch. Expected: ' . $expectedCount . ', Got: ' . $permissions->count());
-        }
-        // Load existing permissions for the role
-        $role->load('permissions');
-        
-        // Get all roles with their permissions for dropdown
-        $allRoles = Role::with('permissions')->orderBy('name')->get();
-        
-        // Filter out Super Admin and roles that already have permissions assigned, but keep the current role
-        $allRoles = $allRoles->filter(function($r) use ($role) {
-            // Exclude Super Admin role (has access to all forms by default)
+
+        // Load all active menus with submenus and forms (new Menu/Submenu/Form structure)
+        $menus = Menu::with(['submenus' => function ($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }, 'forms' => function ($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }, 'submenus.forms' => function ($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        // Load existing form permissions for this role, key by form_id
+        $roleFormPermissions = RoleFormPermission::where('role_id', $role->id)
+            ->get()
+            ->keyBy('form_id');
+
+        // Roles for dropdown (still exclude Super Admin)
+        $allRoles = Role::orderBy('name')->get()->filter(function ($r) use ($role) {
             if ($r->slug === 'super-admin') {
                 return false;
             }
-            
-            // Always include the current role being edited
-            if ($r->id == $role->id) {
-                return true;
-            }
-            
-            // Exclude other roles that have permissions assigned
-            $hasPermissions = $r->permissions->filter(function($permission) {
-                return ($permission->pivot->read ?? false) || 
-                       ($permission->pivot->write ?? false) || 
-                       ($permission->pivot->delete ?? false);
-            })->count() > 0;
-            
-            return !$hasPermissions; // Only include roles without permissions (or current role)
+            return true;
         });
-        
-        return view('masters.roles.permissions', compact('role', 'permissions', 'allRoles'));
+
+        return view('masters.roles.permissions', [
+            'role'               => $role,
+            'menus'              => $menus,
+            'roleFormPermissions'=> $roleFormPermissions,
+            'allRoles'           => $allRoles,
+        ]);
     }
 
     public function update(Request $request, Role $role)
@@ -163,66 +148,50 @@ class RolePermissionController extends Controller
         if ($role->slug === 'super-admin') {
             abort(403, 'Super Admin role has access to all forms by default and cannot be modified.');
         }
-        
-        // Load existing permissions for comparison
-        $role->load('permissions');
-        $oldPermissions = $role->permissions->mapWithKeys(function($perm) {
-            return [$perm->id => [
-                'read' => $perm->pivot->read ?? false,
-                'write' => $perm->pivot->write ?? false,
-                'delete' => $perm->pivot->delete ?? false,
-            ]];
-        })->toArray();
 
-        // Expecting input array: permissions[permission_id][read/write/delete]
-        $data = $request->input('permissions', []);
-        
-        $syncData = [];
-        foreach ($data as $permissionId => $flags) {
-            $read = isset($flags['read']) ? true : false;
-            $write = isset($flags['write']) ? true : false;
-            $delete = isset($flags['delete']) ? true : false;
-            
-            if ($read || $write || $delete) {
-                $syncData[$permissionId] = [
-                    'read' => $read,
-                    'write' => $write,
-                    'delete' => $delete,
-                ];
+        // Expecting input array: form_permissions[form_id][read|write|delete] = 1/0
+        $data = $request->input('form_permissions', []);
+
+        $submittedFormIds = array_keys($data);
+
+        foreach ($data as $formId => $flags) {
+            $read   = !empty($flags['read']);
+            $write  = !empty($flags['write']);
+            $delete = !empty($flags['delete']);
+
+            if (!$read && !$write && !$delete) {
+                // No access selected -> remove any existing permission
+                RoleFormPermission::where('role_id', $role->id)
+                    ->where('form_id', $formId)
+                    ->delete();
+                continue;
             }
-        }
-        
-        // Log changes for each permission
-        $allPermissionIds = array_unique(array_merge(array_keys($oldPermissions), array_keys($syncData)));
-        foreach ($allPermissionIds as $permissionId) {
-            $oldPerm = $oldPermissions[$permissionId] ?? ['read' => false, 'write' => false, 'delete' => false];
-            $newPerm = $syncData[$permissionId] ?? null;
-            
-            if ($newPerm === null) {
-                // Permission removed
-                RolePermissionAudit::log('permission_removed', $role->id, $permissionId, null, json_encode($oldPerm), null, "Permission removed from role");
+
+            // Map checkbox combination to composite permission_type
+            if ($delete) {
+                $permissionType = RoleFormPermission::FULL_ACCESS;
+            } elseif ($write) {
+                $permissionType = RoleFormPermission::ADD_EDIT_UPDATE;
             } else {
-                // Check each field for changes
-                foreach (['read', 'write', 'delete'] as $field) {
-                    if (($oldPerm[$field] ?? false) != ($newPerm[$field] ?? false)) {
-                        $permission = Permission::find($permissionId);
-                        $permissionName = $permission->form_name ?? $permission->name ?? 'Unknown';
-                        RolePermissionAudit::log(
-                            'permission_assigned',
-                            $role->id,
-                            $permissionId,
-                            $field,
-                            $oldPerm[$field] ? 'true' : 'false',
-                            $newPerm[$field] ? 'true' : 'false',
-                            "Permission '{$permissionName}' {$field} changed for role '{$role->name}'"
-                        );
-                    }
-                }
+                // Only read checked
+                $permissionType = RoleFormPermission::VIEW;
             }
-        }
-        
-        $role->permissions()->sync($syncData);
 
-        return redirect()->route('role-permissions.select')->with('success', 'Permissions for role "' . $role->name . '" updated successfully.');
+            RoleFormPermission::updateOrCreate(
+                ['role_id' => $role->id, 'form_id' => $formId],
+                ['permission_type' => $permissionType]
+            );
+        }
+
+        // Any existing permissions for forms not present in submitted data are removed (no access)
+        if (!empty($submittedFormIds)) {
+            RoleFormPermission::where('role_id', $role->id)
+                ->whereNotIn('form_id', $submittedFormIds)
+                ->delete();
+        }
+
+        return redirect()
+            ->route('role-permissions.edit', $role->id)
+            ->with('success', 'Permissions for role "' . $role->name . '" updated successfully.');
     }
 }

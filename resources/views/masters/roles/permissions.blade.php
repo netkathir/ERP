@@ -110,97 +110,7 @@
         </div>
     @endif
 
-    @if($permissions->count() > 0)
-        @php
-            /**
-             * Map each form (permission.form_name) to the sidebar menu section.
-             * This ensures the Permissions UI always follows the left sidebar menu structure.
-             */
-            $menuMap = [
-                // System Admin
-                'branches'                  => 'System Admin',
-                'users'                     => 'System Admin',
-                'roles'                     => 'System Admin',
-                // Role Permissions / Permission form (support multiple name variants)
-                'role-permissions'          => 'System Admin',
-                'Role Permissions'          => 'System Admin',
-                'permission'                => 'System Admin',
-                'Permission'                => 'System Admin',
-                'permissions'               => 'System Admin',
-                'Permissions'               => 'System Admin',
-                // Explicit mapping for the Assign Roles‑Permissions page
-                'assign-roles-permissions'  => 'System Admin',
-
-                // Tender Sales (map all known variants of form names)
-                'tenders'                   => 'Tender Sales',
-                'Tenders'                   => 'Tender Sales',
-                // Customer Order forms
-                'customer-orders'           => 'Tender Sales',
-                'customer-order'            => 'Tender Sales',
-                'Customer Orders'           => 'Tender Sales',
-                'Customer Order'            => 'Tender Sales',
-                // Tender Evaluation forms
-                'tender-evaluations'        => 'Tender Sales',
-                'tender-evaluation'         => 'Tender Sales',
-                'Tender Evaluations'        => 'Tender Sales',
-                'Tender Evaluation'         => 'Tender Sales',
-                // Customer Complaint Register forms
-                'customer-complaints'       => 'Tender Sales',
-                'customer-complaint'        => 'Tender Sales',
-                'Customer Complaints'       => 'Tender Sales',
-                'Customer Complaint'        => 'Tender Sales',
-
-                // Transactions / Sales
-                'transactions'          => 'Transactions',
-                'quotations'            => 'Sales',
-                'proforma-invoices'     => 'Sales',
-
-                // Masters
-                'units'                     => 'Masters',
-                'customers'                 => 'Masters',
-                'suppliers'                 => 'Masters',
-                'subcontractor-evaluations' => 'Masters',
-                'products'                  => 'Masters',
-                'raw-material-categories'   => 'Masters',
-                'raw-material-sub-categories' => 'Masters',
-                'product-categories'        => 'Masters',
-                'processes'                 => 'Masters',
-                'bom-processes'             => 'Masters',
-                'raw-materials'             => 'Masters',
-                'departments'               => 'Masters',
-                'designations'              => 'Masters',
-                'production-departments'    => 'Masters',
-                'employees'                 => 'Masters',
-                'billing-addresses'         => 'Masters',
-
-                // Settings
-                'company-information'   => 'Settings',
-                'company-info'          => 'Settings',
-            ];
-
-            // Group permissions by sidebar section (Menu)
-            $groupedPermissions = $permissions->groupBy(function($perm) use ($menuMap) {
-                $formName = $perm->form_name ?? $perm->name ?? '';
-                return $menuMap[$formName] ?? 'Other Forms';
-            });
-
-            // Order modules to match sidebar approximate order
-            $moduleOrder = [
-                'System Admin'      => 1,
-                'Tender Sales'      => 2,
-                'Transactions'      => 3,
-                'Sales'             => 4,
-                'Purchase'          => 5,
-                'Masters'           => 6,
-                'Settings'          => 7,
-                'Other Forms'       => 999,
-            ];
-
-            $groupedPermissions = $groupedPermissions->sortBy(function ($_, $key) use ($moduleOrder) {
-                return $moduleOrder[$key] ?? 500;
-            });
-        @endphp
-
+    @if(isset($menus) && $menus->count() > 0)
         <form action="{{ route('role-permissions.update', $role->id) }}" method="POST">
             @csrf
             <div style="overflow-x: auto;">
@@ -209,56 +119,137 @@
                         <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Page</th>
                             <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 100px;">Read</th>
-                            <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 100px;">Write</th>
-                            <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 100px;">Delete</th>
+                            <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 120px;">Add / Edit / Update</th>
+                            <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 110px;">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($groupedPermissions as $moduleName => $modulePermissions)
-                            {{-- Module header row (like sidebar section title) --}}
+                        @foreach($menus as $menu)
+                            {{-- Menu header row (matches left sidebar section) --}}
                             <tr>
-                                <td colspan="4" style="padding: 10px 12px; background: #f1f5f9; font-weight: 600; color: #111827; border-top: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
-                                    {{ $moduleName }}
+                                <td style="padding: 10px 12px; background: #e2e8f0; font-weight: 700; color: #111827; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+                                    {{ $menu->name }}
+                                </td>
+                                {{-- Menu-wise select/unselect all checkboxes --}}
+                                <td style="padding: 8px 12px; text-align: center; background: #e2e8f0; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+                                    <input type="checkbox"
+                                           class="menu-select-all"
+                                           data-menu-id="{{ $menu->id }}"
+                                           data-perm="read"
+                                           style="width:18px; height:18px; cursor:pointer;"
+                                           title="Select/Unselect all Read for {{ $menu->name }}">
+                                </td>
+                                <td style="padding: 8px 12px; text-align: center; background: #e2e8f0; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+                                    <input type="checkbox"
+                                           class="menu-select-all"
+                                           data-menu-id="{{ $menu->id }}"
+                                           data-perm="write"
+                                           style="width:18px; height:18px; cursor:pointer;"
+                                           title="Select/Unselect all Add/Edit/Update for {{ $menu->name }}">
+                                </td>
+                                <td style="padding: 8px 12px; text-align: center; background: #e2e8f0; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+                                    <input type="checkbox"
+                                           class="menu-select-all"
+                                           data-menu-id="{{ $menu->id }}"
+                                           data-perm="delete"
+                                           style="width:18px; height:18px; cursor:pointer;"
+                                           title="Select/Unselect all Delete for {{ $menu->name }}">
                                 </td>
                             </tr>
 
-                            @foreach($modulePermissions as $permission)
-                            @php
-                                // Check if role has this permission attached
-                                $rolePermission = $role->permissions->find($permission->id);
-                                $read = $rolePermission ? ($rolePermission->pivot->read ?? false) : false;
-                                $write = $rolePermission ? ($rolePermission->pivot->write ?? false) : false;
-                                $delete = $rolePermission ? ($rolePermission->pivot->delete ?? false) : false;
-                            @endphp
-                            <tr style="border-bottom: 1px solid #dee2e6;">
+                            {{-- Forms directly under this menu (no submenu) --}}
+                            @foreach($menu->forms->where('submenu_id', null) as $form)
+                                @php
+                                    $rp = $roleFormPermissions->get($form->id);
+                                    $permType = $rp ? (int)$rp->permission_type : null;
+                                    $readChecked   = in_array($permType, [\App\Models\RoleFormPermission::VIEW, \App\Models\RoleFormPermission::ADD_EDIT_UPDATE, \App\Models\RoleFormPermission::FULL_ACCESS], true);
+                                    $writeChecked  = in_array($permType, [\App\Models\RoleFormPermission::ADD_EDIT_UPDATE, \App\Models\RoleFormPermission::FULL_ACCESS], true);
+                                    $deleteChecked = $permType === \App\Models\RoleFormPermission::FULL_ACCESS;
+                                @endphp
+                                <tr style="border-bottom: 1px solid #dee2e6;">
                                     <td style="padding: 10px 12px; color: #333;">
-                                        {{ $permission->form_name ?? $permission->name ?? 'N/A' }}
+                                        {{ $form->name }}
                                     </td>
-                                    <td style="padding: 10px 12px; text-align: center;">
-                                    <input type="checkbox" 
-                                        id="read_{{ $permission->id }}" 
-                                        name="permissions[{{ $permission->id }}][read]" 
-                                        value="1" 
-                                        {{ $read ? 'checked' : '' }}
-                                        style="width: 20px; height: 20px; cursor: pointer;">
-                                </td>
-                                    <td style="padding: 10px 12px; text-align: center;">
-                                    <input type="checkbox" 
-                                        id="write_{{ $permission->id }}" 
-                                        name="permissions[{{ $permission->id }}][write]" 
-                                        value="1" 
-                                        {{ $write ? 'checked' : '' }}
-                                        style="width: 20px; height: 20px; cursor: pointer;">
-                                </td>
-                                    <td style="padding: 10px 12px; text-align: center;">
-                                    <input type="checkbox" 
-                                        id="delete_{{ $permission->id }}" 
-                                        name="permissions[{{ $permission->id }}][delete]" 
-                                        value="1" 
-                                        {{ $delete ? 'checked' : '' }}
-                                        style="width: 20px; height: 20px; cursor: pointer;">
-                                </td>
-                            </tr>
+                                    <td style="padding: 10px 12px; text-align:center;">
+                                        <input type="checkbox"
+                                               name="form_permissions[{{ $form->id }}][read]"
+                                               value="1"
+                                               class="perm-read"
+                                               data-menu-id="{{ $menu->id }}"
+                                               style="width:18px; height:18px; cursor:pointer;"
+                                               {{ $readChecked ? 'checked' : '' }}>
+                                    </td>
+                                    <td style="padding: 10px 12px; text-align:center;">
+                                        <input type="checkbox"
+                                               name="form_permissions[{{ $form->id }}][write]"
+                                               value="1"
+                                               class="perm-write"
+                                               data-menu-id="{{ $menu->id }}"
+                                               style="width:18px; height:18px; cursor:pointer;"
+                                               {{ $writeChecked ? 'checked' : '' }}>
+                                    </td>
+                                    <td style="padding: 10px 12px; text-align:center;">
+                                        <input type="checkbox"
+                                               name="form_permissions[{{ $form->id }}][delete]"
+                                               value="1"
+                                               class="perm-delete"
+                                               data-menu-id="{{ $menu->id }}"
+                                               style="width:18px; height:18px; cursor:pointer;"
+                                               {{ $deleteChecked ? 'checked' : '' }}>
+                                    </td>
+                                </tr>
+                            @endforeach
+
+                            {{-- Submenus and their forms --}}
+                            @foreach($menu->submenus as $submenu)
+                                @if(trim($submenu->name) !== 'Transactions')
+                                    <tr>
+                                        <td colspan="4" style="padding: 8px 12px; background:#fafafa; font-weight:500; color:#374151; border-top:1px solid #e5e7eb;">
+                                            {{ $submenu->name }}
+                                        </td>
+                                    </tr>
+                                @endif
+                                @foreach($submenu->forms as $form)
+                                    @php
+                                        $rp = $roleFormPermissions->get($form->id);
+                                        $permType = $rp ? (int)$rp->permission_type : null;
+                                        $readChecked   = in_array($permType, [\App\Models\RoleFormPermission::VIEW, \App\Models\RoleFormPermission::ADD_EDIT_UPDATE, \App\Models\RoleFormPermission::FULL_ACCESS], true);
+                                        $writeChecked  = in_array($permType, [\App\Models\RoleFormPermission::ADD_EDIT_UPDATE, \App\Models\RoleFormPermission::FULL_ACCESS], true);
+                                        $deleteChecked = $permType === \App\Models\RoleFormPermission::FULL_ACCESS;
+                                    @endphp
+                                    <tr style="border-bottom: 1px solid #dee2e6;">
+                                        <td style="padding: 10px 12px; color: #333;">
+                                            {{ $form->name }}
+                                        </td>
+                                        <td style="padding: 10px 12px; text-align:center;">
+                                            <input type="checkbox"
+                                                   name="form_permissions[{{ $form->id }}][read]"
+                                                   value="1"
+                                                   class="perm-read"
+                                                   data-menu-id="{{ $menu->id }}"
+                                                   style="width:18px; height:18px; cursor:pointer;"
+                                                   {{ $readChecked ? 'checked' : '' }}>
+                                        </td>
+                                        <td style="padding: 10px 12px; text-align:center;">
+                                            <input type="checkbox"
+                                                   name="form_permissions[{{ $form->id }}][write]"
+                                                   value="1"
+                                                   class="perm-write"
+                                                   data-menu-id="{{ $menu->id }}"
+                                                   style="width:18px; height:18px; cursor:pointer;"
+                                                   {{ $writeChecked ? 'checked' : '' }}>
+                                        </td>
+                                        <td style="padding: 10px 12px; text-align:center;">
+                                            <input type="checkbox"
+                                                   name="form_permissions[{{ $form->id }}][delete]"
+                                                   value="1"
+                                                   class="perm-delete"
+                                                   data-menu-id="{{ $menu->id }}"
+                                                   style="width:18px; height:18px; cursor:pointer;"
+                                                   {{ $deleteChecked ? 'checked' : '' }}>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             @endforeach
                         @endforeach
                     </tbody>
@@ -276,11 +267,75 @@
         </form>
     @else
         <div style="text-align: center; padding: 40px; color: #666;">
-            <p style="font-size: 18px; margin-bottom: 20px;">No permissions/forms found.</p>
-            <a href="{{ route('permissions.create') }}" style="padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-weight: 500;">
-                Create First Permission/Form
-            </a>
+            <p style="font-size: 18px; margin-bottom: 20px;">No forms found. Please run the MenuFormSeeder.</p>
         </div>
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Menu-level select/unselect all
+        document.querySelectorAll('.menu-select-all').forEach(function (headerCheckbox) {
+            headerCheckbox.addEventListener('change', function () {
+                const menuId = this.getAttribute('data-menu-id');
+                const perm = this.getAttribute('data-perm'); // read/write/delete
+                const checked = this.checked;
+
+                document.querySelectorAll('.perm-' + perm + '[data-menu-id="' + menuId + '"]').forEach(function (cb) {
+                    cb.checked = checked;
+
+                    if (checked) {
+                        // Ensure only one permission type per row when using menu-level checkbox
+                        const row = cb.closest('tr');
+                        if (!row) return;
+                        ['read', 'write', 'delete'].forEach(function (p) {
+                            if (p !== perm) {
+                                const other = row.querySelector('.perm-' + p + '[data-menu-id="' + menuId + '"]');
+                                if (other) {
+                                    other.checked = false;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // When a menu-level permission is checked, uncheck the other menu-level permissions
+                if (checked) {
+                    document.querySelectorAll('.menu-select-all[data-menu-id="' + menuId + '"]').forEach(function (otherHeader) {
+                        if (otherHeader !== headerCheckbox) {
+                            otherHeader.checked = false;
+                        }
+                    });
+                }
+            });
+        });
+
+        // Row-level exclusivity: only one of read/write/delete can be selected at a time
+        document.querySelectorAll('.perm-read, .perm-write, .perm-delete').forEach(function (input) {
+            input.addEventListener('change', function () {
+                if (!this.checked) {
+                    return; // only react when checkbox is turned on
+                }
+
+                let perm = 'read';
+                if (this.classList.contains('perm-write')) perm = 'write';
+                if (this.classList.contains('perm-delete')) perm = 'delete';
+
+                const row = this.closest('tr');
+                if (!row) return;
+
+                ['read', 'write', 'delete'].forEach(function (p) {
+                    if (p !== perm) {
+                        const other = row.querySelector('.perm-' + p);
+                        if (other) {
+                            other.checked = false;
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
+@endpush

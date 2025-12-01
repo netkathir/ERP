@@ -7,8 +7,20 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
         <h2 style="color:#333; font-size:24px; margin:0;">Purchase Indent Details</h2>
         <div style="display:flex; gap:10px;">
+            @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('purchase-indents', 'approve'))
+                @if($indent->status !== 'Approved')
+                    <form action="{{ route('purchase-indents.approve', $indent->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit" 
+                                style="padding:10px 20px; background:#28a745; color:white; border:none; border-radius:5px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:8px;"
+                                onclick="return confirm('Are you sure you want to approve this Purchase Indent?');">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                    </form>
+                @endif
+            @endif
             <a href="{{ route('purchase-indents.edit', $indent->id) }}"
-               style="padding:10px 20px; background:#28a745; color:white; text-decoration:none; border-radius:5px; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+               style="padding:10px 20px; background:#ffc107; color:#212529; text-decoration:none; border-radius:5px; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
                 <i class="fas fa-edit"></i> Edit
             </a>
             <a href="{{ route('purchase-indents.index') }}"

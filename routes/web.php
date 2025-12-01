@@ -100,6 +100,14 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('supplier-evaluations', App\Http\Controllers\SupplierEvaluationController::class);
     Route::resource('subcontractor-evaluations', App\Http\Controllers\SubcontractorEvaluationController::class);
     Route::resource('purchase-indents', App\Http\Controllers\PurchaseIndentController::class);
+    Route::post('purchase-indents/{id}/approve', [App\Http\Controllers\PurchaseIndentController::class, 'approve'])->name('purchase-indents.approve');
+    Route::resource('purchase-orders', App\Http\Controllers\PurchaseOrderController::class);
+    Route::get('notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications/{id}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::get('purchase-orders/purchase-indent/{id}/items', [App\Http\Controllers\PurchaseOrderController::class, 'getPurchaseIndentItems'])->name('purchase-orders.purchase-indent.items');
+    Route::get('purchase-orders/customer/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'getCustomerDetails'])->name('purchase-orders.customer');
+    Route::get('purchase-orders/supplier/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'getSupplierDetails'])->name('purchase-orders.supplier');
+    Route::get('purchase-orders/billing-address/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'getBillingAddressDetails'])->name('purchase-orders.billing-address');
 
     // Quotation Routes
     Route::resource('quotations', App\Http\Controllers\QuotationController::class);

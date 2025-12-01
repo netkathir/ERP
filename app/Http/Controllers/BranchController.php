@@ -200,6 +200,19 @@ class BranchController extends Controller
             abort(403, 'Only Super Admin can delete branches.');
         }
 
+        // Prevent deleting the currently active branch (the one user is logged into)
+        $activeBranchId = session('active_branch_id');
+        if ($activeBranchId && (int)$activeBranchId === (int)$branch->id) {
+            return redirect()->route('branches.index')
+                ->with('error', 'You cannot delete the currently active branch. Please switch to a different branch first.');
+        }
+
+        // Prevent deleting a branch that still has users (including Admin/Super Admin) assigned
+        if ($branch->users()->exists() || $branch->directUsers()->exists()) {
+            return redirect()->route('branches.index')
+                ->with('error', 'This branch has users (including Admin/Super Admin) assigned. Remove or reassign those users before deleting the branch.');
+        }
+
         $branch->delete();
 
         return redirect()->route('branches.index')

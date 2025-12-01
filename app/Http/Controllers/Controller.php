@@ -15,18 +15,13 @@ class Controller extends BaseController
 
     /**
      * Get the active branch ID from session.
-     * Returns null for Super Admin or if no branch is selected.
+     * Used for ALL authenticated users (including Admin / Super Admin).
      */
     protected function getActiveBranchId()
     {
         $user = auth()->user();
         
         if (!$user) {
-            return null;
-        }
-        
-        // Super Admin doesn't have branch restrictions
-        if ($user->isSuperAdmin()) {
             return null;
         }
         
@@ -49,16 +44,11 @@ class Controller extends BaseController
 
     /**
      * Apply branch filtering to a query builder.
-     * For non-Super Admin users, filters by active branch if the model has branch_id.
+     * For ALL authenticated users, filters by active branch if the model has branch_id.
      */
     protected function applyBranchFilter($query, $model = null)
     {
         $user = auth()->user();
-        
-        // Super Admin sees all data
-        if ($user && $user->isSuperAdmin()) {
-            return $query;
-        }
         
         $activeBranchId = $this->getActiveBranchId();
         

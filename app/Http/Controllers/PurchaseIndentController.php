@@ -7,6 +7,7 @@ use App\Models\PurchaseIndentItem;
 use App\Models\RawMaterial;
 use App\Models\Supplier;
 use App\Models\Unit;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -106,7 +107,17 @@ class PurchaseIndentController extends Controller
 
             DB::commit();
 
-            // Placeholder: notify admin about new purchase indent (email/notification system)
+            // Create notification for Admin and Super Admin
+            Notification::create([
+                'type' => 'purchase_indent',
+                'sender' => 'Admin',
+                'message' => 'Purchase Indent (' . $indent->indent_no . ') has been generated. Please Check and Confirm',
+                'action_type' => 'check',
+                'action_url' => route('purchase-indents.show', $indent->id),
+                'related_id' => $indent->id,
+                'is_read' => false,
+                'user_id' => null, // null means visible to all admins
+            ]);
 
             return redirect()->route('purchase-indents.index')->with('success', 'Purchase Indent created successfully.');
         } catch (\Exception $e) {
@@ -266,6 +277,44 @@ class PurchaseIndentController extends Controller
             'items.*.delivery_status' => 'nullable|string|max:255',
             'items.*.po_remarks' => 'nullable|string',
         ]);
+    }
+
+    public function approve($id)
+    {
+        $user = auth()->user();
+
+        // Only Admin and Super Admin can approve
+        if (!$user->isSuperAdmin() && !$user->hasPermission('purchase-indents', 'approve')) {
+            abort(403, 'You do not have permission to approve purchase indents.');
+        }
+
+        $query = PurchaseIndent::query();
+        $query = $this->applyBranchFilter($query, PurchaseIndent::class);
+        $indent = $query->findOrFail($id);
+
+        if ($indent->status === 'Approved') {
+            return back()->with('error', 'Purchase Indent is already approved.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $indent->status = 'Approved';
+            $indent->updated_by_id = $user->id;
+            $indent->save();
+
+            // Mark related notification as read
+            Notification::where('type', 'purchase_indent')
+                ->where('related_id', $indent->id)
+                ->update(['is_read' => true, 'read_at' => now()]);
+
+            DB::commit();
+
+            return redirect()->route('purchase-indents.show', $indent->id)->with('success', 'Purchase Indent approved successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error approving Purchase Indent: ' . $e->getMessage());
+        }
     }
 
     protected function generateIndentNo(): string
