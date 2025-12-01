@@ -142,6 +142,10 @@
         .menu-item-header:hover {
             background: rgba(255,255,255,0.05);
         }
+        .menu-item-header .menu-header-icon {
+            font-size: 16px;
+            margin-right: 8px;
+        }
         .menu-item-header .arrow {
             transition: transform 0.3s ease;
             font-size: 10px;
@@ -199,6 +203,16 @@
             justify-content: center;
             padding: 14px 0;
             gap: 0;
+        }
+        /* In collapsed mode: show only the section icon, hide text and arrow */
+        .sidebar.collapsed .menu-item-header span {
+            display: none;
+        }
+        .sidebar.collapsed .menu-item-header .arrow {
+            display: none;
+        }
+        .sidebar.collapsed .menu-item-header {
+            justify-content: center;
         }
         .sidebar.collapsed .menu-item i {
             justify-content: center;
@@ -320,7 +334,8 @@
                 
                 {{-- System Admin Menu (Super Admin only) --}}
                 @if(auth()->user()->isSuperAdmin())
-                    <div class="menu-item-header" onclick="toggleSystemAdminMenu()" id="systemAdminHeader" style="margin-top: 10px;">
+                    <div class="menu-item-header" onclick="toggleSystemAdminMenu()" id="systemAdminHeader" style="margin-top: 10px;" title="System Admin">
+                        <i class="fas fa-tools menu-header-icon"></i>
                         <span>System Admin</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </div>
@@ -355,18 +370,27 @@
                     </a>
                 @endif
                 
-                <a href="{{ route('quotations.index') }}" class="menu-item" title="Quotations">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Quotations</span>
-                </a>
-                <a href="{{ route('proforma-invoices.index') }}" class="menu-item" title="Proforma Invoices">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Proforma Invoices</span>
-                </a>
+                {{-- Enquiry Sales Module --}}
+                <div class="menu-item-header" onclick="toggleEnquirySalesMenu()" id="enquirySalesHeader" style="margin-top: 10px;" title="Enquiry Sales">
+                    <i class="fas fa-question-circle menu-header-icon"></i>
+                    <span>Enquiry Sales</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <div class="menu-sub-items" id="enquirySalesMenu">
+                    <a href="{{ route('quotations.index') }}" class="menu-item" title="Quotations">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Quotations</span>
+                    </a>
+                    <a href="{{ route('proforma-invoices.index') }}" class="menu-item" title="Proforma Invoices">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Proforma Invoices</span>
+                    </a>
+                </div>
 
                 {{-- Tender Sales Module --}}
                 @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('tenders', 'view'))
-                    <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;">
+                    <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;" title="Tender Sales">
+                        <i class="fas fa-file-contract menu-header-icon"></i>
                         <span>Tender Sales</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </div>
@@ -392,7 +416,8 @@
 
                 {{-- Supplier Master Module --}}
                 @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('suppliers', 'view'))
-                    <div class="menu-item-header" onclick="toggleSupplierMenu()" id="supplierHeader" style="margin-top: 10px;">
+                    <div class="menu-item-header" onclick="toggleSupplierMenu()" id="supplierHeader" style="margin-top: 10px;" title="Supplier">
+                        <i class="fas fa-truck menu-header-icon"></i>
                         <span>Supplier</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </div>
@@ -412,11 +437,12 @@
                     </div>
                 @endif
 
-                {{-- Purchase Module (placeholder for future purchase forms) --}}
-                <div class="menu-item-header" onclick="togglePurchaseMenu()" id="purchaseHeader" style="margin-top: 10px;">
-                    <span>Purchase</span>
-                    <i class="fas fa-chevron-down arrow"></i>
-                </div>
+                {{-- Purchase Module --}}
+                 <div class="menu-item-header" onclick="togglePurchaseMenu()" id="purchaseHeader" style="margin-top: 10px;" title="Purchase">
+                     <i class="fas fa-shopping-cart menu-header-icon"></i>
+                     <span>Purchase</span>
+                     <i class="fas fa-chevron-down arrow"></i>
+                 </div>
                 <div class="menu-sub-items" id="purchaseMenu">
                     <a href="{{ route('purchase-indents.index') }}" class="menu-item" title="Purchase Indents">
                         <i class="fas fa-file-alt"></i>
@@ -428,10 +454,21 @@
                     </a>
                 </div>
 
-                <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader">
-                    <span>Masters</span>
-                    <i class="fas fa-chevron-down arrow"></i>
+                {{-- Store Module --}}
+                 <div class="menu-item-header" onclick="toggleStoreMenu()" id="storeHeader" style="margin-top: 10px;" title="Store">
+                     <i class="fas fa-warehouse menu-header-icon"></i>
+                     <span>Store</span>
+                     <i class="fas fa-chevron-down arrow"></i>
+                 </div>
+                <div class="menu-sub-items" id="storeMenu">
+                    {{-- Add Store-related links here when available --}}
                 </div>
+
+                 <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader" title="Masters">
+                     <i class="fas fa-database menu-header-icon"></i>
+                     <span>Masters</span>
+                     <i class="fas fa-chevron-down arrow"></i>
+                 </div>
                 <div class="menu-sub-items" id="mastersMenu">
                     @if(auth()->user()->hasPermission('units', 'view'))
                     <a href="{{ route('units.index') }}" class="menu-item" title="Units">
@@ -519,12 +556,13 @@
                     @endif
                 </div>
 
-                {{-- Settings Menu (Super Admin only) --}}
-                @if(auth()->user()->isSuperAdmin())
-                    <div class="menu-item-header" onclick="toggleSettingsMenu()" id="settingsHeader" style="margin-top: 10px;">
-                        <span>Settings</span>
-                        <i class="fas fa-chevron-down arrow"></i>
-                    </div>
+                 {{-- Settings Menu (Super Admin only) --}}
+                 @if(auth()->user()->isSuperAdmin())
+                     <div class="menu-item-header" onclick="toggleSettingsMenu()" id="settingsHeader" style="margin-top: 10px;" title="Settings">
+                         <i class="fas fa-cog menu-header-icon"></i>
+                         <span>Settings</span>
+                         <i class="fas fa-chevron-down arrow"></i>
+                     </div>
                     <div class="menu-sub-items" id="settingsMenu">
                         <a href="{{ route('company-information.index') }}" class="menu-item" title="Company Information">
                             <i class="fas fa-building"></i>
@@ -630,10 +668,20 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
+            const toggleIcon = document.querySelector('.menu-toggle i');
             
             // Toggle collapsed state (show icons only)
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('sidebar-collapsed');
+            
+            // Update toggle icon based on state
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.classList.remove('fa-bars');
+                toggleIcon.classList.add('fa-chevron-right');
+            } else {
+                toggleIcon.classList.remove('fa-chevron-right');
+                toggleIcon.classList.add('fa-bars');
+            }
             
             // Remove closed class if present (for mobile)
             sidebar.classList.remove('closed');
@@ -686,6 +734,20 @@
             }
         }
 
+        // Toggle Enquiry Sales menu
+        function toggleEnquirySalesMenu() {
+            const enquirySalesMenu = document.getElementById('enquirySalesMenu');
+            const enquirySalesHeader = document.getElementById('enquirySalesHeader');
+            
+            if (enquirySalesMenu && enquirySalesHeader) {
+                enquirySalesMenu.classList.toggle('collapsed');
+                enquirySalesHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('enquirySalesMenuCollapsed', enquirySalesMenu.classList.contains('collapsed'));
+            }
+        }
+
         // Toggle Supplier menu
         function toggleSupplierMenu() {
             const supplierMenu = document.getElementById('supplierMenu');
@@ -711,6 +773,20 @@
                 
                 // Save state to localStorage
                 localStorage.setItem('purchaseMenuCollapsed', purchaseMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle Store menu
+        function toggleStoreMenu() {
+            const storeMenu = document.getElementById('storeMenu');
+            const storeHeader = document.getElementById('storeHeader');
+            
+            if (storeMenu && storeHeader) {
+                storeMenu.classList.toggle('collapsed');
+                storeHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('storeMenuCollapsed', storeMenu.classList.contains('collapsed'));
             }
         }
 
@@ -766,6 +842,17 @@
                 }
             }
 
+            // Enquiry Sales menu
+            const enquirySalesSavedState = localStorage.getItem('enquirySalesMenuCollapsed');
+            if (enquirySalesSavedState === 'true') {
+                const enquirySalesMenu = document.getElementById('enquirySalesMenu');
+                const enquirySalesHeader = document.getElementById('enquirySalesHeader');
+                if (enquirySalesMenu && enquirySalesHeader) {
+                    enquirySalesMenu.classList.add('collapsed');
+                    enquirySalesHeader.classList.add('collapsed');
+                }
+            }
+
             // Supplier menu
             const supplierSavedState = localStorage.getItem('supplierMenuCollapsed');
             if (supplierSavedState === 'true') {
@@ -785,6 +872,17 @@
                 if (purchaseMenu && purchaseHeader) {
                     purchaseMenu.classList.add('collapsed');
                     purchaseHeader.classList.add('collapsed');
+                }
+            }
+
+            // Store menu
+            const storeSavedState = localStorage.getItem('storeMenuCollapsed');
+            if (storeSavedState === 'true') {
+                const storeMenu = document.getElementById('storeMenu');
+                const storeHeader = document.getElementById('storeHeader');
+                if (storeMenu && storeHeader) {
+                    storeMenu.classList.add('collapsed');
+                    storeHeader.classList.add('collapsed');
                 }
             }
 

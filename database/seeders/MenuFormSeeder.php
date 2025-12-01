@@ -22,8 +22,10 @@ class MenuFormSeeder extends Seeder
 
         $masters      = Menu::firstOrCreate(['code' => 'masters'],        ['name' => 'Masters',        'is_active' => true]);
         $purchase     = Menu::firstOrCreate(['code' => 'purchase'],       ['name' => 'Purchase',       'is_active' => true]);
+        $store        = Menu::firstOrCreate(['code' => 'store'],          ['name' => 'Store',          'is_active' => true]);
         $sales        = Menu::firstOrCreate(['code' => 'sales'],          ['name' => 'Sales',          'is_active' => true]);
         $tenderSales  = Menu::firstOrCreate(['code' => 'tender_sales'],   ['name' => 'Tender Sales',   'is_active' => true]);
+        $enquirySales = Menu::firstOrCreate(['code' => 'enquiry_sales'],  ['name' => 'Enquiry Sales',  'is_active' => true]);
         $supplierMenu = Menu::firstOrCreate(['code' => 'supplier'],       ['name' => 'Supplier',       'is_active' => true]);
         $settings     = Menu::firstOrCreate(['code' => 'settings'],       ['name' => 'Settings',       'is_active' => true]);
         $system       = Menu::firstOrCreate(['code' => 'system'],         ['name' => 'System',         'is_active' => true]);
@@ -39,6 +41,11 @@ class MenuFormSeeder extends Seeder
             ['name' => 'Transactions', 'is_active' => true]
         );
 
+        $storeTxnSubmenu      = Submenu::firstOrCreate(
+            ['menu_id' => $store->id, 'code' => 'store_txn'],
+            ['name' => 'Transactions', 'is_active' => true]
+        );
+
         $salesTxnSubmenu      = Submenu::firstOrCreate(
             ['menu_id' => $sales->id, 'code' => 'sales_txn'],
             ['name' => 'Transactions', 'is_active' => true]
@@ -46,6 +53,11 @@ class MenuFormSeeder extends Seeder
 
         $tenderTxnSubmenu     = Submenu::firstOrCreate(
             ['menu_id' => $tenderSales->id, 'code' => 'tender_txn'],
+            ['name' => 'Transactions', 'is_active' => true]
+        );
+
+        $enquiryTxnSubmenu    = Submenu::firstOrCreate(
+            ['menu_id' => $enquirySales->id, 'code' => 'enquiry_txn'],
             ['name' => 'Transactions', 'is_active' => true]
         );
 
@@ -88,11 +100,13 @@ class MenuFormSeeder extends Seeder
         $makeForm($purchase, $purchaseTxnSubmenu, 'Purchase Indents',  'purchase_indents_form',   'purchase-indents.index');
         $makeForm($purchase, $purchaseTxnSubmenu, 'Purchase Orders',   'purchase_orders_form',    'purchase-orders.index');
 
-        // Sales (top-level Quotation / Proforma etc.)
-        $makeForm($sales, $salesTxnSubmenu, 'Quotations',              'quotations_form',         'quotations.index');
-        $makeForm($sales, $salesTxnSubmenu, 'Proforma Invoices',       'proforma_invoices_form',  'proforma-invoices.index');
+        // Sales (Customer Orders / Complaints etc.)
         $makeForm($sales, $salesTxnSubmenu, 'Customer Orders',         'customer_orders_form',    'customer-orders.index');
         $makeForm($sales, $salesTxnSubmenu, 'Customer Complaints',     'customer_complaints_form','customer-complaints.index');
+
+        // Enquiry Sales (Quotations / Proforma etc.)
+        $makeForm($enquirySales, $enquiryTxnSubmenu, 'Quotations',        'quotations_form',        'quotations.index');
+        $makeForm($enquirySales, $enquiryTxnSubmenu, 'Proforma Invoices', 'proforma_invoices_form', 'proforma-invoices.index');
 
         // Tender Sales group (Tenders + Tender Evaluation + Customer Orders + Complaints)
         $makeForm($tenderSales, $tenderTxnSubmenu, 'Tenders',              'tenders_form',            'tenders.index');

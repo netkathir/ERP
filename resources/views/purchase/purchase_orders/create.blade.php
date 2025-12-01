@@ -54,8 +54,8 @@
                     @endif
                 </div>
 
-                {{-- Branch selection for Super Admin --}}
-                @if(auth()->user()->isSuperAdmin() && isset($branches) && $branches->count() > 0)
+                {{-- Branch selection (visible for users who have at least one branch available) --}}
+                @if(isset($branches) && $branches->count() > 0)
                     <div>
                         <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Branch</label>
                         <select name="branch_id"

@@ -99,11 +99,13 @@ class PurchaseOrderController extends Controller
 
         $units = Unit::orderBy('name')->get();
 
-        // Branches for Super Admin (to show branch dropdown)
+        // Branches for branch selection (Super Admin sees all, others see their assigned active branches)
         $branches = collect();
         $selectedBranchId = $this->getActiveBranchId();
         if ($user->isSuperAdmin()) {
             $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        } else {
+            $branches = $user->branches()->where('is_active', true)->orderBy('name')->get();
         }
 
         return view('purchase.purchase_orders.create', compact(
@@ -198,9 +200,9 @@ class PurchaseOrderController extends Controller
             $po->status = 'Draft';
             $po->remarks = $validated['remarks'] ?? null;
 
-            // Branch handling: Super Admin can choose branch, others use active branch
-            if ($user->isSuperAdmin() && !empty($validated['branch_id'])) {
-                $po->branch_id = $validated['branch_id'];
+            // Branch handling: allow any user with access to select branch, otherwise use active branch
+            if (!empty($validated['branch_id']) && $user->hasAccessToBranch((int)$validated['branch_id'])) {
+                $po->branch_id = (int)$validated['branch_id'];
             } else {
                 $po->branch_id = $this->getActiveBranchId();
             }
@@ -325,11 +327,13 @@ class PurchaseOrderController extends Controller
 
         $units = Unit::orderBy('name')->get();
 
-        // Branches for Super Admin (to show branch dropdown)
+        // Branches for branch selection (Super Admin sees all, others see their assigned active branches)
         $branches = collect();
         $selectedBranchId = $purchaseOrder->branch_id ?? $this->getActiveBranchId();
         if ($user->isSuperAdmin()) {
             $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        } else {
+            $branches = $user->branches()->where('is_active', true)->orderBy('name')->get();
         }
 
         return view('purchase.purchase_orders.edit', compact(
@@ -426,11 +430,10 @@ class PurchaseOrderController extends Controller
             
             $po->remarks = $validated['remarks'] ?? null;
 
-            // Branch handling on update: Super Admin can change branch, others keep existing/active
-            if ($user->isSuperAdmin() && !empty($validated['branch_id'])) {
-                $po->branch_id = $validated['branch_id'];
+            // Branch handling on update: allow any user with access to change branch, otherwise keep existing or fallback to active
+            if (!empty($validated['branch_id']) && $user->hasAccessToBranch((int)$validated['branch_id'])) {
+                $po->branch_id = (int)$validated['branch_id'];
             } elseif (!$po->branch_id) {
-                // Fallback if branch_id was somehow null
                 $po->branch_id = $this->getActiveBranchId();
             }
 
