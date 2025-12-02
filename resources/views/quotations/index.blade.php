@@ -22,28 +22,24 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 50px;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Quotation No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Date</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Customer</th>
                         <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Total Amount</th>
                         <th style="padding: 12px; text-align: right; color: #333; font-weight: 600;">Net Amount</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Status</th>
                         <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($quotations as $quotation)
+                    @foreach($quotations as $index => $quotation)
                         <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 12px; text-align: center; color: #666;">{{ ($quotations->currentPage() - 1) * $quotations->perPage() + $index + 1 }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $quotation->quotation_no }}</td>
                             <td style="padding: 12px; color: #666;">{{ $quotation->date }}</td>
                             <td style="padding: 12px; color: #666;">{{ $quotation->customer->company_name }}</td>
                             <td style="padding: 12px; text-align: right; color: #666;">₹{{ number_format($quotation->total_amount, 2) }}</td>
                             <td style="padding: 12px; text-align: right; color: #333; font-weight: 500;">₹{{ number_format($quotation->net_amount, 2) }}</td>
-                            <td style="padding: 12px;">
-                                <span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: capitalize;">
-                                    {{ $quotation->status }}
-                                </span>
-                            </td>
                             <td style="padding: 12px; text-align: center;">
                                 <div style="display: flex; gap: 8px; justify-content: center;">
                                     <a href="{{ route('quotations.show', $quotation->id) }}" style="padding: 6px 12px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">
@@ -52,6 +48,13 @@
                                     <a href="{{ route('quotations.edit', $quotation->id) }}" style="padding: 6px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
+                                    <form action="{{ route('quotations.destroy', $quotation->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this quotation?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

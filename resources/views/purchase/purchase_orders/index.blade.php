@@ -32,6 +32,7 @@
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
+                            <th style="padding:12px; text-align:center; color:#333; font-weight:600; width:50px;">S.No</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">PO No</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Purchase Indent No</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Supplier</th>
@@ -42,8 +43,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($purchaseOrders as $po)
+                        @foreach($purchaseOrders as $index => $po)
                             <tr style="border-bottom:1px solid #dee2e6;">
+                                <td style="padding:10px 12px; text-align:center; color:#666;">{{ ($purchaseOrders->currentPage() - 1) * $purchaseOrders->perPage() + $index + 1 }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $po->po_no }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $po->purchaseIndent->indent_no ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $po->supplier->supplier_name ?? 'N/A' }}</td>

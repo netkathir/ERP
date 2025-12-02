@@ -25,7 +25,7 @@
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
-                            <th style="padding:12px; text-align:left; color:#333; font-weight:600;">ID</th>
+                            <th style="padding:12px; text-align:center; color:#333; font-weight:600; width:50px;">S.No</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Supplier Name</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">City</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Type</th>
@@ -36,9 +36,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($suppliers as $supplier)
+                        @foreach($suppliers as $index => $supplier)
                             <tr style="border-bottom:1px solid #dee2e6;">
-                                <td style="padding:10px 12px; color:#333;">{{ $supplier->id }}</td>
+                                <td style="padding:10px 12px; text-align:center; color:#666;">{{ ($suppliers->currentPage() - 1) * $suppliers->perPage() + $index + 1 }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $supplier->supplier_name }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $supplier->city }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $supplier->supplier_type }}</td>

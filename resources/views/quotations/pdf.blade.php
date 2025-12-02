@@ -184,11 +184,12 @@
         }
         .signature-section {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             margin-top: 40px;
+            gap: 30px;
         }
         .signature-box {
-            width: 45%;
+            width: 200px;
             text-align: center;
         }
         .signature-line {
@@ -391,19 +392,7 @@
                     <td>SGST ({{ number_format($sgstRate, 2) }}%):</td>
                     <td class="text-right">{{ number_format($sgstAmount, 2) }}</td>
                 </tr>
-                <tr>
-                    <td>IGST (0.00%):</td>
-                    <td class="text-right">0.00</td>
-                </tr>
             @else
-                <tr>
-                    <td>CGST (0.00%):</td>
-                    <td class="text-right">0.00</td>
-                </tr>
-                <tr>
-                    <td>SGST (0.00%):</td>
-                    <td class="text-right">0.00</td>
-                </tr>
                 <tr>
                     <td>IGST ({{ number_format($igstRate, 2) }}%):</td>
                     <td class="text-right">{{ number_format($igstAmount, 2) }}</td>

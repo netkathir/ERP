@@ -100,6 +100,7 @@ class QuotationController extends Controller
                 'billing_pincode' => $request->billing_pincode,
                 'gst_type' => $request->gst_type,
                 'overall_discount_percent' => $request->overall_discount_percent ?? 0,
+                'gst_percent' => $request->gst_percent ?? 0,
                 'freight_charges' => $request->freight_charges ?? 0,
                 'total_amount' => $request->total_amount,
                 'net_amount' => $request->net_amount,
@@ -246,6 +247,7 @@ class QuotationController extends Controller
                 'billing_pincode' => $request->billing_pincode,
                 'gst_type' => $request->gst_type,
                 'overall_discount_percent' => $request->overall_discount_percent ?? 0,
+                'gst_percent' => $request->gst_percent ?? 0,
                 'freight_charges' => $request->freight_charges ?? 0,
                 'total_amount' => $request->total_amount,
                 'net_amount' => $request->net_amount,
@@ -269,11 +271,35 @@ class QuotationController extends Controller
             }
 
             \DB::commit();
-            return redirect()->route('quotations.show', $quotation->id)->with('success', 'Quotation updated successfully.');
+            return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully.');
 
         } catch (\Exception $e) {
             \DB::rollBack();
             return back()->with('error', 'Error updating quotation: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy($id)
+    {
+        $query = \App\Models\Quotation::query();
+        $query = $this->applyBranchFilter($query, \App\Models\Quotation::class);
+        $quotation = $query->findOrFail($id);
+
+        try {
+            \DB::beginTransaction();
+
+            // Delete related items first
+            $quotation->items()->delete();
+
+            // Delete the quotation
+            $quotation->delete();
+
+            \DB::commit();
+            return redirect()->route('quotations.index')->with('success', 'Quotation deleted successfully.');
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return redirect()->route('quotations.index')->with('error', 'Error deleting quotation: ' . $e->getMessage());
         }
     }
 
@@ -309,7 +335,7 @@ class QuotationController extends Controller
                 ->with('error', 'Company information not found. Please configure company information first.');
         }
 
-        // Calculate CGST, SGST, IGST based on GST type
+        // Calculate CGST, SGST, IGST based on GST type and gst_percent
         $cgstRate = 0;
         $sgstRate = 0;
         $igstRate = 0;
@@ -317,28 +343,46 @@ class QuotationController extends Controller
         $sgstAmount = 0;
         $igstAmount = 0;
 
-        // Calculate total tax amount
-        $totalTax = $quotation->net_amount - $quotation->total_amount - $quotation->freight_charges;
+        // Get GST percent from quotation (default to 0 if not set)
+        $gstPercent = $quotation->gst_percent ?? 0;
         
-        // Calculate average GST rate from items
-        $totalGstRate = 0;
-        $itemCount = 0;
+        // Calculate gross amount (sum of all item totals before any discount)
+        $grossAmount = 0;
         foreach ($quotation->items as $item) {
-            if ($item->product && $item->product->gst_rate) {
-                $totalGstRate += $item->product->gst_rate;
-                $itemCount++;
-            }
+            $grossAmount += ($item->price * $item->quantity);
         }
-        $avgGstRate = $itemCount > 0 ? $totalGstRate / $itemCount : 18;
+        
+        // Calculate discount amount
+        $discountAmount = 0;
+        if ($quotation->overall_discount_percent > 0) {
+            $discountAmount = ($grossAmount * $quotation->overall_discount_percent) / 100;
+        }
+        
+        // Subtotal after discount
+        $subtotalAfterDiscount = $grossAmount - $discountAmount;
+        
+        // Calculate GST on subtotal
+        $gstAmount = ($subtotalAfterDiscount * $gstPercent) / 100;
+        
+        // Calculate freight tax
+        $freight = $quotation->freight_charges ?? 0;
+        $freightTax = ($freight * $gstPercent) / 100;
+        
+        // Total tax (GST + freight tax)
+        $totalTax = $gstAmount + $freightTax;
 
         if ($quotation->gst_type == 'intra') {
             // Intra-state: Split GST rate equally between CGST and SGST
-            $cgstRate = $sgstRate = $avgGstRate / 2;
+            $cgstRate = $sgstRate = $gstPercent / 2;
             $cgstAmount = $sgstAmount = $totalTax / 2;
+            $igstRate = 0;
+            $igstAmount = 0;
         } else {
             // Inter-state: Full IGST
-            $igstRate = $avgGstRate;
+            $igstRate = $gstPercent;
             $igstAmount = $totalTax;
+            $cgstRate = $sgstRate = 0;
+            $cgstAmount = $sgstAmount = 0;
         }
 
         // Generate filename: Quotation number + date + time

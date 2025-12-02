@@ -32,6 +32,7 @@
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
+                            <th style="padding:12px; text-align:center; color:#333; font-weight:600; width:50px;">S.No</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Indent No</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Date</th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Created By</th>
@@ -40,8 +41,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($indents as $indent)
+                        @foreach($indents as $index => $indent)
                             <tr style="border-bottom:1px solid #dee2e6;">
+                                <td style="padding:10px 12px; text-align:center; color:#666;">{{ ($indents->currentPage() - 1) * $indents->perPage() + $index + 1 }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $indent->indent_no }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ optional($indent->indent_date)->format('d-m-Y') }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ optional($indent->creator)->name }}</td>

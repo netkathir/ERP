@@ -108,7 +108,7 @@ class RolePermissionController extends Controller
         if ($role->slug === 'super-admin') {
             abort(403, 'Super Admin role has access to all forms by default and cannot be modified.');
         }
-
+        
         // Load all active menus with submenus and forms (new Menu/Submenu/Form structure)
         $menus = Menu::with(['submenus' => function ($q) {
                 $q->where('is_active', true)->orderBy('name');
@@ -119,7 +119,7 @@ class RolePermissionController extends Controller
             }])
             ->where('is_active', true)
             ->orderBy('name')
-            ->get();
+                ->get();
 
         // Load existing form permissions for this role, key by form_id
         $roleFormPermissions = RoleFormPermission::where('role_id', $role->id)
@@ -131,7 +131,7 @@ class RolePermissionController extends Controller
             if ($r->slug === 'super-admin') {
                 return false;
             }
-            return true;
+                return true;
         });
 
         return view('masters.roles.permissions', [
@@ -148,17 +148,17 @@ class RolePermissionController extends Controller
         if ($role->slug === 'super-admin') {
             abort(403, 'Super Admin role has access to all forms by default and cannot be modified.');
         }
-
+        
         // Expecting input array: form_permissions[form_id][read|write|delete] = 1/0
         $data = $request->input('form_permissions', []);
-
+        
         $submittedFormIds = array_keys($data);
 
         foreach ($data as $formId => $flags) {
             $read   = !empty($flags['read']);
             $write  = !empty($flags['write']);
             $delete = !empty($flags['delete']);
-
+            
             if (!$read && !$write && !$delete) {
                 // No access selected -> remove any existing permission
                 RoleFormPermission::where('role_id', $role->id)

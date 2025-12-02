@@ -22,6 +22,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 50px;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Order No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Order Date</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender No</th>
@@ -29,8 +30,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($orders as $order)
+                    @foreach($orders as $index => $order)
                         <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 12px; text-align: center; color: #666;">{{ ($orders->currentPage() - 1) * $orders->perPage() + $index + 1 }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $order->order_no }}</td>
                             <td style="padding: 12px; color: #666;">{{ optional($order->order_date)->format('d-m-Y') }}</td>
                             <td style="padding: 12px; color: #666;">{{ optional($order->tender)->tender_no }}</td>

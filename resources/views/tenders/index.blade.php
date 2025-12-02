@@ -28,6 +28,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 50px;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Customer Tender No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Company</th>
@@ -39,8 +40,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($tenders as $tender)
+                    @foreach($tenders as $index => $tender)
                         <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 12px; text-align: center; color: #666;">{{ ($tenders->currentPage() - 1) * $tenders->perPage() + $index + 1 }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $tender->tender_no }}</td>
                             <td style="padding: 12px; color: #666;">{{ $tender->customer_tender_no ?? '-' }}</td>
                             <td style="padding: 12px; color: #666;">{{ $tender->company->company_name ?? '-' }}</td>
