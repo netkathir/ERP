@@ -377,14 +377,14 @@
                     <i class="fas fa-chevron-down arrow"></i>
                 </div>
                 <div class="menu-sub-items" id="enquirySalesMenu">
-                    <a href="{{ route('quotations.index') }}" class="menu-item" title="Quotations">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>Quotations</span>
-                    </a>
-                    <a href="{{ route('proforma-invoices.index') }}" class="menu-item" title="Proforma Invoices">
-                        <i class="fas fa-file-invoice"></i>
-                        <span>Proforma Invoices</span>
-                    </a>
+                <a href="{{ route('quotations.index') }}" class="menu-item" title="Quotations">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Quotations</span>
+                </a>
+                <a href="{{ route('proforma-invoices.index') }}" class="menu-item" title="Proforma Invoices">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>Proforma Invoices</span>
+                </a>
                 </div>
 
                 {{-- Tender Sales Module --}}
@@ -440,9 +440,9 @@
                 {{-- Purchase Module --}}
                  <div class="menu-item-header" onclick="togglePurchaseMenu()" id="purchaseHeader" style="margin-top: 10px;" title="Purchase">
                      <i class="fas fa-shopping-cart menu-header-icon"></i>
-                     <span>Purchase</span>
-                     <i class="fas fa-chevron-down arrow"></i>
-                 </div>
+                    <span>Purchase</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
                 <div class="menu-sub-items" id="purchaseMenu">
                     <a href="{{ route('purchase-indents.index') }}" class="menu-item" title="Purchase Indents">
                         <i class="fas fa-file-alt"></i>
@@ -466,9 +466,9 @@
 
                  <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader" title="Masters">
                      <i class="fas fa-database menu-header-icon"></i>
-                     <span>Masters</span>
-                     <i class="fas fa-chevron-down arrow"></i>
-                 </div>
+                    <span>Masters</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
                 <div class="menu-sub-items" id="mastersMenu">
                     @if(auth()->user()->hasPermission('units', 'view'))
                     <a href="{{ route('units.index') }}" class="menu-item" title="Units">
@@ -556,13 +556,13 @@
                     @endif
                 </div>
 
-                 {{-- Settings Menu (Super Admin only) --}}
-                 @if(auth()->user()->isSuperAdmin())
+                {{-- Settings Menu (Super Admin only) --}}
+                @if(auth()->user()->isSuperAdmin())
                      <div class="menu-item-header" onclick="toggleSettingsMenu()" id="settingsHeader" style="margin-top: 10px;" title="Settings">
                          <i class="fas fa-cog menu-header-icon"></i>
-                         <span>Settings</span>
-                         <i class="fas fa-chevron-down arrow"></i>
-                     </div>
+                        <span>Settings</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
                     <div class="menu-sub-items" id="settingsMenu">
                         <a href="{{ route('company-information.index') }}" class="menu-item" title="Company Information">
                             <i class="fas fa-building"></i>
@@ -907,6 +907,51 @@
                     systemAdminHeader.classList.add('collapsed');
                 }
             }
+
+            // Restore sidebar scroll position so it doesn't jump to top on navigation
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                const savedScroll = localStorage.getItem('sidebarScrollTop');
+                if (savedScroll !== null) {
+                    sidebar.scrollTop = parseInt(savedScroll, 10) || 0;
+                }
+                
+                // Persist scroll position while user scrolls
+                sidebar.addEventListener('scroll', function () {
+                    localStorage.setItem('sidebarScrollTop', sidebar.scrollTop);
+                });
+            }
+
+            // Add a Remove button next to every file input so users can clear selected files
+            document.querySelectorAll('input[type="file"]').forEach(function (input, index) {
+                // Avoid adding the button twice if DOMContentLoaded fires after ajax/partial loads
+                if (input.dataset.hasRemoveButton === 'true') {
+                    return;
+                }
+                input.dataset.hasRemoveButton = 'true';
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = 'Remove';
+                btn.style.marginLeft = '10px';
+                btn.style.padding = '6px 12px';
+                btn.style.backgroundColor = '#dc3545';
+                btn.style.color = '#fff';
+                btn.style.border = 'none';
+                btn.style.borderRadius = '4px';
+                btn.style.fontSize = '12px';
+                btn.style.cursor = 'pointer';
+
+                btn.addEventListener('click', function () {
+                    // Clear the currently selected file
+                    input.value = '';
+                });
+
+                // Insert button right after the file input
+                if (input.parentNode) {
+                    input.parentNode.insertBefore(btn, input.nextSibling);
+                }
+            });
         });
     </script>
     @stack('scripts')

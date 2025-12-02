@@ -44,10 +44,18 @@
 
         <div style="margin-bottom: 20px;">
             <label for="mobile" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Mobile Number</label>
-            <input type="text" name="mobile" id="mobile" value="{{ old('mobile') }}"
+            <input
+                type="tel"
+                name="mobile"
+                id="mobile"
+                value="{{ old('mobile') }}"
                 style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
                 class="@error('mobile') border-red-500 @enderror"
-                placeholder="e.g., +1234567890">
+                placeholder="e.g., 9876543210"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                title="Enter a valid 10-digit mobile number"
+                oninput="sanitizeMobileInput(this)">
             @error('mobile')
                 <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
             @enderror
@@ -153,6 +161,15 @@
 </div>
 
 <script>
+function sanitizeMobileInput(input) {
+    // Allow only digits and limit to 10 characters
+    let digits = input.value.replace(/\D/g, '');
+    if (digits.length > 10) {
+        digits = digits.slice(0, 10);
+    }
+    input.value = digits;
+}
+
 function toggleBranchSelection() {
     const roleSelect = document.getElementById('roles');
     const branchesSection = document.getElementById('branches-section');
@@ -202,6 +219,21 @@ function togglePasswordVisibility(inputId, btn) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     toggleBranchSelection();
+
+    // Front-end validation for mobile number on submit
+    const form = document.getElementById('userForm');
+    const mobileInput = document.getElementById('mobile');
+
+    if (form && mobileInput) {
+        form.addEventListener('submit', function (e) {
+            const value = mobileInput.value.trim();
+            if (value !== '' && !/^[0-9]{10}$/.test(value)) {
+                e.preventDefault();
+                alert('Please enter a valid 10-digit mobile number.');
+                mobileInput.focus();
+            }
+        });
+    }
 });
 </script>
 

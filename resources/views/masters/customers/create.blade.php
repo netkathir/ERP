@@ -52,6 +52,10 @@
             @enderror
         </div>
 
+        @php
+            $countries = ['India','United States','United Kingdom','Australia','Canada','Germany','France','Singapore','United Arab Emirates','Other'];
+        @endphp
+
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h3 style="color: #667eea; font-size: 16px; margin-bottom: 15px;">Billing Address</h3>
             <div style="margin-bottom: 15px;">
@@ -70,7 +74,7 @@
                     <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
                 @enderror
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
                 <div>
                     <label for="billing_city" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">City</label>
                     <input type="text" name="billing_city" id="billing_city" value="{{ old('billing_city') }}"
@@ -84,6 +88,18 @@
                     <input type="text" name="billing_state" id="billing_state" value="{{ old('billing_state') }}"
                         style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                     @error('billing_state')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="billing_country" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Country</label>
+                    <select name="billing_country" id="billing_country"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: #fff;">
+                        @foreach($countries as $country)
+                            <option value="{{ $country }}" {{ old('billing_country', 'India') === $country ? 'selected' : '' }}>{{ $country }}</option>
+                        @endforeach
+                    </select>
+                    @error('billing_country')
                         <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
                     @enderror
                 </div>
@@ -124,7 +140,7 @@
                     <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
                 @enderror
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
                 <div>
                     <label for="shipping_city" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">City</label>
                     <input type="text" name="shipping_city" id="shipping_city" value="{{ old('shipping_city') }}"
@@ -138,6 +154,18 @@
                     <input type="text" name="shipping_state" id="shipping_state" value="{{ old('shipping_state') }}"
                         style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                     @error('shipping_state')
+                        <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="shipping_country" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Country</label>
+                    <select name="shipping_country" id="shipping_country"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: #fff;">
+                        @foreach($countries as $country)
+                            <option value="{{ $country }}" {{ old('shipping_country', 'India') === $country ? 'selected' : '' }}>{{ $country }}</option>
+                        @endforeach
+                    </select>
+                    @error('shipping_country')
                         <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
                     @enderror
                 </div>
@@ -183,6 +211,7 @@
             document.getElementById('shipping_city').value = document.getElementById('billing_city').value;
             document.getElementById('shipping_state').value = document.getElementById('billing_state').value;
             document.getElementById('shipping_pincode').value = document.getElementById('billing_pincode').value;
+            document.getElementById('shipping_country').value = document.getElementById('billing_country').value;
         }
     }
 </script>

@@ -18,7 +18,7 @@ class ProformaInvoice extends Model
         'billing_city',
         'billing_state',
         'billing_pincode',
-        'gst_type',
+        'gst_type', 
         'gst_percent',
         'overall_discount_percent',
         'freight_charges', 

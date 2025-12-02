@@ -28,7 +28,8 @@ class TenderController extends Controller
             abort(403, 'You do not have permission to view tenders.');
         }
 
-        $query = Tender::with(['company', 'attendedBy']);
+        // Load related company, attended user, and items (for list view columns like Title)
+        $query = Tender::with(['company', 'attendedBy', 'items']);
         $query = $this->applyBranchFilter($query, Tender::class);
         $tenders = $query->latest()->paginate(15);
         return view('tenders.index', compact('tenders'));

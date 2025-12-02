@@ -30,12 +30,15 @@
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                         <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 50px;">S.No</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender No</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Customer Tender No</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Company</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Attended By</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Publishing Date</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Closing Date</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Status</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Cust. Tender No</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Closing Date &amp; Time</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Title</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Company Name</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender Type</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Bidding System</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender Status</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Rank</th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Estimation Price Status</th>
                         <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Actions</th>
                     </tr>
                 </thead>
@@ -45,15 +48,27 @@
                             <td style="padding: 12px; text-align: center; color: #666;">{{ ($tenders->currentPage() - 1) * $tenders->perPage() + $index + 1 }}</td>
                             <td style="padding: 12px; color: #333; font-weight: 500;">{{ $tender->tender_no }}</td>
                             <td style="padding: 12px; color: #666;">{{ $tender->customer_tender_no ?? '-' }}</td>
-                            <td style="padding: 12px; color: #666;">{{ $tender->company->company_name ?? '-' }}</td>
-                            <td style="padding: 12px; color: #666;">{{ $tender->attendedBy->name ?? '-' }}</td>
-                            <td style="padding: 12px; color: #666;">{{ $tender->publishing_date ? $tender->publishing_date->format('d/m/Y') : '-' }}</td>
                             <td style="padding: 12px; color: #666;">{{ $tender->closing_date_time ? $tender->closing_date_time->format('d/m/Y H:i') : '-' }}</td>
+                            @php
+                                $firstItemTitle = optional($tender->items->first())->title;
+                            @endphp
+                            <td style="padding: 12px; color: #666;">{{ $firstItemTitle ?: '-' }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $tender->company->company_name ?? '-' }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $tender->tender_type ?? '-' }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $tender->bidding_system ?? '-' }}</td>
                             <td style="padding: 12px;">
                                 <span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">
-                                    {{ $tender->tender_status }}
+                                    @if($tender->tender_status === 'Bid Coated')
+                                        Bid Quoted
+                                    @elseif($tender->tender_status === 'Bid not coated')
+                                        Bid Not Quoted
+                                    @else
+                                        {{ $tender->tender_status }}
+                                    @endif
                                 </span>
                             </td>
+                            <td style="padding: 12px; color: #666;">{{ $tender->technical_spec_rank ?? '-' }}</td>
+                            <td style="padding: 12px; color: #666;">{{ $tender->bid_result ?? '-' }}</td>
                             <td style="padding: 12px; text-align: center;">
                                 <div style="display: flex; gap: 8px; justify-content: center;">
                                     <a href="{{ route('tenders.show', $tender->id) }}" style="padding: 6px 12px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">

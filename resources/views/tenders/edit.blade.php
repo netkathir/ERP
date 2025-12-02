@@ -263,8 +263,6 @@
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Request for Price</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Price Received</th>
                         <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Price Quoted</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender Status</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Bid Result</th>
                         <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Action</th>
                     </tr>
                     </thead>
@@ -287,8 +285,8 @@
                     <div>
                         <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Tender Status</label>
                         <select name="tender_status" id="tender_status" onchange="toggleBidResult()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                            <option value="Bid not coated" {{ old('tender_status', $tender->tender_status ?? 'Bid not coated') == 'Bid not coated' ? 'selected' : '' }}>Bid not coated</option>
-                            <option value="Bid Coated" {{ old('tender_status', $tender->tender_status) == 'Bid Coated' ? 'selected' : '' }}>Bid Coated</option>
+                            <option value="Bid not coated" {{ old('tender_status', $tender->tender_status ?? 'Bid not coated') == 'Bid not coated' ? 'selected' : '' }}>Bid Not Quoted</option>
+                            <option value="Bid Coated" {{ old('tender_status', $tender->tender_status) == 'Bid Coated' ? 'selected' : '' }}>Bid Quoted</option>
                         </select>
                     </div>
                     <div>
@@ -437,7 +435,7 @@
 
 <!-- Add Customer Modal -->
 <div id="addCustomerModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div style="background-color: white; margin: 5% auto; padding: 30px; border-radius: 10px; width: 90%; max-width: 600px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div style="background-color: white; margin: 5% auto; padding: 30px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0; color: #333; font-size: 20px;">Add Customer</h3>
             <button type="button" onclick="closeAddCustomerModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
@@ -538,12 +536,6 @@
                 </td>
                 <td style="padding: 10px;">
                     <input type="number" name="items[${itemRowCount}][price_quoted]" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                </td>
-                <td style="padding: 10px;">
-                    <input type="text" name="items[${itemRowCount}][tender_status]" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                </td>
-                <td style="padding: 10px;">
-                    <input type="text" name="items[${itemRowCount}][bid_result]" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                 </td>
                 <td style="padding: 10px; text-align: center;">
                     <button type="button" onclick="removeItemRow(${itemRowCount})" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
@@ -814,12 +806,6 @@
                     </td>
                     <td style="padding: 10px;">
                         <input type="number" name="items[${itemRowCount}][price_quoted]" value="{{ $item->price_quoted }}" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                    </td>
-                    <td style="padding: 10px;">
-                        <input type="text" name="items[${itemRowCount}][tender_status]" value="{{ $item->tender_status }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                    </td>
-                    <td style="padding: 10px;">
-                        <input type="text" name="items[${itemRowCount}][bid_result]" value="{{ $item->bid_result }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                     </td>
                     <td style="padding: 10px; text-align: center;">
                         <button type="button" onclick="removeItemRow(${itemRowCount})" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">

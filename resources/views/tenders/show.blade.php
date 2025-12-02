@@ -81,7 +81,15 @@
                 <div><strong>Bidding System:</strong> {{ $tender->bidding_system ?? '-' }}</div>
                 <div><strong>Tender Document Cost:</strong> ₹{{ number_format($tender->tender_document_cost ?? 0, 2) }}</div>
                 <div><strong>EMD:</strong> ₹{{ number_format($tender->emd ?? 0, 2) }}</div>
-                <div><strong>Tender Status:</strong> {{ $tender->tender_status }}</div>
+                <div><strong>Tender Status:</strong>
+                    @if($tender->tender_status === 'Bid Coated')
+                        Bid Quoted
+                    @elseif($tender->tender_status === 'Bid not coated')
+                        Bid Not Quoted
+                    @else
+                        {{ $tender->tender_status }}
+                    @endif
+                </div>
                 <div><strong>Bid Result:</strong> {{ $tender->bid_result ?? '-' }}</div>
             </div>
             @if($tender->tender_document_attachment)

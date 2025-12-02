@@ -52,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Branch Management Routes
     Route::resource('branches', App\Http\Controllers\BranchController::class);
-    
+     
     // Branch Selection Routes
     Route::get('/branch/select', [App\Http\Controllers\BranchSelectionController::class, 'show'])->name('branch.select');
     Route::post('/branch/select', [App\Http\Controllers\BranchSelectionController::class, 'select'])->name('branch.select.post');
