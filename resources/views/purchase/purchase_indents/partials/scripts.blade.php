@@ -33,12 +33,16 @@
                 itemSelect.addEventListener('change', function () {
                     const id = this.value;
                     const data = rawMaterialsData[id];
-                    if (data) {
-                        if (descInput && !descInput.value) {
-                            descInput.value = data.description || '';
-                        }
-                        if (unitSelect && !unitSelect.value && data.unit_id) {
-                            unitSelect.value = data.unit_id;
+                    if (data && unitSelect && data.unit_id) {
+                        // Always set unit based on selected item
+                        unitSelect.value = data.unit_id;
+                        // If there is a hidden unit field in the same row, keep it in sync
+                        const row = this.closest('tr');
+                        if (row) {
+                            const hiddenUnit = row.querySelector('.unit-hidden');
+                            if (hiddenUnit) {
+                                hiddenUnit.value = data.unit_id;
+                            }
                         }
                     }
                 });

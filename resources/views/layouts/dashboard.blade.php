@@ -128,19 +128,23 @@
             background: rgba(255,255,255,0.3);
         }
         .menu-item-header {
-            padding: 10px 20px;
-            font-size: 12px;
-            color: #888;
+            padding: 12px 20px;
+            font-size: 13px;
+            color: #f9fafb;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.06em;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
             user-select: none;
-            transition: background 0.3s;
+            transition: background 0.3s, color 0.3s;
+            background: rgba(255,255,255,0.03);
         }
         .menu-item-header:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.12);
+            color: #ffffff;
         }
         .menu-item-header .menu-header-icon {
             font-size: 16px;
@@ -618,7 +622,7 @@
                                 style="padding: 8px 30px 8px 12px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: white; font-size: 14px; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=\"white\" height=\"20\" viewBox=\"0 0 24 24\" width=\"20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M7 10l5 5 5-5z\"/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
                                 @foreach($branchesForSelector as $branch)
                                     <option value="{{ $branch->id }}" {{ $activeBranchId == $branch->id ? 'selected' : '' }} style="background-color: #2c3e50; color: white;">
-                                        {{ $branch->name }} @if($branch->code)({{ $branch->code }})@endif
+                                        {{ $branch->name }}
                                     </option>
                                 @endforeach
                             </select>

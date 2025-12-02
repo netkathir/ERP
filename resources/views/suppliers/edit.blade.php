@@ -39,18 +39,27 @@
                     <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Supplier Name <span style="color:red;">*</span></label>
                     <input type="text" name="supplier_name" value="{{ old('supplier_name', $supplier->supplier_name) }}" required
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                    @error('supplier_name')
+                        <p style="color:#dc3545; font-size:12px; margin-top:5px;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Address Line 1</label>
-                    <input type="text" name="address_line_1" value="{{ old('address_line_1', $supplier->address_line_1) }}"
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Address Line 1 <span style="color:red;">*</span></label>
+                    <input type="text" name="address_line_1" value="{{ old('address_line_1', $supplier->address_line_1) }}" required
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                    @error('address_line_1')
+                        <p style="color:#dc3545; font-size:12px; margin-top:5px;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">City</label>
-                    <input type="text" name="city" value="{{ old('city', $supplier->city) }}"
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">City <span style="color:red;">*</span></label>
+                    <input type="text" name="city" value="{{ old('city', $supplier->city) }}" required
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                    @error('city')
+                        <p style="color:#dc3545; font-size:12px; margin-top:5px;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom:15px;">

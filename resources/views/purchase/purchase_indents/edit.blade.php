@@ -118,8 +118,9 @@
                                            style="width:90px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <select name="items[{{ $index }}][unit_id]" class="unit-select"
-                                            style="width:120px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                    <select class="unit-select"
+                                            style="width:120px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa;"
+                                            disabled>
                                         <option value="">Select Unit</option>
                                         @foreach($units as $unit)
                                             <option value="{{ $unit->id }}" {{ ($arrayItem['unit_id'] ?? null) == $unit->id ? 'selected' : '' }}>
@@ -127,6 +128,8 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <input type="hidden" name="items[{{ $index }}][unit_id]" class="unit-hidden"
+                                           value="{{ $arrayItem['unit_id'] ?? null }}">
                                 </td>
                                 <td style="padding:6px 8px;">
                                     <input type="date" name="items[{{ $index }}][schedule_date]"
