@@ -39,7 +39,16 @@ class UnitController extends Controller
             });
         }
 
-        $units = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'name': $query->orderBy('units.name', $sortOrder); break;
+            case 'symbol': $query->orderBy('units.symbol', $sortOrder); break;
+            default: $query->orderBy('units.id', $sortOrder); break;
+        }
+        $units = $query->paginate(15)->withQueryString();
         return view('masters.units.index', compact('units'));
     }
 

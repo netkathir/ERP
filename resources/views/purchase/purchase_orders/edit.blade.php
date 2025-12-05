@@ -59,8 +59,8 @@
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; background:#f8f9fa;">
                 </div>
                 <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Purchase Indent No</label>
-                    <select name="purchase_indent_id" id="purchase_indent_id" 
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Purchase Indent No <span style="color:red;">*</span></label>
+                    <select name="purchase_indent_id" id="purchase_indent_id" required
                             style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
                         <option value="">Select Purchase Indent</option>
                         @foreach($purchaseIndents as $indent)
@@ -89,6 +89,67 @@
             </div>
         </div>
 
+        {{-- Supplier Details --}}
+        <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
+                <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Supplier Details</h3>
+            </div>
+            <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Supplier Name <span style="color:red;">*</span></label>
+                    <select name="supplier_id" id="supplier_id" required
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        <option value="">Select Supplier</option>
+                        @foreach($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" {{ old('supplier_id', $purchaseOrder->supplier_id) == $supplier->id ? 'selected' : '' }}>
+                                {{ $supplier->supplier_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div style="grid-column:1/-1;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div>
+                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Address Line 1</label>
+                            <input type="text" name="supplier_address_line_1" id="supplier_address_line_1"
+                                   value="{{ old('supplier_address_line_1', $purchaseOrder->supplier_address_line_1) }}"
+                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Address Line 2</label>
+                            <input type="text" name="supplier_address_line_2" id="supplier_address_line_2"
+                                   value="{{ old('supplier_address_line_2', $purchaseOrder->supplier_address_line_2) }}"
+                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">City</label>
+                            <input type="text" name="supplier_city" id="supplier_city"
+                                   value="{{ old('supplier_city', $purchaseOrder->supplier_city) }}"
+                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">State</label>
+                            <input type="text" name="supplier_state" id="supplier_state"
+                                   value="{{ old('supplier_state', $purchaseOrder->supplier_state) }}"
+                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Email</label>
+                            <input type="email" name="supplier_email" id="supplier_email"
+                                   value="{{ old('supplier_email', $purchaseOrder->supplier_email) }}"
+                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">GST No</label>
+                            <input type="text" name="supplier_gst_no" id="supplier_gst_no"
+                                   value="{{ old('supplier_gst_no', $purchaseOrder->supplier_gst_no) }}"
+                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Ship To Section --}}
         <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
             <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
@@ -96,8 +157,8 @@
             </div>
             <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Ship To <span style="color:#dc3545;">*</span></label>
-                    <select name="ship_to" id="ship_to"
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Ship To <span style="color:red;">*</span></label>
+                    <select name="ship_to" id="ship_to" required
                             style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
                         @php $shipToValue = old('ship_to', $purchaseOrder->ship_to); @endphp
                         <option value="">Select Ship To</option>
@@ -169,66 +230,6 @@
             </div>
         </div>
 
-        {{-- Supplier Address --}}
-        <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
-                <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Supplier Address</h3>
-            </div>
-            <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Supplier <span style="color:#dc3545;">*</span></label>
-                    <select name="supplier_id" id="supplier_id"
-                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        <option value="">Select Supplier</option>
-                        @foreach($suppliers as $supplier)
-                            <option value="{{ $supplier->id }}" {{ old('supplier_id', $purchaseOrder->supplier_id) == $supplier->id ? 'selected' : '' }}>
-                                {{ $supplier->supplier_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div style="grid-column:1/-1;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                        <div>
-                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Address Line 1</label>
-                            <input type="text" name="supplier_address_line_1" id="supplier_address_line_1"
-                                   value="{{ old('supplier_address_line_1', $purchaseOrder->supplier_address_line_1) }}"
-                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Address Line 2</label>
-                            <input type="text" name="supplier_address_line_2" id="supplier_address_line_2"
-                                   value="{{ old('supplier_address_line_2', $purchaseOrder->supplier_address_line_2) }}"
-                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">City</label>
-                            <input type="text" name="supplier_city" id="supplier_city"
-                                   value="{{ old('supplier_city', $purchaseOrder->supplier_city) }}"
-                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">State</label>
-                            <input type="text" name="supplier_state" id="supplier_state"
-                                   value="{{ old('supplier_state', $purchaseOrder->supplier_state) }}"
-                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Email</label>
-                            <input type="email" name="supplier_email" id="supplier_email"
-                                   value="{{ old('supplier_email', $purchaseOrder->supplier_email) }}"
-                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">GST No</label>
-                            <input type="text" name="supplier_gst_no" id="supplier_gst_no"
-                                   value="{{ old('supplier_gst_no', $purchaseOrder->supplier_gst_no) }}"
-                                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         {{-- Billing Address --}}
         <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
@@ -237,8 +238,8 @@
             </div>
             <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Billing Address <span style="color:#dc3545;">*</span></label>
-                    <select name="billing_address_id" id="billing_address_id"
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Billing Address Company Name <span style="color:red;">*</span></label>
+                    <select name="billing_address_id" id="billing_address_id" required
                             style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
                         <option value="">Select Billing Address</option>
                         @foreach($billingAddresses as $billing)
@@ -303,16 +304,16 @@
                 <table style="width:100%; border-collapse:collapse;" id="itemsTable">
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
-                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Name <span style="color:#dc3545;">*</span></th>
-                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Description <span style="color:#dc3545;">*</span></th>
-                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Pack Details</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Name <span style="color:red;">*</span></th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Description <span style="color:red;">*</span></th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Pack Details <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Approved Qty</th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Already Raised PO Qty</th>
-                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">PO Quantity <span style="color:#dc3545;">*</span></th>
+                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">PO Quantity <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Expected Delivery Date</th>
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Unit</th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Qty in KG</th>
-                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Price <span style="color:#dc3545;">*</span></th>
+                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Price <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Amount</th>
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">PO Status</th>
                             <th style="padding:10px; text-align:center; color:#333; font-size:12px; width:80px;">Action</th>
@@ -328,7 +329,7 @@
                                 <td style="padding:6px 8px;">
                                     <input type="hidden" name="items[{{ $index }}][purchase_indent_item_id]" class="purchase_indent_item_id" value="{{ $item->purchase_indent_item_id }}">
                                     <input type="hidden" name="items[{{ $index }}][raw_material_id]" class="raw_material_id" value="{{ $item->raw_material_id }}">
-                                    <select name="items[{{ $index }}][item_name]" class="item_name"
+                                    <select name="items[{{ $index }}][item_name]" class="item_name" required
                                             {{ $isDisabled ? 'disabled' : '' }}
                                             style="width:120px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">
                                         <option value="">Select Item</option>
@@ -336,13 +337,13 @@
                                     </select>
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="text" name="items[{{ $index }}][item_description]" class="item_description"
+                                    <input type="text" name="items[{{ $index }}][item_description]" class="item_description" required
                                            value="{{ old('items.'.$index.'.item_description', $item->item_description) }}"
                                            readonly
                                            style="width:150px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; background:#f8f9fa;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="text" name="items[{{ $index }}][pack_details]" class="pack_details"
+                                    <input type="text" name="items[{{ $index }}][pack_details]" class="pack_details" required
                                            value="{{ old('items.'.$index.'.pack_details', $item->pack_details) }}"
                                            {{ $isDisabled ? 'readonly' : '' }}
                                            style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">
@@ -360,7 +361,7 @@
                                            style="width:120px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right; background:#f8f9fa;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="number" step="1" min="1" name="items[{{ $index }}][po_quantity]" class="po_quantity"
+                                    <input type="number" step="1" min="1" name="items[{{ $index }}][po_quantity]" class="po_quantity" required
                                            value="{{ old('items.'.$index.'.po_quantity', (int)$item->po_quantity) }}"
                                            {{ $isDisabled ? 'readonly' : '' }}
                                            style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">
@@ -386,7 +387,7 @@
                                            style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="number" step="0.01" name="items[{{ $index }}][price]" class="price"
+                                    <input type="number" step="0.01" name="items[{{ $index }}][price]" class="price" required
                                            value="{{ old('items.'.$index.'.price', $item->price) }}"
                                            {{ $isDisabled ? 'readonly' : '' }}
                                            style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">

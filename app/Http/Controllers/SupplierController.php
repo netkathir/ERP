@@ -40,7 +40,36 @@ class SupplierController extends Controller
             });
         }
 
-        $suppliers = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        switch ($sortBy) {
+            case 'supplier_name':
+                $query->orderBy('suppliers.supplier_name', $sortOrder);
+                break;
+            case 'code':
+                $query->orderBy('suppliers.code', $sortOrder);
+                break;
+            case 'supplier_type':
+                $query->orderBy('suppliers.supplier_type', $sortOrder);
+                break;
+            case 'city':
+                $query->orderBy('suppliers.city', $sortOrder);
+                break;
+            case 'state':
+                $query->orderBy('suppliers.state', $sortOrder);
+                break;
+            default:
+                $query->orderBy('suppliers.id', $sortOrder);
+                break;
+        }
+
+        $suppliers = $query->paginate(15)->withQueryString();
 
         return view('suppliers.index', compact('suppliers'));
     }
@@ -74,12 +103,16 @@ class SupplierController extends Controller
 
         $qmsStatusOptions = ['Yes', 'No'];
 
+        // Indian states list
+        $states = $this->getIndianStates();
+
         return view('suppliers.create', compact(
             'typeOfControlOptions',
             'supplierTypeOptions',
             'auditFrequencyOptions',
             'codeOptions',
-            'qmsStatusOptions'
+            'qmsStatusOptions',
+            'states'
         ));
     }
 
@@ -98,7 +131,7 @@ class SupplierController extends Controller
             'address_line_2' => 'nullable|string|max:255',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
-            'contact_person' => 'nullable|string|max:255',
+            'contact_person' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
             'gst' => 'nullable|string|max:50',
@@ -178,13 +211,17 @@ class SupplierController extends Controller
 
         $qmsStatusOptions = ['Yes', 'No'];
 
+        // Indian states list
+        $states = $this->getIndianStates();
+
         return view('suppliers.edit', compact(
             'supplier',
             'typeOfControlOptions',
             'supplierTypeOptions',
             'auditFrequencyOptions',
             'codeOptions',
-            'qmsStatusOptions'
+            'qmsStatusOptions',
+            'states'
         ));
     }
 
@@ -207,7 +244,7 @@ class SupplierController extends Controller
             'address_line_2' => 'nullable|string|max:255',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
-            'contact_person' => 'nullable|string|max:255',
+            'contact_person' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
             'gst' => 'nullable|string|max:50',
@@ -251,6 +288,23 @@ class SupplierController extends Controller
         $supplier->delete();
 
         return redirect()->route('suppliers.index')->with('success', 'Supplier deleted successfully.');
+    }
+
+    /**
+     * Get Indian states list
+     */
+    private function getIndianStates()
+    {
+        return [
+            'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+            'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+            'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+            'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+            'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+            'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+            'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+            'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+        ];
     }
 }
 

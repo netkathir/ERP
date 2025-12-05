@@ -62,9 +62,12 @@
                 </div>
 
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Contact Person</label>
-                    <input type="text" name="contact_person" value="{{ old('contact_person') }}"
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Contact Person <span style="color:red;">*</span></label>
+                    <input type="text" name="contact_person" value="{{ old('contact_person') }}" required
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                    @error('contact_person')
+                        <p style="color:#dc3545; font-size:12px; margin-top:5px;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div style="margin-bottom:15px;">
@@ -158,8 +161,13 @@
 
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">State <span style="color:red;">*</span></label>
-                    <input type="text" name="state" value="{{ old('state') }}"
-                           style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;" required>
+                    <select name="state" id="state" required
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; background:white;">
+                        <option value="">Select State</option>
+                        @foreach($states as $state)
+                            <option value="{{ $state }}" {{ old('state') == $state ? 'selected' : '' }}>{{ $state }}</option>
+                        @endforeach
+                    </select>
                     @error('state')
                         <p style="color:#dc3545; font-size:12px; margin-top:5px;">{{ $message }}</p>
                     @enderror

@@ -51,7 +51,36 @@ class CustomerOrderController extends Controller
             });
         }
 
-        $orders = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        switch ($sortBy) {
+            case 'order_no':
+                $query->orderBy('customer_orders.order_no', $sortOrder);
+                break;
+            case 'order_date':
+                $query->orderBy('customer_orders.order_date', $sortOrder);
+                break;
+            case 'tender_no':
+                $query->leftJoin('tenders', 'customer_orders.tender_id', '=', 'tenders.id')
+                      ->orderBy('tenders.tender_no', $sortOrder)
+                      ->select('customer_orders.*')
+                      ->distinct();
+                break;
+            case 'status':
+                $query->orderBy('customer_orders.status', $sortOrder);
+                break;
+            default:
+                $query->orderBy('customer_orders.id', $sortOrder);
+                break;
+        }
+
+        $orders = $query->paginate(15)->withQueryString();
 
         return view('customer_orders.index', compact('orders'));
     }

@@ -85,39 +85,156 @@
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
-                            <th style="padding:12px; text-align:center; color:#333; font-weight:600; width:50px;">S.No</th>
-                            <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Indent No</th>
-                            <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Date</th>
-                            <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Created By</th>
-                            <th style="padding:12px; text-align:left; color:#333; font-weight:600;">Status</th>
+                            <th style="padding:12px; text-align:center; color:#333; font-weight:600; width:50px; white-space:nowrap;">
+                                <span style="display:inline-flex; align-items:center; gap:5px;">
+                                    S.No
+                                    @php
+                                        $currentSortBy = request('sort_by', 'id');
+                                        $currentSortOrder = request('sort_order', 'desc');
+                                        $newSortOrder = ($currentSortBy == 'id' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                    @endphp
+                                    <a href="#" class="sort-link" data-sort-by="id" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                        @if($currentSortBy == 'id')
+                                            @if($currentSortOrder == 'desc')
+                                                <i class="fas fa-sort-down"></i>
+                                            @else
+                                                <i class="fas fa-sort-up"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                        @endif
+                                    </a>
+                                </span>
+                            </th>
+                            <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
+                                <span style="display:inline-flex; align-items:center; gap:5px;">
+                                    Purchase Indent Raised User Name
+                                    @php
+                                        $newSortOrder = ($currentSortBy == 'created_by' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                    @endphp
+                                    <a href="#" class="sort-link" data-sort-by="created_by" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                        @if($currentSortBy == 'created_by')
+                                            @if($currentSortOrder == 'desc')
+                                                <i class="fas fa-sort-down"></i>
+                                            @else
+                                                <i class="fas fa-sort-up"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                        @endif
+                                    </a>
+                                </span>
+                            </th>
+                            <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
+                                Purchase Indent Raised By
+                            </th>
+                            <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
+                                Item
+                            </th>
+                            <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
+                                <span style="display:inline-flex; align-items:center; gap:5px;">
+                                    Approval Status
+                                    @php
+                                        $newSortOrder = ($currentSortBy == 'status' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                    @endphp
+                                    <a href="#" class="sort-link" data-sort-by="status" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                        @if($currentSortBy == 'status')
+                                            @if($currentSortOrder == 'desc')
+                                                <i class="fas fa-sort-down"></i>
+                                            @else
+                                                <i class="fas fa-sort-up"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                        @endif
+                                    </a>
+                                </span>
+                            </th>
+                            <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
+                                Purchase Order Status
+                            </th>
+                            <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
+                                <span style="display:inline-flex; align-items:center; gap:5px;">
+                                    Purchase Indent Submission Date
+                                    @php
+                                        $newSortOrder = ($currentSortBy == 'created_at' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                    @endphp
+                                    <a href="#" class="sort-link" data-sort-by="created_at" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                        @if($currentSortBy == 'created_at')
+                                            @if($currentSortOrder == 'desc')
+                                                <i class="fas fa-sort-down"></i>
+                                            @else
+                                                <i class="fas fa-sort-up"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                        @endif
+                                    </a>
+                                </span>
+                            </th>
+                            <th style="padding:12px; text-align:center; color:#333; font-weight:600; white-space:nowrap;">
+                                Purchase Order Access
+                            </th>
                             <th style="padding:12px; text-align:center; color:#333; font-weight:600; width:220px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($indents as $index => $indent)
+                            @php
+                                // Get Purchase Indent Raised By (updater if approved, otherwise creator)
+                                $raisedBy = $indent->status === 'Approved' && $indent->updater ? $indent->updater->name : optional($indent->creator)->name;
+                                
+                                // Get items list
+                                $itemsList = $indent->items->map(function($item) {
+                                    return optional($item->rawMaterial)->name ?? 'N/A';
+                                })->unique()->take(3)->implode(', ');
+                                if ($indent->items->count() > 3) {
+                                    $itemsList .= ' (+' . ($indent->items->count() - 3) . ' more)';
+                                }
+                                if (empty($itemsList)) {
+                                    $itemsList = 'No items';
+                                }
+                                
+                                // Get Purchase Order Status (aggregate from items)
+                                $poStatuses = $indent->items->pluck('po_status')->filter()->unique();
+                                $poStatus = $poStatuses->count() > 0 ? $poStatuses->implode(', ') : 'Not Placed';
+                                
+                                // Check if purchase order exists for this indent
+                                $hasPurchaseOrder = $indent->items->whereNotNull('po_status')->count() > 0;
+                            @endphp
                             <tr style="border-bottom:1px solid #dee2e6;">
                                 <td style="padding:10px 12px; text-align:center; color:#666;">{{ ($indents->currentPage() - 1) * $indents->perPage() + $index + 1 }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ $indent->indent_no }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ optional($indent->indent_date)->format('d-m-Y') }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ optional($indent->creator)->name }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ optional($indent->creator)->name ?? 'N/A' }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ $raisedBy ?? 'N/A' }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ $itemsList }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $indent->status }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ $poStatus }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ optional($indent->created_at)->format('d-m-Y') ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; text-align:center;">
-                                    <a href="{{ route('purchase-indents.show', $indent->id) }}"
-                                       style="padding:6px 10px; background:#17a2b8; color:white; border-radius:4px; font-size:12px; text-decoration:none; margin-right:4px;">
-                                        View
+                                    <a href="{{ route('purchase-orders.create', ['purchase_indent_id' => $indent->id]) }}"
+                                       style="padding:6px 10px; background:#007bff; color:white; border-radius:4px; font-size:12px; text-decoration:none; display:inline-block;">
+                                        Access PO
                                     </a>
-                                    <a href="{{ route('purchase-indents.edit', $indent->id) }}"
-                                       style="padding:6px 10px; background:#ffc107; color:#212529; border-radius:4px; font-size:12px; text-decoration:none; margin-right:4px;">
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('purchase-indents.destroy', $indent->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this purchase indent?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                style="padding:6px 10px; background:#dc3545; color:white; border:none; border-radius:4px; font-size:12px; cursor:pointer;">
-                                            Delete
-                                        </button>
-                                    </form>
+                                </td>
+                                <td style="padding:10px 12px; text-align:center;">
+                                    <div style="display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:nowrap;">
+                                        <a href="{{ route('purchase-indents.show', $indent->id) }}"
+                                           style="padding:6px 10px; background:#17a2b8; color:white; border-radius:4px; font-size:12px; text-decoration:none; white-space:nowrap; display:inline-block;">
+                                            View
+                                        </a>
+                                        <a href="{{ route('purchase-indents.edit', $indent->id) }}"
+                                           style="padding:6px 10px; background:#ffc107; color:#212529; border-radius:4px; font-size:12px; text-decoration:none; white-space:nowrap; display:inline-block;">
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('purchase-indents.destroy', $indent->id) }}" method="POST" style="display:inline-block; margin:0;" onsubmit="return confirm('Are you sure you want to delete this purchase indent?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    style="padding:6px 10px; background:#dc3545; color:white; border:none; border-radius:4px; font-size:12px; cursor:pointer; white-space:nowrap;">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -126,11 +243,75 @@
             </div>
         </div>
 
-        <div style="margin-top:15px;">
+        <div style="margin-top:15px;" id="pagination-container">
             {{ $indents->links() }}
         </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sortLinks = document.querySelectorAll('.sort-link');
+    const tableBody = document.querySelector('table tbody');
+    const paginationContainer = document.getElementById('pagination-container');
+    
+    sortLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortBy = this.getAttribute('data-sort-by');
+            const sortOrder = this.getAttribute('data-sort-order');
+            
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="9" style="padding:20px; text-align:center; color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('sort_by', sortBy);
+            urlParams.set('sort_order', sortOrder);
+            
+            fetch('{{ route("purchase-indents.index") }}?' + urlParams.toString(), {
+                method: 'GET',
+                headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html'},
+                credentials: 'same-origin'
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTableBody = doc.querySelector('table tbody');
+                const newPagination = doc.querySelector('#pagination-container') || doc.querySelector('[style*="margin-top:15px"]');
+                
+                if (newTableBody && tableBody) tableBody.innerHTML = newTableBody.innerHTML;
+                if (newPagination && paginationContainer) paginationContainer.innerHTML = newPagination.innerHTML;
+                
+                window.history.pushState({}, '', '{{ route("purchase-indents.index") }}?' + urlParams.toString());
+                updateSortIcons(sortBy, sortOrder);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (tableBody) tableBody.innerHTML = '<tr><td colspan="9" style="padding:20px; text-align:center; color:#dc3545;">Error loading data.</td></tr>';
+            });
+        });
+    });
+    
+    function updateSortIcons(activeSortBy, activeSortOrder) {
+        sortLinks.forEach(link => {
+            const sortBy = link.getAttribute('data-sort-by');
+            const icon = link.querySelector('i');
+            if (sortBy === activeSortBy) {
+                icon.className = activeSortOrder === 'desc' ? 'fas fa-sort-down' : 'fas fa-sort-up';
+                icon.style.opacity = '1';
+                link.setAttribute('data-sort-order', activeSortOrder === 'desc' ? 'asc' : 'desc');
+            } else {
+                icon.className = 'fas fa-sort';
+                icon.style.opacity = '0.3';
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection
 
 

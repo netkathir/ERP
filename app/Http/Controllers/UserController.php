@@ -18,25 +18,39 @@ class UserController extends Controller
      *
      * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         
+        $query = User::with(['role', 'branches']);
+        
         if ($user->isSuperAdmin()) {
             // Super Admin can see all users (active, inactive, locked)
-            $users = User::with(['role', 'branches'])
-                ->latest()
-                ->paginate(15);
+            // Query already set
         } elseif ($user->isBranchUser()) {
             // Branch User can only see themselves
-            $users = User::where('id', $user->id)
-                ->with(['role', 'branches'])
-                ->paginate(15);
+            $query->where('id', $user->id);
         } else {
-            $users = User::where('id', $user->id)
-                ->with(['role', 'branches'])
-                ->paginate(15);
+            $query->where('id', $user->id);
         }
+        
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'name': $query->orderBy('users.name', $sortOrder); break;
+            case 'email': $query->orderBy('users.email', $sortOrder); break;
+            case 'role':
+                $query->leftJoin('roles', 'users.role_id', '=', 'roles.id')
+                      ->orderBy('roles.name', $sortOrder)
+                      ->select('users.*')
+                      ->distinct();
+                break;
+            default: $query->orderBy('users.id', $sortOrder); break;
+        }
+        
+        $users = $query->paginate(15)->withQueryString();
         
         return view('users.index', compact('users'));
     }

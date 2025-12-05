@@ -65,13 +65,13 @@
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
                             <th style="padding:10px; text-align:left; color:#333;">Date</th>
-                            <th style="padding:10px; text-align:left; color:#333;">Item</th>
+                            <th style="padding:10px; text-align:left; color:#333;">Item <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:left; color:#333;">Item Description</th>
-                            <th style="padding:10px; text-align:right; color:#333;">Quantity</th>
+                            <th style="padding:10px; text-align:right; color:#333;">Qty <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:left; color:#333;">Unit</th>
-                            <th style="padding:10px; text-align:left; color:#333;">Schedule Date</th>
-                            <th style="padding:10px; text-align:left; color:#333;">Special Instructions</th>
-                            <th style="padding:10px; text-align:left; color:#333;">Supplier</th>
+                            <th style="padding:10px; text-align:left; color:#333;">Schedule Date <span style="color:red;">*</span></th>
+                            <th style="padding:10px; text-align:left; color:#333;">Special Instructions <span style="color:red;">*</span></th>
+                            <th style="padding:10px; text-align:left; color:#333;">Supplier <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:center; color:#333; width:80px;">Action</th>
                         </tr>
                     </thead>
@@ -84,7 +84,7 @@
                                            style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <select name="items[{{ $index }}][raw_material_id]" class="item-select"
+                                    <select name="items[{{ $index }}][raw_material_id]" class="item-select" required
                                             style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                         <option value="">Select Item</option>
                                         @foreach($rawMaterials as $rm)
@@ -100,8 +100,8 @@
                                            style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="number" step="0.001" min="0" name="items[{{ $index }}][quantity]"
-                                           value="{{ old('items.'.$index.'.quantity', 0) }}"
+                                    <input type="number" step="0.001" min="0.001" name="items[{{ $index }}][quantity]" required
+                                           value="{{ old('items.'.$index.'.quantity', '') }}"
                                            style="width:90px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
                                 </td>
                                 <td style="padding:6px 8px;">
@@ -119,17 +119,17 @@
                                            value="{{ old('items.'.$index.'.unit_id') }}">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="date" name="items[{{ $index }}][schedule_date]"
+                                    <input type="date" name="items[{{ $index }}][schedule_date]" required
                                            value="{{ old('items.'.$index.'.schedule_date') }}"
                                            style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="text" name="items[{{ $index }}][special_instructions]"
+                                    <input type="text" name="items[{{ $index }}][special_instructions]" required
                                            value="{{ old('items.'.$index.'.special_instructions') }}"
                                            style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <select name="items[{{ $index }}][supplier_id]" class="supplier-select"
+                                    <select name="items[{{ $index }}][supplier_id]" class="supplier-select" required
                                             style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                         <option value="">Select Supplier</option>
                                         @foreach($suppliers as $supplier)

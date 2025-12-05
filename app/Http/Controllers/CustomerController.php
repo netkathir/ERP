@@ -32,7 +32,18 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'company_name': $query->orderBy('customers.company_name', $sortOrder); break;
+            case 'contact_name': $query->orderBy('customers.contact_name', $sortOrder); break;
+            case 'gst_no': $query->orderBy('customers.gst_no', $sortOrder); break;
+            case 'billing_city': $query->orderBy('customers.billing_city', $sortOrder); break;
+            default: $query->orderBy('customers.id', $sortOrder); break;
+        }
+        $customers = $query->paginate(15)->withQueryString();
         return view('masters.customers.index', compact('customers'));
     }
 

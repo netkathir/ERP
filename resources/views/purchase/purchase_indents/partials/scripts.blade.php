@@ -67,6 +67,21 @@
                 } else {
                     input.value = '';
                 }
+                
+                // Preserve required attribute for: Item, Quantity, Schedule Date, Special Instructions, Supplier
+                const inputName = newName.toLowerCase();
+                if (inputName.includes('raw_material_id') || 
+                    inputName.includes('quantity') || 
+                    inputName.includes('schedule_date') || 
+                    inputName.includes('special_instructions') ||
+                    inputName.includes('supplier_id')) {
+                    input.setAttribute('required', 'required');
+                }
+                
+                // Set min value for quantity to ensure it's greater than 0
+                if (inputName.includes('quantity') && input.type === 'number') {
+                    input.setAttribute('min', '0.001');
+                }
             });
 
             tableBody.appendChild(newRow);

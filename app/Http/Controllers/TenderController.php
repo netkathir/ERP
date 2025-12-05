@@ -77,7 +77,39 @@ class TenderController extends Controller
             });
         }
 
-        $tenders = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        switch ($sortBy) {
+            case 'tender_no':
+                $query->orderBy('tenders.tender_no', $sortOrder);
+                break;
+            case 'customer_tender_no':
+                $query->orderBy('tenders.customer_tender_no', $sortOrder);
+                break;
+            case 'company_name':
+                $query->leftJoin('customers', 'tenders.company_id', '=', 'customers.id')
+                      ->orderBy('customers.company_name', $sortOrder)
+                      ->select('tenders.*')
+                      ->distinct();
+                break;
+            case 'closing_date':
+                $query->orderBy('tenders.closing_date_time', $sortOrder);
+                break;
+            case 'tender_status':
+                $query->orderBy('tenders.tender_status', $sortOrder);
+                break;
+            default:
+                $query->orderBy('tenders.id', $sortOrder);
+                break;
+        }
+
+        $tenders = $query->paginate(15)->withQueryString();
         return view('tenders.index', compact('tenders'));
     }
 

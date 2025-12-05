@@ -75,11 +75,103 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 50px;">S.No</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Customer Order No</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Order Date</th>
-                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600;">Tender No</th>
-                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Status</th>
+                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 50px; white-space:nowrap;">
+                            <span style="display:inline-flex; align-items:center; gap:5px;">
+                                S.No
+                                @php
+                                    $currentSortBy = request('sort_by', 'id');
+                                    $currentSortOrder = request('sort_order', 'desc');
+                                    $newSortOrder = ($currentSortBy == 'id' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                @endphp
+                                <a href="#" class="sort-link" data-sort-by="id" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                    @if($currentSortBy == 'id')
+                                        @if($currentSortOrder == 'desc')
+                                            <i class="fas fa-sort-down"></i>
+                                        @else
+                                            <i class="fas fa-sort-up"></i>
+                                        @endif
+                                    @else
+                                        <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                    @endif
+                                </a>
+                            </span>
+                        </th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; white-space:nowrap;">
+                            <span style="display:inline-flex; align-items:center; gap:5px;">
+                                Customer Order No
+                                @php
+                                    $newSortOrder = ($currentSortBy == 'order_no' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                @endphp
+                                <a href="#" class="sort-link" data-sort-by="order_no" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                    @if($currentSortBy == 'order_no')
+                                        @if($currentSortOrder == 'desc')
+                                            <i class="fas fa-sort-down"></i>
+                                        @else
+                                            <i class="fas fa-sort-up"></i>
+                                        @endif
+                                    @else
+                                        <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                    @endif
+                                </a>
+                            </span>
+                        </th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; white-space:nowrap;">
+                            <span style="display:inline-flex; align-items:center; gap:5px;">
+                                Order Date
+                                @php
+                                    $newSortOrder = ($currentSortBy == 'order_date' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                @endphp
+                                <a href="#" class="sort-link" data-sort-by="order_date" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                    @if($currentSortBy == 'order_date')
+                                        @if($currentSortOrder == 'desc')
+                                            <i class="fas fa-sort-down"></i>
+                                        @else
+                                            <i class="fas fa-sort-up"></i>
+                                        @endif
+                                    @else
+                                        <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                    @endif
+                                </a>
+                            </span>
+                        </th>
+                        <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; white-space:nowrap;">
+                            <span style="display:inline-flex; align-items:center; gap:5px;">
+                                Tender No
+                                @php
+                                    $newSortOrder = ($currentSortBy == 'tender_no' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                @endphp
+                                <a href="#" class="sort-link" data-sort-by="tender_no" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                    @if($currentSortBy == 'tender_no')
+                                        @if($currentSortOrder == 'desc')
+                                            <i class="fas fa-sort-down"></i>
+                                        @else
+                                            <i class="fas fa-sort-up"></i>
+                                        @endif
+                                    @else
+                                        <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                    @endif
+                                </a>
+                            </span>
+                        </th>
+                        <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; white-space:nowrap;">
+                            <span style="display:inline-flex; align-items:center; gap:5px; justify-content:center;">
+                                Status
+                                @php
+                                    $newSortOrder = ($currentSortBy == 'status' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                @endphp
+                                <a href="#" class="sort-link" data-sort-by="status" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                    @if($currentSortBy == 'status')
+                                        @if($currentSortOrder == 'desc')
+                                            <i class="fas fa-sort-down"></i>
+                                        @else
+                                            <i class="fas fa-sort-up"></i>
+                                        @endif
+                                    @else
+                                        <i class="fas fa-sort" style="opacity:0.3;"></i>
+                                    @endif
+                                </a>
+                            </span>
+                        </th>
                         <th style="padding: 12px; text-align: center; color: #333; font-weight: 600;">Actions</th>
                     </tr>
                 </thead>
@@ -120,7 +212,7 @@
             </table>
         </div>
 
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 20px;" id="pagination-container">
             {{ $orders->links() }}
         </div>
     @else
@@ -132,6 +224,87 @@
         </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sortLinks = document.querySelectorAll('.sort-link');
+    const tableBody = document.querySelector('table tbody');
+    const paginationContainer = document.getElementById('pagination-container');
+    
+    sortLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const sortBy = this.getAttribute('data-sort-by');
+            const sortOrder = this.getAttribute('data-sort-order');
+            
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('sort_by', sortBy);
+            urlParams.set('sort_order', sortOrder);
+            
+            fetch('{{ route("customer-orders.index") }}?' + urlParams.toString(), {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newTableBody = doc.querySelector('table tbody');
+                const newPagination = doc.querySelector('#pagination-container') || doc.querySelector('[style*="margin-top:20px"]');
+                
+                if (newTableBody && tableBody) {
+                    tableBody.innerHTML = newTableBody.innerHTML;
+                }
+                
+                if (newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+                
+                window.history.pushState({}, '', '{{ route("customer-orders.index") }}?' + urlParams.toString());
+                updateSortIcons(sortBy, sortOrder);
+            })
+            .catch(error => {
+                console.error('Error sorting data:', error);
+                if (tableBody) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color:#dc3545;">Error loading data. Please refresh the page.</td></tr>';
+                }
+            });
+        });
+    });
+    
+    function updateSortIcons(activeSortBy, activeSortOrder) {
+        sortLinks.forEach(link => {
+            const sortBy = link.getAttribute('data-sort-by');
+            const icon = link.querySelector('i');
+            
+            if (sortBy === activeSortBy) {
+                if (activeSortOrder === 'desc') {
+                    icon.className = 'fas fa-sort-down';
+                } else {
+                    icon.className = 'fas fa-sort-up';
+                }
+                icon.style.opacity = '1';
+                link.setAttribute('data-sort-order', activeSortOrder === 'desc' ? 'asc' : 'desc');
+            } else {
+                icon.className = 'fas fa-sort';
+                icon.style.opacity = '0.3';
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection
 
 

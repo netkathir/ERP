@@ -26,7 +26,7 @@
                 <label for="search" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Search:</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}"
                     style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
-                    placeholder="Search by Subcontractor Name, Date (dd-mm-yyyy)...">
+                    placeholder="Search by ID, Subcontractor, Contact Person, Total Score, Assessment Result, Status, Date...">
             </div>
             <div>
                 <a href="{{ route('subcontractor-evaluations.index') }}" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-weight: 500; display: inline-flex; align-items: center;">

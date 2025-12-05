@@ -27,7 +27,7 @@ class PurchaseOrderController extends Controller
             abort(403, 'You do not have permission to view purchase orders.');
         }
 
-        $query = PurchaseOrder::with(['creator', 'items', 'purchaseIndent']);
+        $query = PurchaseOrder::with(['creator', 'items', 'purchaseIndent.creator', 'supplier']);
         $query = $this->applyBranchFilter($query, PurchaseOrder::class);
 
         // Search functionality
@@ -38,6 +38,9 @@ class PurchaseOrderController extends Controller
                   ->orWhereHas('purchaseIndent', function($indentQuery) use ($search) {
                       $indentQuery->where('indent_no', 'like', "%{$search}%");
                   })
+                  ->orWhereHas('supplier', function($supplierQuery) use ($search) {
+                      $supplierQuery->where('supplier_name', 'like', "%{$search}%");
+                  })
                   // Search in dates
                   ->orWhereRaw("DATE_FORMAT(po_date, '%d-%m-%Y') LIKE ?", ["%{$search}%"])
                   ->orWhereRaw("DATE_FORMAT(po_date, '%d/%m/%Y') LIKE ?", ["%{$search}%"])
@@ -46,7 +49,57 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        $purchaseOrders = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        // Validate sort order
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        // Handle sorting for different columns
+        switch ($sortBy) {
+            case 'po_no':
+                $query->orderBy('purchase_orders.po_no', $sortOrder);
+                break;
+            case 'supplier_name':
+                $query->leftJoin('suppliers', 'purchase_orders.supplier_id', '=', 'suppliers.id')
+                      ->orderBy('suppliers.supplier_name', $sortOrder)
+                      ->select('purchase_orders.*')
+                      ->distinct();
+                break;
+            case 'purchase_indent_no':
+                $query->leftJoin('purchase_indents', 'purchase_orders.purchase_indent_id', '=', 'purchase_indents.id')
+                      ->orderBy('purchase_indents.indent_no', $sortOrder)
+                      ->select('purchase_orders.*')
+                      ->distinct();
+                break;
+            case 'material_inward_status':
+                // Material Inward Status is based on delivery_status from items
+                // We'll use a subquery to get the latest delivery status
+                $query->orderByRaw("(
+                    SELECT delivery_status 
+                    FROM purchase_order_items 
+                    WHERE purchase_order_items.purchase_order_id = purchase_orders.id 
+                    AND delivery_status IS NOT NULL
+                    ORDER BY id DESC 
+                    LIMIT 1
+                ) {$sortOrder}");
+                break;
+            case 'purchase_indent_raised_user':
+                $query->leftJoin('purchase_indents', 'purchase_orders.purchase_indent_id', '=', 'purchase_indents.id')
+                      ->leftJoin('users', 'purchase_indents.created_by_id', '=', 'users.id')
+                      ->orderBy('users.name', $sortOrder)
+                      ->select('purchase_orders.*')
+                      ->distinct();
+                break;
+            default:
+                $query->orderBy('purchase_orders.id', $sortOrder);
+                break;
+        }
+
+        $purchaseOrders = $query->paginate(15)->withQueryString();
 
         return view('purchase.purchase_orders.index', compact('purchaseOrders'));
     }

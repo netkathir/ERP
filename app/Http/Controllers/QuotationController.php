@@ -34,7 +34,22 @@ class QuotationController extends Controller
             });
         }
 
-        $quotations = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'quotation_no': $query->orderBy('quotations.quotation_no', $sortOrder); break;
+            case 'quotation_date': $query->orderBy('quotations.quotation_date', $sortOrder); break;
+            case 'customer_name':
+                $query->leftJoin('customers', 'quotations.customer_id', '=', 'customers.id')
+                      ->orderBy('customers.company_name', $sortOrder)
+                      ->select('quotations.*')
+                      ->distinct();
+                break;
+            default: $query->orderBy('quotations.id', $sortOrder); break;
+        }
+        $quotations = $query->paginate(15)->withQueryString();
         return view('quotations.index', compact('quotations'));
     }
 

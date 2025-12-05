@@ -23,7 +23,7 @@ class PurchaseIndentController extends Controller
             abort(403, 'You do not have permission to view purchase indents.');
         }
 
-        $query = PurchaseIndent::with(['creator', 'items']);
+        $query = PurchaseIndent::with(['creator', 'updater', 'items.rawMaterial', 'items']);
         $query = $this->applyBranchFilter($query, PurchaseIndent::class);
 
         // Search functionality
@@ -40,7 +40,39 @@ class PurchaseIndentController extends Controller
             });
         }
 
-        $indents = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        switch ($sortBy) {
+            case 'indent_no':
+                $query->orderBy('purchase_indents.indent_no', $sortOrder);
+                break;
+            case 'indent_date':
+                $query->orderBy('purchase_indents.indent_date', $sortOrder);
+                break;
+            case 'created_by':
+                $query->leftJoin('users', 'purchase_indents.created_by_id', '=', 'users.id')
+                      ->orderBy('users.name', $sortOrder)
+                      ->select('purchase_indents.*')
+                      ->distinct();
+                break;
+            case 'status':
+                $query->orderBy('purchase_indents.status', $sortOrder);
+                break;
+            case 'created_at':
+                $query->orderBy('purchase_indents.created_at', $sortOrder);
+                break;
+            default:
+                $query->orderBy('purchase_indents.id', $sortOrder);
+                break;
+        }
+
+        $indents = $query->paginate(15)->withQueryString();
 
         return view('purchase.purchase_indents.index', compact('indents'));
     }
@@ -287,11 +319,10 @@ class PurchaseIndentController extends Controller
             'items' => 'required|array|min:1',
             'items.*.raw_material_id' => 'required|exists:raw_materials,id',
             'items.*.item_description' => 'nullable|string',
-            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_id' => 'required|exists:units,id',
-            // Schedule date is optional; validate only when provided
-            'items.*.schedule_date' => 'nullable|date|after_or_equal:' . $today,
-            'items.*.special_instructions' => 'nullable|string',
+            'items.*.schedule_date' => 'required|date|after_or_equal:' . $today,
+            'items.*.special_instructions' => 'required|string',
             'items.*.supplier_id' => 'required|exists:suppliers,id',
             'items.*.po_status' => 'nullable|string|max:255',
             'items.*.lr_details' => 'nullable|string|max:255',

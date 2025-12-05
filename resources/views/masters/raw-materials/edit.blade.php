@@ -42,8 +42,8 @@
         </div>
 
         <div style="margin-bottom: 20px;">
-            <label for="raw_material_sub_category_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Raw Material SubCategory <span style="color: red;">*</span></label>
-            <select name="raw_material_sub_category_id" id="raw_material_sub_category_id" required
+            <label for="raw_material_sub_category_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Raw Material SubCategory</label>
+            <select name="raw_material_sub_category_id" id="raw_material_sub_category_id"
                 style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: white;">
                 <option value="">Select</option>
                 @foreach($subCategories as $subCategory)

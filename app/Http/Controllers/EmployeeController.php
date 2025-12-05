@@ -45,7 +45,29 @@ class EmployeeController extends Controller
             });
         }
 
-        $employees = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'employee_code': $query->orderBy('employees.employee_code', $sortOrder); break;
+            case 'name': $query->orderBy('employees.name', $sortOrder); break;
+            case 'email': $query->orderBy('employees.email', $sortOrder); break;
+            case 'department': 
+                $query->leftJoin('departments', 'employees.department_id', '=', 'departments.id')
+                      ->orderBy('departments.name', $sortOrder)
+                      ->select('employees.*')
+                      ->distinct();
+                break;
+            case 'designation':
+                $query->leftJoin('designations', 'employees.designation_id', '=', 'designations.id')
+                      ->orderBy('designations.name', $sortOrder)
+                      ->select('employees.*')
+                      ->distinct();
+                break;
+            default: $query->orderBy('employees.id', $sortOrder); break;
+        }
+        $employees = $query->paginate(15)->withQueryString();
         return view('masters.employees.index', compact('employees'));
     }
 

@@ -35,7 +35,39 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        switch ($sortBy) {
+            case 'name':
+                $query->orderBy('products.name', $sortOrder);
+                break;
+            case 'code':
+                $query->orderBy('products.code', $sortOrder);
+                break;
+            case 'category':
+                $query->leftJoin('product_categories', 'products.product_category_id', '=', 'product_categories.id')
+                      ->orderBy('product_categories.name', $sortOrder)
+                      ->select('products.*')
+                      ->distinct();
+                break;
+            case 'unit':
+                $query->leftJoin('units', 'products.unit_id', '=', 'units.id')
+                      ->orderBy('units.name', $sortOrder)
+                      ->select('products.*')
+                      ->distinct();
+                break;
+            default:
+                $query->orderBy('products.id', $sortOrder);
+                break;
+        }
+
+        $products = $query->paginate(15)->withQueryString();
         return view('masters.products.index', compact('products'));
     }
 

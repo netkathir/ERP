@@ -19,13 +19,27 @@ class SubcontractorEvaluationController extends Controller
         $query = SubcontractorEvaluation::with('supplier');
         $query = $this->applyBranchFilter($query, SubcontractorEvaluation::class);
 
-        // Search functionality
+        // Search functionality - search across all columns
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
-                $q->whereHas('supplier', function($supplierQuery) use ($search) {
+                // Search by ID
+                if (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+                
+                // Search by Subcontractor Name
+                $q->orWhereHas('supplier', function($supplierQuery) use ($search) {
                     $supplierQuery->where('supplier_name', 'like', "%{$search}%");
                 })
+                // Search by Contact Person
+                ->orWhere('contact_person', 'like', "%{$search}%")
+                // Search by Total Score
+                ->orWhere('total_score', 'like', "%{$search}%")
+                // Search by Assessment Result
+                ->orWhere('assessment_result', 'like', "%{$search}%")
+                // Search by Status
+                ->orWhere('status', 'like', "%{$search}%")
                 // Search in dates
                 ->orWhereRaw("DATE_FORMAT(created_at, '%d-%m-%Y') LIKE ?", ["%{$search}%"])
                 ->orWhereRaw("DATE_FORMAT(created_at, '%d/%m/%Y') LIKE ?", ["%{$search}%"])
@@ -68,7 +82,10 @@ class SubcontractorEvaluationController extends Controller
         $assessmentResults = ['Approved', 'Needs Improvement', 'Not Approved'];
         $statusOptions = ['Pending', 'Approved', 'Rejected'];
 
-        return view('suppliers.subcontractor_evaluations.create', compact('suppliers', 'assessmentResults', 'statusOptions', 'suppliersData'));
+        // Indian states list
+        $states = $this->getIndianStates();
+
+        return view('suppliers.subcontractor_evaluations.create', compact('suppliers', 'assessmentResults', 'statusOptions', 'suppliersData', 'states'));
     }
 
     public function store(Request $request)
@@ -145,7 +162,10 @@ class SubcontractorEvaluationController extends Controller
         $assessmentResults = ['Approved', 'Needs Improvement', 'Not Approved'];
         $statusOptions = ['Pending', 'Approved', 'Rejected'];
 
-        return view('suppliers.subcontractor_evaluations.edit', compact('evaluation', 'suppliers', 'assessmentResults', 'statusOptions', 'suppliersData'));
+        // Indian states list
+        $states = $this->getIndianStates();
+
+        return view('suppliers.subcontractor_evaluations.edit', compact('evaluation', 'suppliers', 'assessmentResults', 'statusOptions', 'suppliersData', 'states'));
     }
 
     public function update(Request $request, $id)
@@ -305,6 +325,23 @@ class SubcontractorEvaluationController extends Controller
         }
 
         return [$total, $total];
+    }
+
+    /**
+     * Get Indian states list
+     */
+    private function getIndianStates()
+    {
+        return [
+            'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+            'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+            'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+            'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+            'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+            'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+            'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+            'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+        ];
     }
 }
 

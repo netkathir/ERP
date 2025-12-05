@@ -47,7 +47,34 @@ class RawMaterialController extends Controller
             });
         }
 
-        $rawMaterials = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'name': $query->orderBy('raw_materials.name', $sortOrder); break;
+            case 'code': $query->orderBy('raw_materials.code', $sortOrder); break;
+            case 'category':
+                $query->leftJoin('raw_material_categories', 'raw_materials.raw_material_category_id', '=', 'raw_material_categories.id')
+                      ->orderBy('raw_material_categories.name', $sortOrder)
+                      ->select('raw_materials.*')
+                      ->distinct();
+                break;
+            case 'sub_category':
+                $query->leftJoin('raw_material_sub_categories', 'raw_materials.raw_material_sub_category_id', '=', 'raw_material_sub_categories.id')
+                      ->orderBy('raw_material_sub_categories.name', $sortOrder)
+                      ->select('raw_materials.*')
+                      ->distinct();
+                break;
+            case 'unit':
+                $query->leftJoin('units', 'raw_materials.unit_id', '=', 'units.id')
+                      ->orderBy('units.name', $sortOrder)
+                      ->select('raw_materials.*')
+                      ->distinct();
+                break;
+            default: $query->orderBy('raw_materials.id', $sortOrder); break;
+        }
+        $rawMaterials = $query->paginate(15)->withQueryString();
         return view('masters.raw-materials.index', compact('rawMaterials'));
     }
 
@@ -90,7 +117,7 @@ class RawMaterialController extends Controller
 
         $request->validate([
             'raw_material_category_id' => 'required|exists:raw_material_categories,id',
-            'raw_material_sub_category_id' => 'required|exists:raw_material_sub_categories,id',
+            'raw_material_sub_category_id' => 'nullable|exists:raw_material_sub_categories,id',
             'name' => 'required|string|max:255',
             'grade' => 'nullable|string|max:255',
             'thickness' => 'nullable|string|max:255',
@@ -102,7 +129,6 @@ class RawMaterialController extends Controller
         ], [
             'raw_material_category_id.required' => 'Raw Material Category is required.',
             'raw_material_category_id.exists' => 'Selected Raw Material Category does not exist.',
-            'raw_material_sub_category_id.required' => 'Raw Material SubCategory is required.',
             'raw_material_sub_category_id.exists' => 'Selected Raw Material SubCategory does not exist.',
             'name.required' => 'Raw Material is required.',
             'unit_id.required' => 'UOM is required.',
@@ -176,7 +202,7 @@ class RawMaterialController extends Controller
 
         $request->validate([
             'raw_material_category_id' => 'required|exists:raw_material_categories,id',
-            'raw_material_sub_category_id' => 'required|exists:raw_material_sub_categories,id',
+            'raw_material_sub_category_id' => 'nullable|exists:raw_material_sub_categories,id',
             'name' => 'required|string|max:255',
             'grade' => 'nullable|string|max:255',
             'thickness' => 'nullable|string|max:255',
@@ -188,7 +214,6 @@ class RawMaterialController extends Controller
         ], [
             'raw_material_category_id.required' => 'Raw Material Category is required.',
             'raw_material_category_id.exists' => 'Selected Raw Material Category does not exist.',
-            'raw_material_sub_category_id.required' => 'Raw Material SubCategory is required.',
             'raw_material_sub_category_id.exists' => 'Selected Raw Material SubCategory does not exist.',
             'name.required' => 'Raw Material is required.',
             'unit_id.required' => 'UOM is required.',

@@ -497,22 +497,22 @@
                     <i class="fas fa-chevron-down arrow"></i>
                 </div>
                 <div class="menu-sub-items" id="mastersMenu">
+                    @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('departments.index') }}" class="menu-item" title="Departments">
+                        <i class="fas fa-building"></i>
+                        <span>Departments</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('designations', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('designations.index') }}" class="menu-item" title="Designations">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Designations</span>
+                    </a>
+                    @endif
                     @if(auth()->user()->hasPermission('units', 'view'))
                     <a href="{{ route('units.index') }}" class="menu-item" title="Units">
                         <i class="fas fa-balance-scale"></i>
                         <span>Units</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('customers', 'view'))
-                    <a href="{{ route('customers.index') }}" class="menu-item" title="Customers">
-                        <i class="fas fa-users"></i>
-                        <span>Customers</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('products', 'view'))
-                    <a href="{{ route('products.index') }}" class="menu-item" title="Products">
-                        <i class="fas fa-box"></i>
-                        <span>Products</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('raw-material-categories', 'view') || auth()->user()->isSuperAdmin())
@@ -527,10 +527,22 @@
                         <span>Raw Material SubCategories</span>
                     </a>
                     @endif
+                    @if(auth()->user()->hasPermission('raw-materials', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-materials.index') }}" class="menu-item" title="Raw Materials">
+                        <i class="fas fa-cube"></i>
+                        <span>Raw Materials</span>
+                    </a>
+                    @endif
                     @if(auth()->user()->hasPermission('product-categories', 'view') || auth()->user()->isSuperAdmin())
                     <a href="{{ route('product-categories.index') }}" class="menu-item" title="Product Categories">
                         <i class="fas fa-tags"></i>
                         <span>Product Categories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('products', 'view'))
+                    <a href="{{ route('products.index') }}" class="menu-item" title="Products">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('processes', 'view') || auth()->user()->isSuperAdmin())
@@ -545,34 +557,22 @@
                         <span>BOM Processes</span>
                     </a>
                     @endif
-                    @if(auth()->user()->hasPermission('raw-materials', 'view') || auth()->user()->isSuperAdmin())
-                    <a href="{{ route('raw-materials.index') }}" class="menu-item" title="Raw Materials">
-                        <i class="fas fa-cube"></i>
-                        <span>Raw Materials</span>
+                    @if(auth()->user()->hasPermission('employees', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('employees.index') }}" class="menu-item" title="Employees">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Employees</span>
                     </a>
                     @endif
-                    @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->isSuperAdmin())
-                    <a href="{{ route('departments.index') }}" class="menu-item" title="Departments">
-                        <i class="fas fa-building"></i>
-                        <span>Departments</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('designations', 'view') || auth()->user()->isSuperAdmin())
-                    <a href="{{ route('designations.index') }}" class="menu-item" title="Designations">
-                        <i class="fas fa-user-tie"></i>
-                        <span>Designations</span>
+                    @if(auth()->user()->hasPermission('customers', 'view'))
+                    <a href="{{ route('customers.index') }}" class="menu-item" title="Customers">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('production-departments', 'view') || auth()->user()->isSuperAdmin())
                     <a href="{{ route('production-departments.index') }}" class="menu-item" title="Production Departments">
                         <i class="fas fa-industry"></i>
                         <span>Production Departments</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('employees', 'view') || auth()->user()->isSuperAdmin())
-                    <a href="{{ route('employees.index') }}" class="menu-item" title="Employees">
-                        <i class="fas fa-user-friends"></i>
-                        <span>Employees</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('billing-addresses', 'view') || auth()->user()->isSuperAdmin())

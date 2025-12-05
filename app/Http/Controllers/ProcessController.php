@@ -33,7 +33,15 @@ class ProcessController extends Controller
             });
         }
 
-        $processes = $query->latest()->paginate(15)->withQueryString();
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'name': $query->orderBy('processes.name', $sortOrder); break;
+            default: $query->orderBy('processes.id', $sortOrder); break;
+        }
+        $processes = $query->paginate(15)->withQueryString();
         return view('masters.processes.index', compact('processes'));
     }
 

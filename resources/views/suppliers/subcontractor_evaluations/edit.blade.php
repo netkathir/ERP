@@ -70,8 +70,13 @@
                     </div>
                     <div>
                         <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">State <span style="color:red;">*</span></label>
-                        <input type="text" name="state" id="state" value="{{ old('state', $evaluation->state) }}"
-                               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; background:#f8f9fa;" readonly required>
+                        <select name="state" id="state" required
+                                style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; background:#f8f9fa;" readonly>
+                            <option value="">Select State</option>
+                            @foreach($states as $stateOption)
+                                <option value="{{ $stateOption }}" {{ old('state', $evaluation->state) == $stateOption ? 'selected' : '' }}>{{ $stateOption }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
