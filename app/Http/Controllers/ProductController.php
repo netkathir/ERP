@@ -65,7 +65,21 @@ class ProductController extends Controller
 
         $data = $request->all();
         $data['branch_id'] = $this->getActiveBranchId();
-        \App\Models\Product::create($data);
+        $product = \App\Models\Product::create($data);
+
+        // If this is an AJAX request, return JSON response
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Product created successfully.',
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'unit_id' => $product->unit_id,
+                    'unit_symbol' => optional($product->unit)->symbol ?? '',
+                ]
+            ]);
+        }
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }

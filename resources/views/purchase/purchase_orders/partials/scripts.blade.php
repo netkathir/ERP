@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
     @php
         $placeholderId = 'ROUTE_ID_PLACEHOLDER_12345';
         $purchaseIndentItemsUrlPattern = route('purchase-orders.purchase-indent.items', ['id' => $placeholderId]);
+        $purchaseIndentItemsDisplayUrlPattern = route('purchase-orders.purchase-indent.items.display', ['id' => $placeholderId]);
         $customerDetailsUrlPattern = route('purchase-orders.customer', ['id' => $placeholderId]);
         $supplierDetailsUrlPattern = route('purchase-orders.supplier', ['id' => $placeholderId]);
         $billingAddressDetailsUrlPattern = route('purchase-orders.billing-address', ['id' => $placeholderId]);
@@ -144,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (purchaseIndentSelect) {
         purchaseIndentSelect.addEventListener('change', function() {
             const indentId = this.value;
+            
             if (indentId) {
                 // Show loading state
                 const loadingMsg = document.createElement('div');

@@ -82,6 +82,37 @@
         </div>
 
         <!-- Items Section -->
+        {{-- Tender Items Details Section (View Only) --}}
+        <div id="tender_items_details_section" style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:none;">
+            <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
+                <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Tender Items Details</h3>
+            </div>
+            <div style="padding:20px; overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">PL Code</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Title</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Description</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Delivery Location</th>
+                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Qty</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Unit</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Request for Price</th>
+                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Price Received</th>
+                            <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Price Quoted</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Tender Status</th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Bid Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tender_items_details_table_body">
+                        <tr>
+                            <td colspan="11" style="padding:10px; text-align:center; color:#777;">Select a Tender to view details.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div style="background: white; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6; border-radius: 5px 5px 0 0; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; color: #667eea; font-size: 18px; font-weight: 600;">Items</h3>
@@ -93,7 +124,12 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 20%;">Product Name <span style="color:red;">*</span></th>
+                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 20%;">
+                                Product Name <span style="color:red;">*</span>
+                                <button type="button" onclick="openAddProductModal()" style="margin-left: 10px; padding: 4px 8px; background: #28a745; color: white; border: none; border-radius: 3px; font-size: 11px; cursor: pointer; font-weight: 500;">
+                                    <i class="fas fa-plus"></i> Add Product
+                                </button>
+                            </th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 25%;">Description</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 10%;">Unit <span style="color:red;">*</span></th>
                             <th style="padding: 12px; text-align: right; color: #333; font-weight: 600; width: 12%;">Quantity <span style="color:red;">*</span></th>
@@ -307,19 +343,176 @@
 @include('customer_orders.partials.schedule_modal')
 @include('customer_orders.partials.amendment_modal')
 
+<!-- Add Product Modal -->
+<div id="addProductModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h2 style="color: #333; font-size: 24px; margin: 0;">Add Product</h2>
+            <button type="button" onclick="closeAddProductModal()" style="background: none; border: none; font-size: 24px; color: #999; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="addProductModalErrors" style="display: none; background: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+            <ul style="margin: 0; padding-left: 20px;" id="addProductModalErrorsList"></ul>
+        </div>
+
+        <form id="addProductForm">
+            <div style="margin-bottom: 20px;">
+                <label for="modal_product_category_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Product Category</label>
+                <select name="product_category_id" id="modal_product_category_id"
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: white;">
+                    <option value="">Select Product Category</option>
+                    @if(isset($productCategories) && $productCategories->count() > 0)
+                        @foreach($productCategories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    @else
+                        <option value="" disabled>No Product Categories available</option>
+                    @endif
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="modal_product_name" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Product Name <span style="color: red;">*</span></label>
+                <input type="text" name="name" id="modal_product_name" required
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="modal_product_description" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Description</label>
+                <textarea name="description" id="modal_product_description" rows="4"
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="modal_product_unit_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Unit <span style="color: red;">*</span></label>
+                <select name="unit_id" id="modal_product_unit_id" required
+                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    <option value="">Select Unit</option>
+                    @foreach($units as $unit)
+                        <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->symbol }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 30px; justify-content: flex-end;">
+                <button type="button" onclick="closeAddProductModal()" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 5px; font-weight: 500; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 5px; font-weight: 500; cursor: pointer;">
+                    Save Product
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     const tendersMeta = @json($tendersMeta);
     const units = @json($unitsData);
     const products = @json($productsData);
+    const routeIdPlaceholder = '{{ $placeholderId ?? 'PLACEHOLDER_ID' }}';
+    const tenderItemsDisplayUrl = @json(route('customer-orders.tender.items.display', ['id' => $placeholderId ?? 'PLACEHOLDER_ID']));
 
     let itemIndexCounter = 0;
     let selectedItemIndex = null; // index into items array for schedule/amendment
     let schedules = []; // { item_index, product_name, po_sr_no, ordered_qty, quantity, unit_id, unit_symbol, start_date, end_date, inspection_clause }
     let amendments = []; // { item_index, product_name, po_sr_no, ordered_qty, amendment_no, amendment_date, existing_quantity, new_quantity, remarks }
 
+    // Function to load and display Tender Items Details table
+    function loadTenderItemsDetailsTable(tenderId) {
+        const detailsSection = document.getElementById('tender_items_details_section');
+        const detailsTableBody = document.getElementById('tender_items_details_table_body');
+        
+        if (!tenderId) {
+            // Hide the section if no tender is selected
+            if (detailsSection) {
+                detailsSection.style.display = 'none';
+            }
+            if (detailsTableBody) {
+                detailsTableBody.innerHTML = '<tr><td colspan="11" style="padding:10px; text-align:center; color:#777;">Select a Tender to view details.</td></tr>';
+            }
+            return;
+        }
+        
+        // Show the section
+        if (detailsSection) {
+            detailsSection.style.display = 'block';
+        }
+        
+        // Clear existing rows
+        if (detailsTableBody) {
+            detailsTableBody.innerHTML = '<tr><td colspan="11" style="padding:10px; text-align:center; color:#777;">Loading details...</td></tr>';
+        }
+        
+        // Fetch all items for display
+        const displayUrl = tenderItemsDisplayUrl.replace(routeIdPlaceholder, tenderId);
+        fetch(displayUrl, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error (${response.status})`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const items = Array.isArray(data) ? data : [];
+                
+                if (items.length === 0) {
+                    if (detailsTableBody) {
+                        detailsTableBody.innerHTML = '<tr><td colspan="11" style="padding:20px; text-align:center; color:#666;">No items found in this Tender.</td></tr>';
+                    }
+                    return;
+                }
+                
+                // Populate the table
+                detailsTableBody.innerHTML = '';
+                items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid #eee';
+                    
+                    row.innerHTML = `
+                        <td style="padding:8px 10px; font-size:12px;">${item.pl_code || ''}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.title || ''}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.description || ''}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.delivery_location || ''}</td>
+                        <td style="padding:8px 10px; text-align:right; font-size:12px;">${item.qty || '0'}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.unit_symbol || ''}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.request_for_price || 'No'}</td>
+                        <td style="padding:8px 10px; text-align:right; font-size:12px;">${item.price_received ? '₹' + parseFloat(item.price_received).toFixed(2) : ''}</td>
+                        <td style="padding:8px 10px; text-align:right; font-size:12px;">${item.price_quoted ? '₹' + parseFloat(item.price_quoted).toFixed(2) : ''}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.tender_status || ''}</td>
+                        <td style="padding:8px 10px; font-size:12px;">${item.bid_result || ''}</td>
+                    `;
+                    
+                    if (detailsTableBody) {
+                        detailsTableBody.appendChild(row);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading tender items details:', error);
+                if (detailsTableBody) {
+                    detailsTableBody.innerHTML = '<tr><td colspan="11" style="padding:20px; text-align:center; color:#dc3545;">Error loading tender items details.</td></tr>';
+                }
+            });
+    }
+
     document.getElementById('tender_id').addEventListener('change', function () {
         const tenderId = this.value;
+
+        // Load the Tender Items Details table
+        loadTenderItemsDetailsTable(tenderId);
 
         // Auto-populate header fields from selected tender (if data available)
         const meta = tendersMeta[tenderId] || {};
@@ -702,6 +895,133 @@
     // Initialize tax calculation on page load
     document.addEventListener('DOMContentLoaded', function() {
         recalculateTax();
+    });
+
+    // Add Product Modal Functions
+    let targetProductSelectIndex = null; // Store which product select to update after creation
+
+    function openAddProductModal(index = null) {
+        targetProductSelectIndex = index;
+        document.getElementById('addProductModal').style.display = 'flex';
+        document.getElementById('addProductForm').reset();
+        document.getElementById('addProductModalErrors').style.display = 'none';
+    }
+
+    function closeAddProductModal() {
+        document.getElementById('addProductModal').style.display = 'none';
+        targetProductSelectIndex = null;
+        document.getElementById('addProductForm').reset();
+        document.getElementById('addProductModalErrors').style.display = 'none';
+    }
+
+    // Handle form submission
+    document.getElementById('addProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        fetch('{{ route("products.store") }}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Add new product to products array
+                const newProduct = {
+                    id: data.product.id,
+                    name: data.product.name,
+                    unit_id: data.product.unit_id,
+                    unit_symbol: data.product.unit_symbol
+                };
+                products.push(newProduct);
+                
+                // Update all product dropdowns
+                updateAllProductDropdowns(newProduct);
+                
+                // If a specific index was provided, select the new product in that dropdown
+                if (targetProductSelectIndex !== null) {
+                    const select = document.getElementById(`product_${targetProductSelectIndex}`);
+                    if (select) {
+                        select.value = newProduct.id;
+                        onProductSelect(targetProductSelectIndex);
+                    }
+                }
+                
+                // Close modal
+                closeAddProductModal();
+                
+                // Show success message
+                alert('Product created successfully and added to the list!');
+            } else {
+                throw new Error(data.message || 'Failed to create product');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorsList = document.getElementById('addProductModalErrorsList');
+            errorsList.innerHTML = '';
+            
+            if (error.errors) {
+                // Display validation errors
+                Object.keys(error.errors).forEach(key => {
+                    const errorMessages = Array.isArray(error.errors[key]) ? error.errors[key] : [error.errors[key]];
+                    errorMessages.forEach(msg => {
+                        const li = document.createElement('li');
+                        li.textContent = msg;
+                        errorsList.appendChild(li);
+                    });
+                });
+                document.getElementById('addProductModalErrors').style.display = 'block';
+            } else if (error.message) {
+                const li = document.createElement('li');
+                li.textContent = error.message;
+                errorsList.appendChild(li);
+                document.getElementById('addProductModalErrors').style.display = 'block';
+            } else {
+                alert('Error creating product: Unknown error occurred');
+            }
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        });
+    });
+
+    function updateAllProductDropdowns(newProduct) {
+        // Update all product select dropdowns in the items table
+        const allProductSelects = document.querySelectorAll('select[id^="product_"]');
+        allProductSelects.forEach(select => {
+            // Check if option already exists
+            const existingOption = Array.from(select.options).find(opt => opt.value == newProduct.id);
+            if (!existingOption) {
+                const option = document.createElement('option');
+                option.value = newProduct.id;
+                option.textContent = newProduct.name;
+                select.appendChild(option);
+            }
+        });
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('addProductModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAddProductModal();
+        }
     });
 </script>
 @endpush

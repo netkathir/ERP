@@ -590,6 +590,62 @@ class PurchaseOrderController extends Controller
     }
 
     /**
+     * Get all purchase indent items for display (view-only table)
+     * Returns ALL items regardless of remaining quantity
+     */
+    public function getPurchaseIndentItemsForDisplay($purchaseIndentId)
+    {
+        try {
+            // Don't apply branch filter here - we want to load items from the selected purchase indent
+            $purchaseIndent = PurchaseIndent::with(['items.rawMaterial.unit', 'items.supplier'])
+                ->findOrFail($purchaseIndentId);
+
+            // Check if purchase indent has items
+            if (!$purchaseIndent->items || $purchaseIndent->items->isEmpty()) {
+                return response()->json([
+                    'items' => []
+                ], 200);
+            }
+
+            // Return ALL items for display purposes
+            $items = $purchaseIndent->items
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'item_name' => optional($item->rawMaterial)->name ?? '',
+                        'item_description' => $item->item_description ?? '',
+                        'quantity' => (float)($item->quantity ?? 0),
+                        'unit_symbol' => optional($item->unit)->symbol ?? optional($item->unit)->name ?? '',
+                        'schedule_date' => optional($item->schedule_date)->format('d-m-Y') ?? '',
+                        'supplier_name' => optional($item->supplier)->supplier_name ?? '',
+                        'special_instructions' => $item->special_instructions ?? '',
+                        'po_status' => $item->po_status ?? '',
+                        'lr_details' => $item->lr_details ?? '',
+                        'booking_agency' => $item->booking_agency ?? '',
+                        'delivered_qty' => $item->delivered_qty ?? '',
+                        'delivery_status' => $item->delivery_status ?? '',
+                        'po_remarks' => $item->po_remarks ?? '',
+                    ];
+                })
+                ->values();
+
+            return response()->json($items->all());
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Purchase Indent not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error loading purchase indent items for display: ' . $e->getMessage(), [
+                'purchase_indent_id' => $purchaseIndentId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Error loading purchase indent items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get customer details
      */
     public function getCustomerDetails($customerId)

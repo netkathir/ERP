@@ -105,7 +105,14 @@ class CustomerOrderController extends Controller
             return ['id' => $u->id, 'symbol' => $u->symbol];
         });
 
-        return view('customer_orders.create', compact('tenders', 'orderNo', 'units', 'unitsData', 'tendersMeta', 'products', 'productsData'));
+        // Load Product Categories for the Add Product modal
+        $categoryQuery = \App\Models\ProductCategory::query();
+        $categoryQuery = $this->applyBranchFilter($categoryQuery, \App\Models\ProductCategory::class);
+        $productCategories = $categoryQuery->orderBy('name')->get();
+
+        $placeholderId = 'PLACEHOLDER_ID';
+
+        return view('customer_orders.create', compact('tenders', 'orderNo', 'units', 'unitsData', 'tendersMeta', 'products', 'productsData', 'productCategories', 'placeholderId'));
     }
 
     public function store(Request $request)
@@ -349,7 +356,14 @@ class CustomerOrderController extends Controller
             ];
         })->values();
 
-        return view('customer_orders.edit', compact('order', 'tenders', 'units', 'unitsData', 'products', 'productsData', 'schedulesData', 'amendmentsData'));
+        // Load Product Categories for the Add Product modal
+        $categoryQuery = \App\Models\ProductCategory::query();
+        $categoryQuery = $this->applyBranchFilter($categoryQuery, \App\Models\ProductCategory::class);
+        $productCategories = $categoryQuery->orderBy('name')->get();
+
+        $placeholderId = 'PLACEHOLDER_ID';
+
+        return view('customer_orders.edit', compact('order', 'tenders', 'units', 'unitsData', 'products', 'productsData', 'schedulesData', 'amendmentsData', 'productCategories', 'placeholderId'));
     }
 
     public function show($id)
@@ -600,6 +614,53 @@ class CustomerOrderController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error approving Customer Order: ' . $e->getMessage());
+        }
+    }
+
+    public function getTenderItemsForDisplay($tenderId)
+    {
+        try {
+            $tender = Tender::with(['items.unit'])
+                ->findOrFail($tenderId);
+
+            if (!$tender->items || $tender->items->isEmpty()) {
+                return response()->json([
+                    'error' => 'No items found in this Tender.',
+                    'items' => []
+                ], 200);
+            }
+
+            $items = $tender->items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'pl_code' => $item->pl_code ?? '',
+                    'title' => $item->title ?? '',
+                    'description' => $item->description ?? '',
+                    'delivery_location' => $item->delivery_location ?? '',
+                    'qty' => (float)($item->qty ?? 0),
+                    'unit_id' => $item->unit_id,
+                    'unit_symbol' => optional($item->unit)->symbol ?? '',
+                    'request_for_price' => $item->request_for_price ?? 'No',
+                    'price_received' => (float)($item->price_received ?? 0),
+                    'price_quoted' => (float)($item->price_quoted ?? 0),
+                    'tender_status' => $item->tender_status ?? '',
+                    'bid_result' => $item->bid_result ?? '',
+                ];
+            })->values();
+
+            return response()->json($items->all());
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Tender not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error loading tender items for display: ' . $e->getMessage(), [
+                'tender_id' => $tenderId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Error loading tender items for display: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
