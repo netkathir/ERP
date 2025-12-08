@@ -9,7 +9,7 @@
         <a href="{{ route('purchase-indents.index') }}" style="padding:10px 20px; background:#6c757d; color:white; text-decoration:none; border-radius:5px; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
             <i class="fas fa-list"></i> List
         </a>
-    </div>
+    </div>  
 
     @if($errors->any())
         <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; margin-bottom:20px; border:1px solid #f5c6cb;">
