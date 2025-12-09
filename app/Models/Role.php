@@ -9,48 +9,23 @@ class Role extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'slug',
-        'description',
-        'is_active',
-        'is_system_role',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-        'is_system_role' => 'boolean',
-    ];
+    protected $fillable = ['name', 'slug', 'description'];
 
     /**
-     * Get the users for the role.
-     */
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
-
-    /**
-     * Get the permissions for the role.
+     * Permissions associated with the role.
      */
     public function permissions()
     {
-        return $this->belongsToMany(Permission::class, 'role_permission');
+        return $this->belongsToMany(Permission::class, 'role_permission')
+                    ->withPivot('read', 'write', 'delete')
+                    ->withTimestamps();
     }
 
     /**
-     * Check if role is a system role (protected).
+     * Users that have this role.
      */
-    public function isSystemRole(): bool
+    public function users()
     {
-        return $this->is_system_role === true;
-    }
-
-    /**
-     * Check if role can be deleted.
-     */
-    public function canBeDeleted(): bool
-    {
-        return !$this->isSystemRole() && $this->slug !== 'super-admin';
+        return $this->belongsToMany(User::class, 'user_role');
     }
 }

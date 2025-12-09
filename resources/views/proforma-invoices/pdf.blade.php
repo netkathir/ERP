@@ -272,38 +272,119 @@
                 <td class="billed-to">
                     <div class="section-title">Billed To</div>
                     <div style="font-weight: bold; margin-bottom: 8px;">{{ $invoice->customer->company_name }}</div>
-                    <div class="address-line">{{ $invoice->billing_address_line_1 ?? '' }}</div>
-                    @if($invoice->billing_address_line_2)
+                    @if(!empty($invoice->billing_address_line_1))
+                        <div class="address-line">{{ $invoice->billing_address_line_1 }}</div>
+                    @endif
+                    @if(!empty($invoice->billing_address_line_2))
                         <div class="address-line">{{ $invoice->billing_address_line_2 }}</div>
                     @endif
-                    <div class="address-line">{{ $invoice->billing_city ?? '' }}, {{ $invoice->billing_state ?? '' }} - {{ $invoice->billing_pincode ?? '' }}</div>
-                    <div class="address-line" style="margin-top: 8px;">
-                        <strong>Party Mobile No:</strong> {{ $invoice->customer->contact_info ?? 'N/A' }}<br>
-                        <strong>State:</strong> {{ $invoice->billing_state ?? 'N/A' }}<br>
-                        <strong>GST No:</strong> {{ $invoice->customer->gst_no ?? 'N/A' }}
-                    </div>
+                    @php
+                        $billedCityParts = [];
+                        if (!empty($invoice->billing_city)) {
+                            $billedCityParts[] = $invoice->billing_city;
+                        }
+                        if (!empty($invoice->billing_state)) {
+                            $billedCityParts[] = $invoice->billing_state;
+                        }
+                        $billedCityLine = implode(', ', $billedCityParts);
+                    @endphp
+                    @if($billedCityLine || !empty($invoice->billing_pincode))
+                        <div class="address-line">
+                            {{ $billedCityLine }}@if($billedCityLine && $invoice->billing_pincode) - @endif{{ $invoice->billing_pincode }}
+                        </div>
+                    @endif
+                    @php
+                        $billedMobile = $invoice->customer->contact_info ?? null;
+                        $billedState = $invoice->billing_state ?? null;
+                        $billedGst   = $invoice->customer->gst_no ?? null;
+                    @endphp
+                    @if($billedMobile || $billedState || $billedGst)
+                        <div class="address-line" style="margin-top: 8px;">
+                            @if($billedMobile)
+                                <strong>Party Mobile No:</strong> {{ $billedMobile }}<br>
+                            @endif
+                            @if($billedState)
+                                <strong>State:</strong> {{ $billedState }}<br>
+                            @endif
+                            @if($billedGst)
+                                <strong>GST No:</strong> {{ $billedGst }}
+                            @endif
+                        </div>
+                    @endif
                 </td>
                 <td class="shipped-to">
                     <div class="section-title">Shipped To</div>
                     <div style="font-weight: bold; margin-bottom: 8px;">{{ $invoice->customer->company_name }}</div>
-                    @if($invoice->customer->shipping_address_line_1)
-                        <div class="address-line">{{ $invoice->customer->shipping_address_line_1 }}</div>
-                        @if($invoice->customer->shipping_address_line_2)
+                    @php
+                        $useShipping = !empty($invoice->customer->shipping_address_line_1) ||
+                                       !empty($invoice->customer->shipping_address_line_2) ||
+                                       !empty($invoice->customer->shipping_city) ||
+                                       !empty($invoice->customer->shipping_state) ||
+                                       !empty($invoice->customer->shipping_pincode);
+                    @endphp
+                    @if($useShipping)
+                        @if(!empty($invoice->customer->shipping_address_line_1))
+                            <div class="address-line">{{ $invoice->customer->shipping_address_line_1 }}</div>
+                        @endif
+                        @if(!empty($invoice->customer->shipping_address_line_2))
                             <div class="address-line">{{ $invoice->customer->shipping_address_line_2 }}</div>
                         @endif
-                        <div class="address-line">{{ $invoice->customer->shipping_city ?? '' }}, {{ $invoice->customer->shipping_state ?? '' }} - {{ $invoice->customer->shipping_pincode ?? '' }}</div>
+                        @php
+                            $shipCityParts = [];
+                            if (!empty($invoice->customer->shipping_city)) {
+                                $shipCityParts[] = $invoice->customer->shipping_city;
+                            }
+                            if (!empty($invoice->customer->shipping_state)) {
+                                $shipCityParts[] = $invoice->customer->shipping_state;
+                            }
+                            $shipCityLine = implode(', ', $shipCityParts);
+                        @endphp
+                        @if($shipCityLine || !empty($invoice->customer->shipping_pincode))
+                            <div class="address-line">
+                                {{ $shipCityLine }}@if($shipCityLine && $invoice->customer->shipping_pincode) - @endif{{ $invoice->customer->shipping_pincode }}
+                            </div>
+                        @endif
                     @else
-                        <div class="address-line">{{ $invoice->billing_address_line_1 ?? '' }}</div>
-                        @if($invoice->billing_address_line_2)
+                        @if(!empty($invoice->billing_address_line_1))
+                            <div class="address-line">{{ $invoice->billing_address_line_1 }}</div>
+                        @endif
+                        @if(!empty($invoice->billing_address_line_2))
                             <div class="address-line">{{ $invoice->billing_address_line_2 }}</div>
                         @endif
-                        <div class="address-line">{{ $invoice->billing_city ?? '' }}, {{ $invoice->billing_state ?? '' }} - {{ $invoice->billing_pincode ?? '' }}</div>
+                        @php
+                            $shipFallbackParts = [];
+                            if (!empty($invoice->billing_city)) {
+                                $shipFallbackParts[] = $invoice->billing_city;
+                            }
+                            if (!empty($invoice->billing_state)) {
+                                $shipFallbackParts[] = $invoice->billing_state;
+                            }
+                            $shipFallbackLine = implode(', ', $shipFallbackParts);
+                        @endphp
+                        @if($shipFallbackLine || !empty($invoice->billing_pincode))
+                            <div class="address-line">
+                                {{ $shipFallbackLine }}@if($shipFallbackLine && $invoice->billing_pincode) - @endif{{ $invoice->billing_pincode }}
+                            </div>
+                        @endif
                     @endif
-                    <div class="address-line" style="margin-top: 8px;">
-                        <strong>Party Mobile No:</strong> {{ $invoice->customer->contact_info ?? 'N/A' }}<br>
-                        <strong>State:</strong> {{ $invoice->customer->shipping_state ?? $invoice->billing_state ?? 'N/A' }}<br>
-                        <strong>GST No:</strong> {{ $invoice->customer->gst_no ?? 'N/A' }}
-                    </div>
+                    @php
+                        $shipMobile = $invoice->customer->contact_info ?? null;
+                        $shipState = $invoice->customer->shipping_state ?? $invoice->billing_state ?? null;
+                        $shipGst   = $invoice->customer->gst_no ?? null;
+                    @endphp
+                    @if($shipMobile || $shipState || $shipGst)
+                        <div class="address-line" style="margin-top: 8px;">
+                            @if($shipMobile)
+                                <strong>Party Mobile No:</strong> {{ $shipMobile }}<br>
+                            @endif
+                            @if($shipState)
+                                <strong>State:</strong> {{ $shipState }}<br>
+                            @endif
+                            @if($shipGst)
+                                <strong>GST No:</strong> {{ $shipGst }}
+                            @endif
+                        </div>
+                    @endif
                 </td>
             </tr>
         </table>

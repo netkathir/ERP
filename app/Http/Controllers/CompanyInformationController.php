@@ -7,6 +7,7 @@ use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Helpers\FileUploadHelper;
 
 class CompanyInformationController extends Controller
 {
@@ -88,8 +89,10 @@ class CompanyInformationController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
-            $logo = $request->file('logo');
-            $logoPath = $logo->store('company-logos', 'public');
+            $logoPath = FileUploadHelper::storeWithOriginalName(
+                $request->file('logo'),
+                'company-logos'
+            );
             $data['logo_path'] = $logoPath;
         }
 
@@ -178,8 +181,10 @@ class CompanyInformationController extends Controller
                 Storage::disk('public')->delete($companyInfo->logo_path);
             }
             
-            $logo = $request->file('logo');
-            $logoPath = $logo->store('company-logos', 'public');
+            $logoPath = FileUploadHelper::storeWithOriginalName(
+                $request->file('logo'),
+                'company-logos'
+            );
             $data['logo_path'] = $logoPath;
         }
 

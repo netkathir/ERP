@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -69,7 +70,7 @@ class LoginController extends Controller
         // Update last login
         $user->updateLastLogin();
 
-        // Handle branch selection for non-Super Admin users
+        // Handle branch selection for all non-Super Admin users
         if (!$user->isSuperAdmin()) {
             $branches = $user->branches()->where('is_active', true)->get();
             
@@ -87,7 +88,14 @@ class LoginController extends Controller
             return redirect()->route('dashboard')->with('success', 'Login successful!');
         }
 
-        // Super Admin - no branch selection needed
+        // Super Admin - set default active branch as the first active branch in the system (if any)
+        $defaultBranch = Branch::where('is_active', true)->orderBy('id')->first();
+        if ($defaultBranch) {
+            \Illuminate\Support\Facades\Session::put('active_branch_id', $defaultBranch->id);
+            \Illuminate\Support\Facades\Session::put('active_branch_name', $defaultBranch->name);
+            \Illuminate\Support\Facades\Session::save();
+        }
+
         return redirect()->route('dashboard')->with('success', 'Login successful!');
     }
 

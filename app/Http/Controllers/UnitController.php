@@ -16,7 +16,7 @@ class UnitController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         
@@ -27,7 +27,28 @@ class UnitController extends Controller
 
         $query = \App\Models\Unit::query();
         $query = $this->applyBranchFilter($query, \App\Models\Unit::class);
-        $units = $query->latest()->paginate(15);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('symbol', 'like', "%{$search}%")
+                  // Search in dates
+                  ->orWhereRaw("DATE_FORMAT(created_at, '%d-%m-%Y') LIKE ?", ["%{$search}%"]);
+            });
+        }
+
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'name': $query->orderBy('units.name', $sortOrder); break;
+            case 'symbol': $query->orderBy('units.symbol', $sortOrder); break;
+            default: $query->orderBy('units.id', $sortOrder); break;
+        }
+        $units = $query->paginate(15)->withQueryString();
         return view('masters.units.index', compact('units'));
     }
 

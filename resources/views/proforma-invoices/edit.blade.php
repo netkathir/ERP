@@ -139,14 +139,13 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 5%;">Action</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 25%;">Product</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 10%;">Unit</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 10%;">Price</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 10%;">Quantity</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 10%;">Discount %</th>
-                            <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 10%;">Tax %</th>
                             <th style="padding: 12px; text-align: left; color: #333; font-weight: 600; width: 15%;">Total</th>
+                            <th style="padding: 12px; text-align: center; color: #333; font-weight: 600; width: 5%;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="productRows">
@@ -162,27 +161,10 @@
                 <h3 style="margin: 0; color: #667eea; font-size: 18px; font-weight: 600;">Charges & Discount</h3>
             </div>
             <div style="padding: 20px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div>
-                        <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Freight & Forwarding Charges</label>
-                        <input type="number" name="freight_charges" id="freight_charges" value="{{ old('freight_charges', $invoice->freight_charges) }}" oninput="calculateAll()" step="0.01"
-                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                    </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">GST Type <span style="color: red;">*</span></label>
-                        <div style="display: flex; gap: 20px; margin-top: 10px;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="radio" name="gst_type" value="intra" id="gst_type_intra" {{ old('gst_type', $invoice->gst_type) == 'intra' ? 'checked' : '' }} onchange="calculateAll()"
-                                    style="width: 18px; height: 18px; cursor: pointer;">
-                                <span>CGST & SGST</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="radio" name="gst_type" value="inter" id="gst_type_inter" {{ old('gst_type', $invoice->gst_type) == 'inter' ? 'checked' : '' }} onchange="calculateAll()"
-                                    style="width: 18px; height: 18px; cursor: pointer;">
-                                <span>IGST</span>
-                            </label>
-                        </div>
-                    </div>
+                <div style="max-width: 400px;">
+                    <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Freight & Forwarding Charges</label>
+                    <input type="number" name="freight_charges" id="freight_charges" value="{{ old('freight_charges', $invoice->freight_charges ?? 0) }}" oninput="calculateAll()" step="0.01"
+                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                 </div>
             </div>
         </div>
@@ -197,6 +179,41 @@
                             <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="grossAmount">0.00</span></td>
                         </tr>
                         <tr>
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">GST (%):</td>
+                            <td style="padding: 8px 0; text-align: right;">
+                                <input type="number" name="gst_percent" id="gst_percent" value="{{ old('gst_percent', $invoice->gst_percent ?? 0) }}" min="0" max="100" oninput="calculateAll()" step="0.01"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">GST Type:</td>
+                            <td style="padding: 8px 0; text-align: right;">
+                                <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                        <input type="radio" name="summary_gst_type" id="summary_gst_type_intra" value="intra" {{ old('gst_type', $invoice->gst_type ?? 'intra') == 'intra' ? 'checked' : '' }} onchange="updateGstType()" style="cursor: pointer;">
+                                        <span>CGST & SGST</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                                        <input type="radio" name="summary_gst_type" id="summary_gst_type_inter" value="inter" {{ old('gst_type', $invoice->gst_type ?? 'intra') == 'inter' ? 'checked' : '' }} onchange="updateGstType()" style="cursor: pointer;">
+                                        <span>IGST</span>
+                                    </label>
+                                </div>
+                                <input type="hidden" name="gst_type" id="gst_type" value="{{ old('gst_type', $invoice->gst_type ?? 'intra') }}">
+                            </td>
+                        </tr>
+                        <tr id="cgst_sgst_row" style="display: {{ old('gst_type', $invoice->gst_type ?? 'intra') == 'intra' ? 'table-row' : 'none' }};">
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">CGST Amount:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="cgstAmount">0.00</span></td>
+                        </tr>
+                        <tr id="cgst_sgst_row2" style="display: {{ old('gst_type', $invoice->gst_type ?? 'intra') == 'intra' ? 'table-row' : 'none' }};">
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">SGST Amount:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="sgstAmount">0.00</span></td>
+                        </tr>
+                        <tr id="igst_row" style="display: {{ old('gst_type', $invoice->gst_type ?? 'intra') == 'inter' ? 'table-row' : 'none' }};">
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">IGST Amount:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="igstAmount">0.00</span></td>
+                        </tr>
+                        <tr>
                             <td style="padding: 8px 0; color: #333; font-weight: 500;">Overall Discount (%):</td>
                             <td style="padding: 8px 0; text-align: right;">
                                 <input type="number" name="overall_discount_percent" id="overall_discount_percent" value="{{ old('overall_discount_percent', $invoice->overall_discount_percent ?? 0) }}" min="0" max="100" oninput="handleOverallDiscount()" step="0.01"
@@ -208,20 +225,15 @@
                             <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="discountAmount">0.00</span></td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px 0; color: #333; font-weight: 500;">Taxable Amount:</td>
-                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="taxableAmount">0.00</span></td>
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">Sub Total:</td>
+                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="subTotal">0.00</span></td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px 0; color: #333; font-weight: 500;">CGST:</td>
-                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="cgstAmount">0.00</span></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 0; color: #333; font-weight: 500;">SGST:</td>
-                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="sgstAmount">0.00</span></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 0; color: #333; font-weight: 500;">IGST:</td>
-                            <td style="padding: 8px 0; text-align: right; color: #333; font-weight: 500;">₹<span id="igstAmount">0.00</span></td>
+                            <td style="padding: 8px 0; color: #333; font-weight: 500;">Freight Charges:</td>
+                            <td style="padding: 8px 0; text-align: right;">
+                                <input type="number" name="freight_charges" id="freight_charges" value="{{ old('freight_charges', $invoice->freight_charges ?? 0) }}" oninput="calculateAll()" step="0.01"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; text-align: right;">
+                            </td>
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; color: #333; font-weight: 500;">Total Tax:</td>
@@ -234,7 +246,6 @@
                     </table>
                     <input type="hidden" name="gross_amount" id="input_gross_amount">
                     <input type="hidden" name="discount_amount" id="input_discount_amount">
-                    <input type="hidden" name="taxable_amount" id="input_taxable_amount">
                     <input type="hidden" name="cgst_amount" id="input_cgst_amount">
                     <input type="hidden" name="sgst_amount" id="input_sgst_amount">
                     <input type="hidden" name="igst_amount" id="input_igst_amount">
@@ -271,11 +282,6 @@
 
         const html = `
             <tr id="row_${rowCount}" style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 10px; text-align: center;">
-                    <button type="button" onclick="removeRow(${rowCount})" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
-                        <i class="fas fa-minus"></i> (-)
-                    </button>
-                </td>
                 <td style="padding: 10px;">
                     <select name="products[${rowCount}][product_id]" onchange="fetchProductDetails(this, ${rowCount})" required
                         style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
@@ -302,14 +308,15 @@
                         style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: #f8f9fa;" ${item && item.discount_percent > 0 ? '' : 'disabled'}>
                 </td>
                 <td style="padding: 10px;">
-                    <input type="number" name="products[${rowCount}][tax_percent]" id="tax_percent_${rowCount}" value="${taxPercent}" min="0" max="100" oninput="calculateRow(${rowCount})" step="0.01"
-                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                </td>
-                <td style="padding: 10px;">
                     <input type="text" name="products[${rowCount}][line_total]" id="line_total_${rowCount}" value="${lineTotal}" readonly
                         style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: #f8f9fa; font-weight: 500;">
                     <input type="hidden" name="products[${rowCount}][line_base_amount]" id="line_base_amount_${rowCount}" value="${lineBaseAmount}">
                     <input type="hidden" name="products[${rowCount}][item_discount_amount]" id="item_discount_amount_${rowCount}" value="${itemDiscountAmount}">
+                </td>
+                <td style="padding: 10px; text-align: center;">
+                    <button type="button" class="btn-remove-row" onclick="removeRow(${rowCount})" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `;
@@ -319,7 +326,11 @@
             setTimeout(() => {
                 document.getElementById(`unit_${rowCount}`).value = unitId;
                 document.getElementById(`price_${rowCount}`).value = price;
-                document.getElementById(`tax_percent_${rowCount}`).value = taxPercent;
+                // Set default GST % from product GST rate if available
+                const gstPercentField = document.getElementById('gst_percent');
+                if (gstPercentField && gstPercentField.value == 0 && item.product.gst_rate) {
+                    gstPercentField.value = item.product.gst_rate;
+                }
             }, 100);
         }
     }
@@ -352,7 +363,11 @@
             .then(data => {
                 document.getElementById(`unit_${rowId}`).value = data.unit_id;
                 document.getElementById(`price_${rowId}`).value = data.price;
-                document.getElementById(`tax_percent_${rowId}`).value = data.gst_rate || 0;
+                // Set default GST % from product GST rate if available
+                const gstPercentField = document.getElementById('gst_percent');
+                if (gstPercentField && gstPercentField.value == 0 && data.gst_rate) {
+                    gstPercentField.value = data.gst_rate;
+                }
                 calculateRow(rowId);
             });
     }
@@ -462,8 +477,6 @@
         let totalTax = 0;
         let netAmount = 0;
         const overallDiscPercent = parseFloat(document.getElementById('overall_discount_percent').value) || 0;
-        const gstType = document.querySelector('input[name="gst_type"]:checked').value;
-        const freight = parseFloat(document.getElementById('freight_charges').value) || 0;
 
         const rows = document.querySelectorAll('[id^="row_"]');
         rows.forEach(row => {
@@ -483,45 +496,64 @@
             });
         }
 
-        taxableAmount += freight;
+        // Calculate subtotal (before freight and tax)
+        let subTotal = taxableAmount;
 
-        let totalTaxPercent = 0;
-        let taxItemCount = 0;
-        rows.forEach(row => {
-            const rowId = row.id.split('_')[1];
-            const taxPercent = parseFloat(document.getElementById(`tax_percent_${rowId}`).value) || 0;
-            if (taxPercent > 0) {
-                totalTaxPercent += taxPercent;
-                taxItemCount++;
-            }
-        });
-        const avgTaxRate = taxItemCount > 0 ? totalTaxPercent / taxItemCount : 18;
+        // Get GST % from summary section
+        const gstPercent = parseFloat(document.getElementById('gst_percent').value) || 0;
+        
+        // Get GST Type from summary section
+        const summaryGstType = document.querySelector('input[name="summary_gst_type"]:checked')?.value || 'intra';
+        
+        // Calculate GST on subtotal
+        let gstAmount = (subTotal * gstPercent) / 100;
+        totalTax = gstAmount;
 
-        if (gstType == 'intra') {
-            const cgstRate = avgTaxRate / 2;
-            const sgstRate = avgTaxRate / 2;
-            cgstAmount = (taxableAmount * cgstRate) / 100;
-            sgstAmount = (taxableAmount * sgstRate) / 100;
-            totalTax = cgstAmount + sgstAmount;
+        // Add freight
+        const freight = parseFloat(document.getElementById('freight_charges').value) || 0;
+        const freightTax = (freight * gstPercent) / 100;
+        
+        totalTax += freightTax;
+        gstAmount = totalTax; // Update GST amount to include freight tax
+        
+        // Calculate CGST/SGST or IGST based on type
+        if (summaryGstType === 'intra') {
+            // Intra-state: Split GST equally between CGST and SGST
+            cgstAmount = gstAmount / 2;
+            sgstAmount = gstAmount / 2;
+            igstAmount = 0;
+            
+            // Show CGST/SGST rows, hide IGST row
+            document.getElementById('cgst_sgst_row').style.display = 'table-row';
+            document.getElementById('cgst_sgst_row2').style.display = 'table-row';
+            document.getElementById('igst_row').style.display = 'none';
+            
+            document.getElementById('cgstAmount').innerText = cgstAmount.toFixed(2);
+            document.getElementById('sgstAmount').innerText = sgstAmount.toFixed(2);
         } else {
-            igstAmount = (taxableAmount * avgTaxRate) / 100;
-            totalTax = igstAmount;
+            // Inter-state: Full IGST
+            igstAmount = gstAmount;
+            cgstAmount = 0;
+            sgstAmount = 0;
+            
+            // Hide CGST/SGST rows, show IGST row
+            document.getElementById('cgst_sgst_row').style.display = 'none';
+            document.getElementById('cgst_sgst_row2').style.display = 'none';
+            document.getElementById('igst_row').style.display = 'table-row';
+            
+            document.getElementById('igstAmount').innerText = igstAmount.toFixed(2);
         }
-
-        netAmount = taxableAmount + totalTax;
+        
+        netAmount = subTotal + totalTax + freight;
 
         document.getElementById('grossAmount').innerText = grossAmount.toFixed(2);
         document.getElementById('discountAmount').innerText = discountAmount.toFixed(2);
-        document.getElementById('taxableAmount').innerText = taxableAmount.toFixed(2);
-        document.getElementById('cgstAmount').innerText = cgstAmount.toFixed(2);
-        document.getElementById('sgstAmount').innerText = sgstAmount.toFixed(2);
-        document.getElementById('igstAmount').innerText = igstAmount.toFixed(2);
+        document.getElementById('subTotal').innerText = subTotal.toFixed(2);
         document.getElementById('totalTax').innerText = totalTax.toFixed(2);
         document.getElementById('netAmount').innerText = netAmount.toFixed(2);
 
         document.getElementById('input_gross_amount').value = grossAmount.toFixed(2);
         document.getElementById('input_discount_amount').value = discountAmount.toFixed(2);
-        document.getElementById('input_taxable_amount').value = taxableAmount.toFixed(2);
         document.getElementById('input_cgst_amount').value = cgstAmount.toFixed(2);
         document.getElementById('input_sgst_amount').value = sgstAmount.toFixed(2);
         document.getElementById('input_igst_amount').value = igstAmount.toFixed(2);
@@ -573,6 +605,19 @@
     setTimeout(() => {
         calculateAll();
     }, 500);
+    
+    // Update GST type when summary section GST type changes
+    function updateGstType() {
+        const summaryGstType = document.querySelector('input[name="summary_gst_type"]:checked')?.value || 'intra';
+        document.getElementById('gst_type').value = summaryGstType;
+        calculateAll();
+    }
+    
+    // Initialize hidden gst_type field on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const summaryGstType = document.querySelector('input[name="summary_gst_type"]:checked')?.value || 'intra';
+        document.getElementById('gst_type').value = summaryGstType;
+    });
 </script>
 @endpush
 @endsection

@@ -17,6 +17,17 @@
             @error('name')<p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>@enderror
         </div>
 
+        @php
+            $states = [
+                'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana',
+                'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur',
+                'Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu',
+                'Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
+                'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu',
+                'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+            ];
+        @endphp
+
         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h3 style="color: #667eea; font-size: 16px; margin-bottom: 15px;">Branch Address</h3>
             <div style="margin-bottom: 15px;">
@@ -43,9 +54,13 @@
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">State <span style="color: red;">*</span></label>
-                    <input type="text" name="state" value="{{ old('state') }}" required
-                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
-                        placeholder="Enter state">
+                    <select name="state" required
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: #fff;">
+                        <option value="">Select state</option>
+                        @foreach($states as $state)
+                            <option value="{{ $state }}" {{ old('state') === $state ? 'selected' : '' }}>{{ $state }}</option>
+                        @endforeach
+                    </select>
                     @error('state')<p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>@enderror
                 </div>
                 <div>

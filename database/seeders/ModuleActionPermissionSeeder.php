@@ -9,42 +9,59 @@ class ModuleActionPermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * 
+     * NOTE: This seeder now creates resource-based permissions (one per resource)
+     * instead of action-based permissions. The Read/Write/Delete flags are managed
+     * in the role_permission pivot table.
      */
     public function run(): void
     {
-        $modules = [
-            'branches' => ['View', 'Create', 'Edit', 'Delete'],
-            'users' => ['View', 'Create', 'Edit', 'Delete'],
-            'roles' => ['View', 'Create', 'Edit', 'Delete'],
-            'permissions' => ['View', 'Create', 'Edit', 'Delete'],
-            'products' => ['View', 'Create', 'Edit', 'Delete', 'Export'],
-            'units' => ['View', 'Create', 'Edit', 'Delete'],
-            'customers' => ['View', 'Create', 'Edit', 'Delete', 'Export'],
-            'quotations' => ['View', 'Create', 'Edit', 'Delete', 'Approve', 'Export', 'Print'],
-            'proforma-invoices' => ['View', 'Create', 'Edit', 'Delete', 'Approve', 'Export', 'Print'],
-            'tax' => ['View', 'Create', 'Edit', 'Delete'],
-            'company-info' => ['View', 'Create', 'Edit', 'Delete'],
-            'reports' => ['View', 'Export'],
+        $resources = [
+            'branches',
+            'users',
+            'roles',
+            'permissions',
+            'products',
+            'units',
+            'customers',
+            'suppliers',
+            'quotations',
+            'proforma-invoices',
+            'tax',
+            'company-info',
+            'reports',
+            'raw-material-categories',
+            'raw-material-sub-categories',
+            'raw-materials',
+            'product-categories',
+            'processes',
+            'bom-processes',
+            'departments',
+            'designations',
+            'production-departments',
+            'employees',
+            'billing-addresses',
+            'tenders',
+            'customer-complaints',
+            'discounts',
+            'subcontractor-evaluations',
+            'purchase-indents',
         ];
 
-        foreach ($modules as $module => $actions) {
-            foreach ($actions as $action) {
-                $slug = strtolower($module . '-' . $action);
-                $name = ucfirst($module) . ' - ' . $action;
-                
-                Permission::updateOrCreate(
-                    ['slug' => $slug],
-                    [
-                        'name' => $name,
-                        'description' => "Permission to {$action} {$module}",
-                        'module' => $module,
-                        'action' => strtolower($action),
-                        'is_active' => true,
-                    ]
-                );
-            }
+        foreach ($resources as $resource) {
+            Permission::updateOrCreate(
+                ['form_name' => $resource],
+                [
+                    'form_name' => $resource,
+                    'name' => ucfirst(str_replace('-', ' ', $resource)),
+                    'slug' => $resource,
+                    'description' => "Permission for {$resource} resource",
+                    'module' => $resource,
+                    'is_active' => true,
+                ]
+            );
         }
 
-        $this->command->info('Module-action based permissions seeded successfully.');
+        $this->command->info('Resource-based permissions seeded successfully.');
     }
 }

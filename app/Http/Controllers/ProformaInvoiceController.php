@@ -13,11 +13,29 @@ class ProformaInvoiceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $query = \App\Models\ProformaInvoice::with('customer');
         $query = $this->applyBranchFilter($query, \App\Models\ProformaInvoice::class);
-        $invoices = $query->latest()->paginate(15);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function($customerQuery) use ($search) {
+                      $customerQuery->where('company_name', 'like', "%{$search}%")
+                                    ->orWhere('contact_name', 'like', "%{$search}%");
+                  })
+                  // Search in dates
+                  ->orWhereRaw("DATE_FORMAT(invoice_date, '%d-%m-%Y') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(invoice_date, '%d/%m/%Y') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(invoice_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(created_at, '%d-%m-%Y') LIKE ?", ["%{$search}%"]);
+            });
+        }
+
+        $invoices = $query->latest()->paginate(15)->withQueryString();
         return view('proforma-invoices.index', compact('invoices'));
     }
 
@@ -68,6 +86,7 @@ class ProformaInvoiceController extends Controller
             'date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
             'gst_type' => 'required|in:intra,inter',
+            'gst_percent' => 'nullable|numeric|min:0|max:100',
             'billing_address_line_1' => 'nullable|string|max:255',
             'billing_address_line_2' => 'nullable|string|max:255',
             'billing_city' => 'nullable|string|max:100',
@@ -110,11 +129,11 @@ class ProformaInvoiceController extends Controller
                 'billing_state' => $request->billing_state,
                 'billing_pincode' => $request->billing_pincode,
                 'gst_type' => $request->gst_type,
+                'gst_percent' => $request->gst_percent ?? 0,
                 'overall_discount_percent' => $request->overall_discount_percent ?? 0,
                 'freight_charges' => $request->freight_charges ?? 0,
                 'gross_amount' => $request->gross_amount,
                 'discount_amount' => $request->discount_amount ?? 0,
-                'taxable_amount' => $request->taxable_amount,
                 'cgst_amount' => $request->cgst_amount ?? 0,
                 'sgst_amount' => $request->sgst_amount ?? 0,
                 'igst_amount' => $request->igst_amount ?? 0,
@@ -266,11 +285,11 @@ class ProformaInvoiceController extends Controller
                 'billing_state' => $request->billing_state,
                 'billing_pincode' => $request->billing_pincode,
                 'gst_type' => $request->gst_type,
+                'gst_percent' => $request->gst_percent ?? 0,
                 'overall_discount_percent' => $request->overall_discount_percent ?? 0,
                 'freight_charges' => $request->freight_charges ?? 0,
                 'gross_amount' => $request->gross_amount,
                 'discount_amount' => $request->discount_amount ?? 0,
-                'taxable_amount' => $request->taxable_amount,
                 'cgst_amount' => $request->cgst_amount ?? 0,
                 'sgst_amount' => $request->sgst_amount ?? 0,
                 'igst_amount' => $request->igst_amount ?? 0,
@@ -316,9 +335,23 @@ class ProformaInvoiceController extends Controller
         $query = \App\Models\ProformaInvoice::query();
         $query = $this->applyBranchFilter($query, \App\Models\ProformaInvoice::class);
         $invoice = $query->findOrFail($id);
+
+        try {
+            DB::beginTransaction();
+
+            // Delete related items first
+            $invoice->items()->delete();
+
+            // Delete the invoice
         $invoice->delete();
 
+            DB::commit();
         return redirect()->route('proforma-invoices.index')->with('success', 'Proforma Invoice deleted successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('proforma-invoices.index')->with('error', 'Error deleting proforma invoice: ' . $e->getMessage());
+        }
     }
 
     /**

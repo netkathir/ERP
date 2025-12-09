@@ -64,7 +64,7 @@
 
         <div>
             <label style="display: block; color: #666; font-weight: 500; margin-bottom: 5px;">Created At</label>
-            <p style="color: #333; font-size: 16px; margin: 0 0 20px 0;">{{ $user->created_at->format('M d, Y H:i') }}</p>
+            <p style="color: #333; font-size: 16px; margin: 0 0 20px 0;">{{ $user->created_at->format('M d, Y') }}</p>
         </div>
     </div>
 </div>

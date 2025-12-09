@@ -19,4 +19,9 @@ class RawMaterialCategory extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function subCategories()
+    {
+        return $this->hasMany(RawMaterialSubCategory::class);
+    }
 }

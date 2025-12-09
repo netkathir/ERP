@@ -29,13 +29,21 @@
 
     <div class="form-group">
         <label for="password">Password</label>
-        <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            required
-            placeholder="Enter your password"
-        >
+        <div style="position: relative;">
+            <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                required
+                placeholder="Enter your password"
+                style="padding-right: 40px;"
+            >
+            <button type="button"
+                onclick="togglePasswordVisibility('password', this)"
+                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: #666;">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
         @error('password')
             <div class="error-message">{{ $message }}</div>
         @enderror
@@ -47,5 +55,25 @@
 
     <button type="submit" class="btn">Login</button>
 </form>
+
+@push('scripts')
+<script>
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (!input) return;
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
+@endpush
 @endsection
 

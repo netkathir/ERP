@@ -10,15 +10,17 @@ use App\Models\TenderFinancialTabulation;
 use App\Models\TenderRemark;
 use App\Models\Customer;
 use App\Models\Unit;
+use App\Models\ProductionDepartment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Helpers\FileUploadHelper;
 
 class TenderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         
@@ -27,9 +29,87 @@ class TenderController extends Controller
             abort(403, 'You do not have permission to view tenders.');
         }
 
-        $query = Tender::with(['company', 'attendedBy']);
+        // Load related company, attended user, and items (for list view columns like Title)
+        $query = Tender::with(['company', 'attendedBy', 'items']);
         $query = $this->applyBranchFilter($query, Tender::class);
-        $tenders = $query->latest()->paginate(15);
+
+        // Text search
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('tender_no', 'like', "%{$search}%")
+                  ->orWhere('customer_tender_no', 'like', "%{$search}%")
+                  ->orWhereHas('items', function($itemsQuery) use ($search) {
+                      $itemsQuery->where('title', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('company', function($companyQuery) use ($search) {
+                      $companyQuery->where('company_name', 'like', "%{$search}%")
+                                    ->orWhere('contact_name', 'like', "%{$search}%");
+                  })
+                  ->orWhere('tender_type', 'like', "%{$search}%")
+                  ->orWhere('bidding_system', 'like', "%{$search}%")
+                  ->orWhere('tender_status', 'like', "%{$search}%")
+                  ->orWhere('technical_spec_rank', 'like', "%{$search}%")
+                  ->orWhere('bid_result', 'like', "%{$search}%")
+                  // Search in dates (string-based)
+                  ->orWhereRaw("DATE_FORMAT(closing_date_time, '%d-%m-%Y') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(closing_date_time, '%d/%m/%Y') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(closing_date_time, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(closing_date_time, '%d-%m-%Y %H:%i') LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(created_at, '%d-%m-%Y') LIKE ?", ["%{$search}%"]);
+            });
+        }
+
+        // Date range filter on Closing Date & Time
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+
+            $query->where(function ($q) use ($startDate, $endDate) {
+                if ($startDate) {
+                    // from start date 00:00
+                    $q->whereDate('closing_date_time', '>=', $startDate);
+                }
+                if ($endDate) {
+                    // up to end date 23:59:59
+                    $q->whereDate('closing_date_time', '<=', $endDate);
+                }
+            });
+        }
+
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        switch ($sortBy) {
+            case 'tender_no':
+                $query->orderBy('tenders.tender_no', $sortOrder);
+                break;
+            case 'customer_tender_no':
+                $query->orderBy('tenders.customer_tender_no', $sortOrder);
+                break;
+            case 'company_name':
+                $query->leftJoin('customers', 'tenders.company_id', '=', 'customers.id')
+                      ->orderBy('customers.company_name', $sortOrder)
+                      ->select('tenders.*')
+                      ->distinct();
+                break;
+            case 'closing_date':
+                $query->orderBy('tenders.closing_date_time', $sortOrder);
+                break;
+            case 'tender_status':
+                $query->orderBy('tenders.tender_status', $sortOrder);
+                break;
+            default:
+                $query->orderBy('tenders.id', $sortOrder);
+                break;
+        }
+
+        $tenders = $query->paginate(15)->withQueryString();
         return view('tenders.index', compact('tenders'));
     }
 
@@ -51,6 +131,11 @@ class TenderController extends Controller
         
         // Get units (shared across branches)
         $units = Unit::all();
+
+        // Get production departments (by active branch)
+        $prodDeptQuery = ProductionDepartment::query();
+        $prodDeptQuery = $this->applyBranchFilter($prodDeptQuery, ProductionDepartment::class);
+        $productionDepartments = $prodDeptQuery->get();
         
         // Generate Tender Number
         $lastTender = Tender::latest()->first();
@@ -60,7 +145,7 @@ class TenderController extends Controller
         // Get logged in user
         $user = auth()->user();
 
-        return view('tenders.create', compact('customers', 'units', 'tenderNo', 'user'));
+        return view('tenders.create', compact('customers', 'units', 'tenderNo', 'user', 'productionDepartments'));
     }
 
     /**
@@ -78,7 +163,8 @@ class TenderController extends Controller
         $request->validate([
             'tender_no' => 'required|unique:tenders,tender_no',
             'customer_tender_no' => 'nullable|string|max:255',
-            'production_dept' => 'nullable|in:Door Section,Fiber tables&windows,Railways',
+            // Must match an existing production department name
+            'production_dept' => 'nullable|exists:production_departments,name',
             'company_id' => 'nullable|exists:customers,id',
             'contact_person' => 'nullable|string|max:255',
             'billing_address_line_1' => 'nullable|string|max:255',
@@ -94,6 +180,10 @@ class TenderController extends Controller
             'contract_type' => 'nullable|in:Goods,Service',
             'bidding_system' => 'nullable|in:Single Packet,Two Packet',
             'procure_from_approved_source' => 'nullable|in:Yes,No',
+            'validity_of_offer_days' => 'nullable|integer|min:0',
+            'regular_developmental' => 'nullable|in:Regular,Developmental',
+            'validity_of_offer_days' => 'nullable|integer|min:0',
+            'regular_developmental' => 'nullable|in:Regular,Developmental',
             'tender_document_cost' => 'nullable|numeric|min:0',
             'emd' => 'nullable|numeric|min:0',
             'ra_enabled' => 'nullable|in:Yes,No',
@@ -102,6 +192,12 @@ class TenderController extends Controller
             'pre_bid_conference_date' => 'nullable|date',
             'inspection_agency' => 'nullable|string|max:255',
             'tender_document_attachment' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'financial_tabulation_attachment' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'technical_spec_attachment' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'delete_tender_document_attachment' => 'nullable|boolean',
+            'delete_financial_tabulation_attachment' => 'nullable|boolean',
+            'delete_technical_spec_attachment' => 'nullable|boolean',
+            'technical_spec_rank' => 'nullable|string|max:255',
             'tender_status' => 'nullable|in:Bid not coated,Bid Coated',
             'bid_result' => 'nullable|in:Bid Awarded,Bid not Awarded',
             'items' => 'required|array|min:1',
@@ -114,10 +210,28 @@ class TenderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Handle file upload
+            // Handle file uploads
             $tenderDocumentPath = null;
+            $financialTabulationPath = null;
+            $technicalSpecPath = null;
+
             if ($request->hasFile('tender_document_attachment')) {
-                $tenderDocumentPath = $request->file('tender_document_attachment')->store('tender_documents', 'public');
+                $tenderDocumentPath = FileUploadHelper::storeWithOriginalName(
+                    $request->file('tender_document_attachment'),
+                    'tender_documents'
+                );
+            }
+            if ($request->hasFile('financial_tabulation_attachment')) {
+                $financialTabulationPath = FileUploadHelper::storeWithOriginalName(
+                    $request->file('financial_tabulation_attachment'),
+                    'financial_tabulations'
+                );
+            }
+            if ($request->hasFile('technical_spec_attachment')) {
+                $technicalSpecPath = FileUploadHelper::storeWithOriginalName(
+                    $request->file('technical_spec_attachment'),
+                    'technical_specs'
+                );
             }
 
             $tender = Tender::create([
@@ -140,6 +254,8 @@ class TenderController extends Controller
                 'contract_type' => $request->contract_type,
                 'bidding_system' => $request->bidding_system,
                 'procure_from_approved_source' => $request->procure_from_approved_source,
+                'validity_of_offer_days' => $request->validity_of_offer_days,
+                'regular_developmental' => $request->regular_developmental ?: 'Regular',
                 'tender_document_cost' => $request->tender_document_cost,
                 'emd' => $request->emd,
                 'ra_enabled' => $request->ra_enabled,
@@ -148,6 +264,9 @@ class TenderController extends Controller
                 'pre_bid_conference_date' => $request->pre_bid_conference_date,
                 'inspection_agency' => $request->inspection_agency,
                 'tender_document_attachment' => $tenderDocumentPath,
+                'financial_tabulation_attachment' => $financialTabulationPath,
+                'technical_spec_attachment' => $technicalSpecPath,
+                'technical_spec_rank' => $request->technical_spec_rank,
                 'tender_status' => $request->tender_status ?? 'Bid not coated',
                 'bid_result' => $request->bid_result,
                 'branch_id' => $this->getActiveBranchId(),
@@ -205,7 +324,10 @@ class TenderController extends Controller
                     if (!empty($remarkData['remarks'])) {
                         $corrigendumPath = null;
                         if (isset($remarkData['corrigendum_file']) && $remarkData['corrigendum_file'] instanceof \Illuminate\Http\UploadedFile) {
-                            $corrigendumPath = $remarkData['corrigendum_file']->store('tender_corrigendums', 'public');
+                            $corrigendumPath = FileUploadHelper::storeWithOriginalName(
+                                $remarkData['corrigendum_file'],
+                                'tender_corrigendums'
+                            );
                         }
 
                         TenderRemark::create([
@@ -267,11 +389,16 @@ class TenderController extends Controller
         
         // Get units
         $units = Unit::all();
+
+        // Get production departments (by active branch)
+        $prodDeptQuery = ProductionDepartment::query();
+        $prodDeptQuery = $this->applyBranchFilter($prodDeptQuery, ProductionDepartment::class);
+        $productionDepartments = $prodDeptQuery->get();
         
         // Get logged in user
         $user = auth()->user();
         
-        return view('tenders.edit', compact('tender', 'customers', 'units', 'user'));
+        return view('tenders.edit', compact('tender', 'customers', 'units', 'user', 'productionDepartments'));
     }
 
     /**
@@ -293,7 +420,8 @@ class TenderController extends Controller
         $request->validate([
             'tender_no' => 'required|unique:tenders,tender_no,' . $id,
             'customer_tender_no' => 'nullable|string|max:255',
-            'production_dept' => 'nullable|in:Door Section,Fiber tables&windows,Railways',
+            // Must match an existing production department name
+            'production_dept' => 'nullable|exists:production_departments,name',
             'company_id' => 'nullable|exists:customers,id',
             'contact_person' => 'nullable|string|max:255',
             'billing_address_line_1' => 'nullable|string|max:255',
@@ -317,6 +445,9 @@ class TenderController extends Controller
             'pre_bid_conference_date' => 'nullable|date',
             'inspection_agency' => 'nullable|string|max:255',
             'tender_document_attachment' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'financial_tabulation_attachment' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'technical_spec_attachment' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'technical_spec_rank' => 'nullable|string|max:255',
             'tender_status' => 'nullable|in:Bid not coated,Bid Coated',
             'bid_result' => 'nullable|in:Bid Awarded,Bid not Awarded',
             'items' => 'required|array|min:1',
@@ -329,14 +460,57 @@ class TenderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Handle file upload
+            // Handle file uploads and optional deletions
             $tenderDocumentPath = $tender->tender_document_attachment;
-            if ($request->hasFile('tender_document_attachment')) {
-                // Delete old file if exists
+            $financialTabulationPath = $tender->financial_tabulation_attachment ?? null;
+            $technicalSpecPath = $tender->technical_spec_attachment ?? null;
+
+            // Explicit delete for Tender Document attachment
+            if ($request->boolean('delete_tender_document_attachment')) {
                 if ($tenderDocumentPath) {
                     Storage::disk('public')->delete($tenderDocumentPath);
                 }
-                $tenderDocumentPath = $request->file('tender_document_attachment')->store('tender_documents', 'public');
+                $tenderDocumentPath = null;
+            } elseif ($request->hasFile('tender_document_attachment')) {
+                if ($tenderDocumentPath) {
+                    Storage::disk('public')->delete($tenderDocumentPath);
+                }
+                $tenderDocumentPath = FileUploadHelper::storeWithOriginalName(
+                    $request->file('tender_document_attachment'),
+                    'tender_documents'
+                );
+            }
+
+            // Explicit delete for Financial Tabulation attachment
+            if ($request->boolean('delete_financial_tabulation_attachment')) {
+                if ($financialTabulationPath) {
+                    Storage::disk('public')->delete($financialTabulationPath);
+                }
+                $financialTabulationPath = null;
+            } elseif ($request->hasFile('financial_tabulation_attachment')) {
+                if ($financialTabulationPath) {
+                    Storage::disk('public')->delete($financialTabulationPath);
+                }
+                $financialTabulationPath = FileUploadHelper::storeWithOriginalName(
+                    $request->file('financial_tabulation_attachment'),
+                    'financial_tabulations'
+                );
+            }
+
+            // Explicit delete for Technical Specification attachment
+            if ($request->boolean('delete_technical_spec_attachment')) {
+                if ($technicalSpecPath) {
+                    Storage::disk('public')->delete($technicalSpecPath);
+                }
+                $technicalSpecPath = null;
+            } elseif ($request->hasFile('technical_spec_attachment')) {
+                if ($technicalSpecPath) {
+                    Storage::disk('public')->delete($technicalSpecPath);
+                }
+                $technicalSpecPath = FileUploadHelper::storeWithOriginalName(
+                    $request->file('technical_spec_attachment'),
+                    'technical_specs'
+                );
             }
 
             $tender->update([
@@ -358,6 +532,8 @@ class TenderController extends Controller
                 'contract_type' => $request->contract_type,
                 'bidding_system' => $request->bidding_system,
                 'procure_from_approved_source' => $request->procure_from_approved_source,
+                'validity_of_offer_days' => $request->validity_of_offer_days,
+                'regular_developmental' => $request->regular_developmental ?: 'Regular',
                 'tender_document_cost' => $request->tender_document_cost,
                 'emd' => $request->emd,
                 'ra_enabled' => $request->ra_enabled,
@@ -366,6 +542,9 @@ class TenderController extends Controller
                 'pre_bid_conference_date' => $request->pre_bid_conference_date,
                 'inspection_agency' => $request->inspection_agency,
                 'tender_document_attachment' => $tenderDocumentPath,
+                'financial_tabulation_attachment' => $financialTabulationPath,
+                'technical_spec_attachment' => $technicalSpecPath,
+                'technical_spec_rank' => $request->technical_spec_rank,
                 'tender_status' => $request->tender_status ?? 'Bid not coated',
                 'bid_result' => $request->bid_result,
             ]);
@@ -430,7 +609,10 @@ class TenderController extends Controller
                     if (!empty($remarkData['remarks'])) {
                         $corrigendumPath = null;
                         if (isset($remarkData['corrigendum_file']) && $remarkData['corrigendum_file'] instanceof \Illuminate\Http\UploadedFile) {
-                            $corrigendumPath = $remarkData['corrigendum_file']->store('tender_corrigendums', 'public');
+                            $corrigendumPath = FileUploadHelper::storeWithOriginalName(
+                                $remarkData['corrigendum_file'],
+                                'tender_corrigendums'
+                            );
                         }
 
                         TenderRemark::create([
@@ -444,7 +626,8 @@ class TenderController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('tenders.show', $tender->id)->with('success', 'Tender updated successfully.');
+            // After editing, go back to the Tender list view
+            return redirect()->route('tenders.index')->with('success', 'Tender updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error updating tender: ' . $e->getMessage())->withInput();
@@ -468,9 +651,15 @@ class TenderController extends Controller
         $tender = $query->findOrFail($id);
         
         try {
-            // Delete file if exists
+            // Delete files if exist
             if ($tender->tender_document_attachment) {
                 Storage::disk('public')->delete($tender->tender_document_attachment);
+            }
+            if ($tender->financial_tabulation_attachment) {
+                Storage::disk('public')->delete($tender->financial_tabulation_attachment);
+            }
+            if ($tender->technical_spec_attachment) {
+                Storage::disk('public')->delete($tender->technical_spec_attachment);
             }
             
             // Delete related files in remarks
@@ -501,6 +690,7 @@ class TenderController extends Controller
             'billing_address_line_2' => $customer->billing_address_line_2,
             'billing_city' => $customer->billing_city,
             'billing_state' => $customer->billing_state,
+            'billing_country' => $customer->billing_country ?? null,
             'billing_pincode' => $customer->billing_pincode,
             'gst_no' => $customer->gst_no,
             'contact_name' => $customer->contact_name,

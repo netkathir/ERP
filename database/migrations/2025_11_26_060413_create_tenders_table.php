@@ -18,7 +18,8 @@ class CreateTendersTable extends Migration
             $table->string('tender_no')->unique();
             $table->string('customer_tender_no')->nullable();
             $table->foreignId('attended_by')->constrained('users');
-            $table->enum('production_dept', ['Door Section', 'Fiber tables&windows', 'Railways'])->nullable();
+            // Store department name as text; actual allowed values are managed in production_departments table
+            $table->string('production_dept')->nullable();
             $table->foreignId('company_id')->nullable()->constrained('customers')->onDelete('set null');
             $table->string('contact_person')->nullable();
             

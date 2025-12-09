@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Permission;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -53,11 +54,19 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the role that owns the user.
+     * Get the role that owns the user (legacy single role).
      */
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the roles that belong to the user (Many-to-Many).
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_role');
     }
 
     /**
@@ -166,37 +175,66 @@ class User extends Authenticatable
     /**
      * Check if user has a specific permission.
      */
-    public function hasPermission(string $module, string $action = 'view'): bool
+    public function hasPermission(string $form, string $type = 'read'): bool
     {
         // Super Admin has all permissions
         if ($this->isSuperAdmin()) {
             return true;
         }
 
-        // Ensure role is loaded
-        if (!$this->relationLoaded('role')) {
-            $this->load('role');
+        // Map legacy actions to new permission columns
+        $typeMap = [
+            'view' => 'read',
+            'read' => 'read',
+            'create' => 'write',
+            'edit' => 'write',
+            'write' => 'write',
+            'delete' => 'delete',
+            'destroy' => 'delete',
+        ];
+
+        $checkColumn = $typeMap[strtolower($type)] ?? 'read';
+
+        // Load roles with their permissions if not already loaded
+        $this->loadMissing(['roles.permissions']);
+
+        foreach ($this->roles as $role) {
+            // Find permission for the given form in this role
+            $permission = $role->permissions->firstWhere('form_name', $form);
+            
+            if ($permission) {
+                $pivot = $permission->pivot;
+
+                // Hierarchical permission logic:
+                // - Delete => full access (delete, write, read)
+                // - Write  => write + read
+                // - Read   => read only
+                $hasPermission = false;
+
+                switch ($checkColumn) {
+                    case 'read':
+                        $hasPermission = ($pivot->read ?? false)
+                            || ($pivot->write ?? false)
+                            || ($pivot->delete ?? false);
+                        break;
+                    case 'write':
+                        $hasPermission = ($pivot->write ?? false)
+                            || ($pivot->delete ?? false);
+                        break;
+                    case 'delete':
+                        $hasPermission = ($pivot->delete ?? false);
+                        break;
+                    default:
+                        $hasPermission = ($pivot->$checkColumn ?? false);
+                        break;
+                }
+
+                if ($hasPermission) {
+                return true;
+                }
+            }
         }
 
-        // Check if user's role has the permission
-        if (!$this->role) {
-            return false;
-        }
-
-        // Ensure role permissions are loaded
-        if (!$this->role->relationLoaded('permissions')) {
-            $this->role->load('permissions');
-        }
-
-        $permission = Permission::where('module', $module)
-            ->where('action', $action)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$permission) {
-            return false;
-        }
-
-        return $this->role->permissions->contains('id', $permission->id);
+        return false;
     }
 }

@@ -3,107 +3,63 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permission;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class PermissionController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()->isSuperAdmin()) {
+                abort(403, 'Unauthorized action.');
+            }
+            return $next($request);
+        });
     }
 
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): View
+    public function index()
     {
-        $permissions = Permission::where('module', '!=', 'organizations')
-            ->latest()
-            ->paginate(15);
-        return view('permissions.index', compact('permissions'));
+        // Use form_name if exists, otherwise fallback to name
+        $permissions = Permission::orderByRaw('COALESCE(form_name, name)')->paginate(15);
+        return view('masters.permissions.index', compact('permissions'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): View
+    public function create()
     {
-        return view('permissions.create');
+        return view('masters.permissions.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|min:3',
-            'slug' => 'required|string|max:255|unique:permissions|regex:/^[a-z0-9-]+$/',
-            'description' => 'nullable|string|max:500',
-            'module' => 'nullable|string|max:255|regex:/^[a-z0-9-]+$/',
-        ], [
-            'slug.regex' => 'Slug must contain only lowercase letters, numbers, and hyphens.',
-            'module.regex' => 'Module must contain only lowercase letters, numbers, and hyphens.',
+            'form_name' => 'required|string|unique:permissions,form_name|max:255',
         ]);
 
         Permission::create($request->all());
 
-        return redirect()->route('permissions.index')
-            ->with('success', 'Permission created successfully.');
+        return redirect()->route('permissions.index')->with('success', 'Form/Permission created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(int $id): View
+    public function edit(Permission $permission)
     {
-        $permission = Permission::with('roles')->findOrFail($id);
-        return view('permissions.show', compact('permission'));
+        return view('masters.permissions.edit', compact('permission'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(int $id): View
+    public function update(Request $request, Permission $permission)
     {
-        $permission = Permission::findOrFail($id);
-        return view('permissions.edit', compact('permission'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, int $id): RedirectResponse
-    {
-        $permission = Permission::findOrFail($id);
-
         $request->validate([
-            'name' => 'required|string|max:255|min:3',
-            'slug' => 'required|string|max:255|unique:permissions,slug,' . $id . '|regex:/^[a-z0-9-]+$/',
-            'description' => 'nullable|string|max:500',
-            'module' => 'nullable|string|max:255|regex:/^[a-z0-9-]+$/',
-        ], [
-            'slug.regex' => 'Slug must contain only lowercase letters, numbers, and hyphens.',
-            'module.regex' => 'Module must contain only lowercase letters, numbers, and hyphens.',
+            'form_name' => 'required|string|max:255|unique:permissions,form_name,' . $permission->id,
         ]);
 
         $permission->update($request->all());
 
-        return redirect()->route('permissions.index')
-            ->with('success', 'Permission updated successfully.');
+        return redirect()->route('permissions.index')->with('success', 'Form/Permission updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(Permission $permission)
     {
-        $permission = Permission::findOrFail($id);
         $permission->delete();
-
-        return redirect()->route('permissions.index')
-            ->with('success', 'Permission deleted successfully.');
+        return redirect()->route('permissions.index')->with('success', 'Form/Permission deleted successfully.');
     }
 }

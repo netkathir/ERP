@@ -22,7 +22,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left;">ID</th>
+                        <th style="padding: 12px; text-align: left;">S.No</th>
                         <th style="padding: 12px; text-align: left;">Name</th>
                         <th style="padding: 12px; text-align: left;">Slug</th>
                         <th style="padding: 12px; text-align: left;">Permissions</th>
@@ -32,7 +32,7 @@
                 <tbody>
                     @foreach($roles as $role)
                         <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px;">{{ $role->id }}</td>
+                            <td style="padding: 12px;">{{ ($roles->currentPage() - 1) * $roles->perPage() + $loop->iteration }}</td>
                             <td style="padding: 12px; font-weight: 500;">{{ $role->name }}</td>
                             <td style="padding: 12px;">{{ $role->slug }}</td>
                             <td style="padding: 12px;">{{ $role->permissions->count() }} permissions</td>

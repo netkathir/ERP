@@ -20,6 +20,7 @@ class Quotation extends Model
         'billing_pincode',
         'gst_type', 
         'overall_discount_percent',
+        'gst_percent',
         'freight_charges', 
         'total_amount', 
         'net_amount', 

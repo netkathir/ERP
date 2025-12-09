@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Database\QueryException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -36,6 +37,32 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        // Handle foreign key constraint violations globally so all forms
+        // show a friendly message instead of a raw SQL error.
+        $this->renderable(function (Throwable $e, $request) {
+            if ($e instanceof QueryException) {
+                $errorCode = $e->errorInfo[1] ?? null;
+
+                // MySQL foreign key constraint error code
+                if ($errorCode === 1451 || $errorCode === 1452) {
+                    $message = 'This record is used in another form and cannot be deleted. '
+                             . 'Please remove its usage in other forms before deleting.';
+
+                    // For normal web requests, redirect back with a warning message
+                    if (!$request->expectsJson()) {
+                        return redirect()->back()->with('error', $message);
+                    }
+
+                    // For API / JSON requests, return a JSON error response
+                    return response()->json([
+                        'message' => $message,
+                    ], 409);
+                }
+            }
+
+            return null;
         });
     }
 }

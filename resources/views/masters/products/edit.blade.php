@@ -26,6 +26,31 @@
         @csrf
         @method('PUT')
         <div style="margin-bottom: 20px;">
+            <label for="product_category_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Product Category</label>
+            <select name="product_category_id" id="product_category_id"
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: white;">
+                <option value="">Select Product Category</option>
+                @if(isset($categories) && $categories->count() > 0)
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ old('product_category_id', $product->product_category_id) == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
+                @else
+                    <option value="" disabled>No Product Categories available</option>
+                @endif
+            </select>
+            @error('product_category_id')
+                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+            @enderror
+            @if(isset($categories) && $categories->count() == 0)
+                <p style="color: #856404; font-size: 12px; margin-top: 5px; background: #fff3cd; padding: 8px; border-radius: 4px;">
+                    <i class="fas fa-info-circle"></i> No Product Categories found. Please create Product Categories first.
+                </p>
+            @endif
+        </div>
+
+        <div style="margin-bottom: 20px;">
             <label for="name" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Product Name <span style="color: red;">*</span></label>
             <input type="text" name="name" id="name" value="{{ old('name', $product->name) }}" required
                 style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
@@ -43,50 +68,18 @@
             @enderror
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <div>
-                <label for="unit_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Unit <span style="color: red;">*</span></label>
-                <select name="unit_id" id="unit_id" required
-                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                    <option value="">Select Unit</option>
-                    @foreach($units as $unit)
-                        <option value="{{ $unit->id }}" {{ old('unit_id', $product->unit_id) == $unit->id ? 'selected' : '' }}>{{ $unit->name }} ({{ $unit->symbol }})</option>
-                    @endforeach
-                </select>
-                @error('unit_id')
-                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
-                @enderror
-            </div>
-            <div>
-                <label for="price" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Price <span style="color: red;">*</span></label>
-                <input type="number" step="0.01" name="price" id="price" value="{{ old('price', $product->price) }}" required
-                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
-                    placeholder="0.00">
-                @error('price')
-                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <div>
-                <label for="gst_rate" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">GST Rate (%) <span style="color: red;">*</span></label>
-                <input type="number" step="0.01" name="gst_rate" id="gst_rate" value="{{ old('gst_rate', $product->gst_rate) }}" required
-                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
-                    placeholder="e.g., 18.00">
-                @error('gst_rate')
-                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
-                @enderror
-            </div>
-            <div>
-                <label for="category" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Category</label>
-                <input type="text" name="category" id="category" value="{{ old('category', $product->category) }}"
-                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
-                    placeholder="e.g., Electronics, Furniture">
-                @error('category')
-                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
-                @enderror
-            </div>
+        <div style="margin-bottom: 20px;">
+            <label for="unit_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Unit <span style="color: red;">*</span></label>
+            <select name="unit_id" id="unit_id" required
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                <option value="">Select Unit</option>
+                @foreach($units as $unit)
+                    <option value="{{ $unit->id }}" {{ old('unit_id', $product->unit_id) == $unit->id ? 'selected' : '' }}>{{ $unit->name }} ({{ $unit->symbol }})</option>
+                @endforeach
+            </select>
+            @error('unit_id')
+                <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+            @enderror
         </div>
 
         <div style="display: flex; gap: 15px; margin-top: 30px;">

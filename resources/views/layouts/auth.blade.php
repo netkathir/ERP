@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
     <!-- Styles -->
     <style>
         * {
@@ -20,14 +23,14 @@
         }
         body {
             font-family: 'Figtree', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .auth-container {
-            background: white;
+            background: #2c3e50; /* match dashboard sidebar color */
             border-radius: 10px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             padding: 40px;
@@ -39,12 +42,12 @@
             margin-bottom: 30px;
         }
         .auth-header h1 {
-            color: #333;
+            color: #ffffff;
             font-size: 28px;
             margin-bottom: 10px;
         }
         .auth-header p {
-            color: #666;
+            color: #d0d7e2;
             font-size: 14px;
         }
         .form-group {
@@ -53,7 +56,7 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #f0f4ff;
             font-weight: 500;
         }
         .form-group input {

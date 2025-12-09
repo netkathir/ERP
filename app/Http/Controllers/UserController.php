@@ -18,23 +18,39 @@ class UserController extends Controller
      *
      * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         
+        $query = User::with(['role', 'branches']);
+        
         if ($user->isSuperAdmin()) {
-            // Super Admin can see all users
-            $users = User::with(['role', 'branches'])->latest()->paginate(15);
+            // Super Admin can see all users (active, inactive, locked)
+            // Query already set
         } elseif ($user->isBranchUser()) {
             // Branch User can only see themselves
-            $users = User::where('id', $user->id)
-                ->with(['role', 'branches'])
-                ->paginate(15);
+            $query->where('id', $user->id);
         } else {
-            $users = User::where('id', $user->id)
-                ->with(['role', 'branches'])
-                ->paginate(15);
+            $query->where('id', $user->id);
         }
+        
+        // Sorting functionality
+        $sortBy = $request->get('sort_by', 'id');
+        $sortOrder = $request->get('sort_order', 'desc');
+        if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'desc';
+        switch ($sortBy) {
+            case 'name': $query->orderBy('users.name', $sortOrder); break;
+            case 'email': $query->orderBy('users.email', $sortOrder); break;
+            case 'role':
+                $query->leftJoin('roles', 'users.role_id', '=', 'roles.id')
+                      ->orderBy('roles.name', $sortOrder)
+                      ->select('users.*')
+                      ->distinct();
+                break;
+            default: $query->orderBy('users.id', $sortOrder); break;
+        }
+        
+        $users = $query->paginate(15)->withQueryString();
         
         return view('users.index', compact('users'));
     }
@@ -80,16 +96,32 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'mobile' => 'nullable|string|max:20',
-            'role_id' => 'required|exists:roles,id',
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,id',
             'branches' => 'nullable|array',
             'branches.*' => 'exists:branches,id',
-            'send_email' => 'nullable|boolean',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
+            ],
         ];
         
-        $request->validate($rules);
+        $request->validate($rules, [
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            'password.confirmed' => 'Password confirmation does not match.',
+        ]);
         
-        // Get selected role
-        $role = \App\Models\Role::findOrFail($request->role_id);
+        // Get selected roles
+        $roles = \App\Models\Role::whereIn('id', $request->roles)->get();
+        
+        // Determine primary role (prioritize Super Admin if selected, otherwise first one)
+        $primaryRole = $roles->firstWhere('slug', 'super-admin') ?? $roles->first();
+        $role = $primaryRole; // For legacy logic below
         
         // Validate branch assignment (not required for Super Admin)
         if ($role->slug !== 'super-admin' && (!$request->branches || !is_array($request->branches) || count($request->branches) == 0)) {
@@ -97,15 +129,15 @@ class UserController extends Controller
         }
         
         try {
-            // Generate random password
-            $password = Str::random(12);
+            // Use password from form
+            $password = $request->password;
             
             $data = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($password),
                 'mobile' => $request->mobile ?? null,
-                'role_id' => $role->id,
+                'role_id' => $primaryRole->id,
                 'status' => 'active',
                 'created_by' => $currentUser->id,
                 'organization_id' => null,
@@ -115,21 +147,15 @@ class UserController extends Controller
 
             $user = User::create($data);
             
+            // Sync roles (many-to-many)
+            $user->roles()->sync($request->roles);
+            
             // Sync branches (many-to-many) - only if not Super Admin
             if ($role->slug !== 'super-admin' && $request->branches) {
                 $user->branches()->sync($request->branches);
             }
             
-            // Send welcome email
-            if ($request->has('send_email') && $request->send_email) {
-                try {
-                    $loginUrl = route('login');
-                    Mail::to($user->email)->send(new UserWelcomeMail($user, $password, $loginUrl));
-                } catch (\Exception $e) {
-                    // Log error but don't fail user creation
-                    \Log::error('Failed to send welcome email: ' . $e->getMessage());
-                }
-            }
+            // Email is not sent - Admin will share credentials externally
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Failed to create user: ' . $e->getMessage()])->withInput();
         }
@@ -139,9 +165,11 @@ class UserController extends Controller
             $message .= ' and assigned to ' . count($request->branches) . ' branch(es)';
         }
         $message .= '.';
-        if ($request->has('send_email') && $request->send_email) {
-            $message .= ' Welcome email sent.';
-        }
+        
+        // Store password in session to display to admin
+        session()->flash('user_password', $password);
+        session()->flash('user_email', $user->email);
+        session()->flash('user_name', $user->name);
 
         return redirect()->route('users.index')->with('success', $message);
     }
@@ -197,34 +225,42 @@ class UserController extends Controller
             abort(403, 'Only Super Admin can update users.');
         }
         
-        $role = \App\Models\Role::findOrFail($request->role_id);
-        
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'mobile' => 'nullable|string|max:20',
-            'role_id' => 'required|exists:roles,id',
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,id',
             'status' => 'required|in:active,inactive,locked',
         ];
-        
-        // Validate branches only if not Super Admin
-        if ($role->slug !== 'super-admin') {
-            $rules['branches'] = 'required|array|min:1';
-            $rules['branches.*'] = 'exists:branches,id';
-        }
         
         // Only validate password if it's provided
         if ($request->filled('password')) {
             $rules['password'] = [
+                'required',
                 'string',
                 'min:8',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
             ];
         }
         
         $request->validate($rules);
         
-        $data = $request->only(['name', 'email', 'mobile', 'status', 'role_id']);
+        // Get roles after validation
+        $roles = \App\Models\Role::whereIn('id', $request->roles)->get();
+        $primaryRole = $roles->firstWhere('slug', 'super-admin') ?? $roles->first();
+        $role = $primaryRole; // For legacy logic below
+        
+        // Validate branches only if not Super Admin
+        if ($role->slug !== 'super-admin') {
+            if (!$request->branches || !is_array($request->branches) || count($request->branches) == 0) {
+                return back()->withErrors(['branches' => 'At least one branch is required for non-Super Admin users.'])->withInput();
+            }
+        }
+        
+        $data = $request->only(['name', 'email', 'mobile', 'status']);
+        $data['role_id'] = $primaryRole->id;
         
         // Update password only if provided and not empty
         $password = $request->input('password');
@@ -233,17 +269,27 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        $user->roles()->sync($request->roles);
         
         // Sync branches (many-to-many) - only if not Super Admin
         if ($role->slug !== 'super-admin' && $request->branches) {
             $user->branches()->sync($request->branches);
+            $branchCount = count($request->branches);
         } elseif ($role->slug === 'super-admin') {
             // Remove all branch assignments for Super Admin
             $user->branches()->detach();
+            $branchCount = 0;
+        } else {
+            $branchCount = 0;
         }
 
-        return redirect()->route('users.index')
-            ->with('success', 'User updated successfully and assigned to ' . count($request->branches) . ' branch(es).');
+        $message = 'User updated successfully';
+        if ($branchCount > 0) {
+            $message .= ' and assigned to ' . $branchCount . ' branch(es)';
+        }
+        $message .= '.';
+
+        return redirect()->route('users.index')->with('success', $message);
     }
 
     /**
@@ -277,5 +323,108 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'User deactivated successfully.');
+    }
+
+    /**
+     * Show the form for changing user's own password.
+     *
+     * @return View
+     */
+    public function showChangePasswordForm(): View
+    {
+        return view('account.change-password');
+    }
+
+    /**
+     * Change the authenticated user's password.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function changePassword(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
+            ],
+        ], [
+            'current_password.required' => 'Current password is required.',
+            'new_password.required' => 'New password is required.',
+            'new_password.min' => 'New password must be at least 8 characters.',
+            'new_password.regex' => 'New password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            'new_password.confirmed' => 'New password confirmation does not match.',
+        ]);
+
+        // Verify current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.'])->withInput();
+        }
+
+        // Check if new password is different from current password
+        if (Hash::check($request->new_password, $user->password)) {
+            return back()->withErrors(['new_password' => 'New password must be different from your current password.'])->withInput();
+        }
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        // Logout user after password change
+        auth()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Your password has been successfully changed. Please log in with your new password.');
+    }
+
+    /**
+     * Admin change user password (without requiring current password).
+     *
+     * @param Request $request
+     * @param int $id
+     * @return RedirectResponse
+     */
+    public function adminChangePassword(Request $request, int $id): RedirectResponse
+    {
+        $currentUser = auth()->user();
+        
+        // Only Super Admin can change user passwords
+        if (!$currentUser->isSuperAdmin()) {
+            abort(403, 'Only Super Admin can change user passwords.');
+        }
+
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'new_password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                'confirmed'
+            ],
+        ], [
+            'new_password.required' => 'New password is required.',
+            'new_password.min' => 'New password must be at least 8 characters.',
+            'new_password.regex' => 'New password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            'new_password.confirmed' => 'New password confirmation does not match.',
+        ]);
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        return redirect()->route('users.edit', $user->id)
+            ->with('success', 'User password has been successfully changed.');
     }
 }

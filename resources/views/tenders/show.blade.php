@@ -79,9 +79,25 @@
                 <div><strong>Tender Type:</strong> {{ $tender->tender_type ?? '-' }}</div>
                 <div><strong>Contract Type:</strong> {{ $tender->contract_type ?? '-' }}</div>
                 <div><strong>Bidding System:</strong> {{ $tender->bidding_system ?? '-' }}</div>
+                <div><strong>Procure from Approved Source:</strong> {{ $tender->procure_from_approved_source ?? '-' }}</div>
+                <div><strong>Regular / Developmental:</strong> {{ $tender->regular_developmental ?? 'Regular' }}</div>
+                <div><strong>Validity of Offer (Days):</strong> {{ $tender->validity_of_offer_days ?? '-' }}</div>
                 <div><strong>Tender Document Cost:</strong> ₹{{ number_format($tender->tender_document_cost ?? 0, 2) }}</div>
                 <div><strong>EMD:</strong> ₹{{ number_format($tender->emd ?? 0, 2) }}</div>
-                <div><strong>Tender Status:</strong> {{ $tender->tender_status }}</div>
+                <div><strong>RA Enabled:</strong> {{ $tender->ra_enabled ?? '-' }}</div>
+                <div><strong>RA Date &amp; Time:</strong> {{ $tender->ra_date_time ? $tender->ra_date_time->format('d/m/Y H:i') : '-' }}</div>
+                <div><strong>Pre-Bid Conference Required:</strong> {{ $tender->pre_bid_conference_required ?? '-' }}</div>
+                <div><strong>Pre-Bid Conference Date:</strong> {{ $tender->pre_bid_conference_date ? $tender->pre_bid_conference_date->format('d/m/Y') : '-' }}</div>
+                <div><strong>Inspection Agency:</strong> {{ $tender->inspection_agency ?? '-' }}</div>
+                <div><strong>Tender Status:</strong>
+                    @if($tender->tender_status === 'Bid Coated')
+                        Bid Quoted
+                    @elseif($tender->tender_status === 'Bid not coated')
+                        Bid Not Quoted
+                    @else
+                        {{ $tender->tender_status }}
+                    @endif
+                </div>
                 <div><strong>Bid Result:</strong> {{ $tender->bid_result ?? '-' }}</div>
             </div>
             @if($tender->tender_document_attachment)

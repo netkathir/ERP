@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class, // Create Super Admin first
             UserSeeder::class,
             BranchUserSeeder::class, // Create test Branch User with branch assigned
+            MenuFormSeeder::class, // New menu / submenu / form structure
         ]);
     }
 }

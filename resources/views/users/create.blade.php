@@ -44,28 +44,75 @@
 
         <div style="margin-bottom: 20px;">
             <label for="mobile" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Mobile Number</label>
-            <input type="text" name="mobile" id="mobile" value="{{ old('mobile') }}"
+            <input
+                type="tel"
+                name="mobile"
+                id="mobile"
+                value="{{ old('mobile') }}"
                 style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
                 class="@error('mobile') border-red-500 @enderror"
-                placeholder="e.g., +1234567890">
+                placeholder="e.g., 9876543210"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                title="Enter a valid 10-digit mobile number"
+                oninput="sanitizeMobileInput(this)">
             @error('mobile')
                 <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
             @enderror
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <label for="password" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Password <span style="color: red;">*</span></label>
+                <div style="position: relative;">
+                    <input type="password" name="password" id="password" value="{{ old('password') }}" required
+                        style="width: 100%; padding: 12px 40px 12px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                        class="@error('password') border-red-500 @enderror"
+                        autocomplete="new-password">
+                    <button type="button"
+                        onclick="togglePasswordVisibility('password', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: #666;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Minimum 8 characters, 1 uppercase, 1 lowercase, 1 number</small>
+                @error('password')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="password_confirmation" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Confirm Password <span style="color: red;">*</span></label>
+                <div style="position: relative;">
+                    <input type="password" name="password_confirmation" id="password_confirmation" value="{{ old('password_confirmation') }}" required
+                        style="width: 100%; padding: 12px 40px 12px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+                        class="@error('password_confirmation') border-red-500 @enderror"
+                        autocomplete="new-password">
+                    <button type="button"
+                        onclick="togglePasswordVisibility('password_confirmation', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: #666;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                @error('password_confirmation')
+                    <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
         <div style="margin-bottom: 20px;">
-            <label for="role_id" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Role <span style="color: red;">*</span></label>
-            <select name="role_id" id="role_id" required
-                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;"
+            <label for="roles" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">Roles <span style="color: red;">*</span></label>
+            <select name="roles[]" id="roles" multiple required
+                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; min-height: 100px;"
                 onchange="toggleBranchSelection()">
-                <option value="">-- Select Role --</option>
                 @foreach($roles as $role)
-                    <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                    <option value="{{ $role->id }}" {{ in_array($role->id, old('roles', [])) ? 'selected' : '' }}>
                         {{ $role->name }}
                     </option>
                 @endforeach
             </select>
-            @error('role_id')
+            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Hold Ctrl (Windows) or Cmd (Mac) to select multiple roles</small>
+            @error('roles')
                 <p style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</p>
             @enderror
         </div>
@@ -94,15 +141,12 @@
             @enderror
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" name="send_email" id="send_email" value="1" {{ old('send_email') ? 'checked' : 'checked' }}
-                    style="margin-right: 8px; width: 18px; height: 18px;">
-                <span style="color: #333; font-weight: 500;">Send welcome email with login credentials</span>
-            </label>
-            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px; margin-left: 26px;">
-                A system-generated password will be created and sent via email. User can change it after first login.
-            </small>
+        <div style="background: #e7f3ff; color: #004085; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #b3d7ff;">
+            <strong><i class="fas fa-info-circle"></i> Note:</strong>
+            <p style="margin: 8px 0 0 0; font-size: 14px;">
+                Email will not be sent to the user. Please share the login credentials (email and password) with the user externally. 
+                The user can change their password after first login.
+            </p>
         </div>
 
         <div style="display: flex; gap: 15px; margin-top: 30px;">
@@ -117,26 +161,79 @@
 </div>
 
 <script>
+function sanitizeMobileInput(input) {
+    // Allow only digits and limit to 10 characters
+    let digits = input.value.replace(/\D/g, '');
+    if (digits.length > 10) {
+        digits = digits.slice(0, 10);
+    }
+    input.value = digits;
+}
+
 function toggleBranchSelection() {
-    const roleSelect = document.getElementById('role_id');
+    const roleSelect = document.getElementById('roles');
     const branchesSection = document.getElementById('branches-section');
     const branchesSelect = document.getElementById('branches');
-    const selectedRole = roleSelect.options[roleSelect.selectedIndex];
-    const roleName = selectedRole ? selectedRole.text.toLowerCase() : '';
     
-    if (roleName.includes('super admin')) {
+    // Check if any selected role is Super Admin
+    let hasSuperAdmin = false;
+    for (let i = 0; i < roleSelect.options.length; i++) {
+        if (roleSelect.options[i].selected) {
+            const roleName = roleSelect.options[i].text.toLowerCase();
+            if (roleName.includes('super admin')) {
+                hasSuperAdmin = true;
+                break;
+            }
+        }
+    }
+    
+    if (hasSuperAdmin) {
         branchesSection.style.display = 'none';
         branchesSelect.removeAttribute('required');
-        branchesSelect.value = null;
+        // Clear all selections
+        for (let i = 0; i < branchesSelect.options.length; i++) {
+            branchesSelect.options[i].selected = false;
+        }
     } else {
         branchesSection.style.display = 'block';
         branchesSelect.setAttribute('required', 'required');
     }
 }
 
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (!input) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     toggleBranchSelection();
+
+    // Front-end validation for mobile number on submit
+    const form = document.getElementById('userForm');
+    const mobileInput = document.getElementById('mobile');
+
+    if (form && mobileInput) {
+        form.addEventListener('submit', function (e) {
+            const value = mobileInput.value.trim();
+            if (value !== '' && !/^[0-9]{10}$/.test(value)) {
+                e.preventDefault();
+                alert('Please enter a valid 10-digit mobile number.');
+                mobileInput.focus();
+            }
+        });
+    }
 });
 </script>
 

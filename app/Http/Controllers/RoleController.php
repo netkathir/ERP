@@ -3,157 +3,122 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
-use App\Models\Permission;
-use Illuminate\Http\RedirectResponse;
+use App\Models\RolePermissionAudit;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
-        // Only Super Admin can manage roles
+        // Ensure only super admin or authorized users can manage roles
         $this->middleware(function ($request, $next) {
             if (!auth()->user()->isSuperAdmin()) {
-                abort(403, 'Only Super Admin can manage roles.');
+                abort(403, 'Unauthorized action.');
             }
             return $next($request);
         });
     }
 
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): View
+    public function index()
     {
-        $roles = Role::with('permissions')->latest()->paginate(15);
-        return view('roles.index', compact('roles'));
+        $roles = Role::paginate(15);
+        return view('masters.roles.index', compact('roles'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): View
+    public function create()
     {
-        $permissions = Permission::where('is_active', true)
-            ->where('module', '!=', 'organizations')
-            ->orderBy('module')
-            ->orderByRaw('action IS NULL, action')
-            ->get()
-            ->groupBy('module');
-        return view('roles.create', compact('permissions'));
+        return view('masters.roles.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|min:3',
-            'slug' => 'required|string|max:255|unique:roles|regex:/^[a-z0-9-]+$/',
-            'description' => 'nullable|string|max:500',
-            'is_system_role' => 'boolean',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
-        ], [
-            'slug.regex' => 'Slug must contain only lowercase letters, numbers, and hyphens.',
+            'name' => 'required|unique:roles,name|max:255',
+            'description' => 'nullable|string',
         ]);
 
-        $data = $request->only(['name', 'slug', 'description', 'is_active', 'is_system_role']);
-        // Prevent creating system roles through UI (only via seeders)
-        $data['is_system_role'] = false;
+        // Generate slug from name
+        $slug = Str::slug($request->name);
         
-        $role = Role::create($data);
-
-        if ($request->has('permissions')) {
-            $role->permissions()->attach($request->permissions);
+        // Ensure slug is unique
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Role::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
         }
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Role created successfully.');
+        $role = Role::create([
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+        ]);
+
+        // Log audit trail
+        RolePermissionAudit::log('created', $role->id, null, null, null, json_encode($request->all()), "Role '{$role->name}' created");
+
+        return redirect()->route('roles.index')->with('success', 'Role created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(int $id): View
+    public function edit(Role $role)
     {
-        $role = Role::with('permissions')->findOrFail($id);
-        return view('roles.show', compact('role'));
+        return view('masters.roles.edit', compact('role'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(int $id): View
+    public function update(Request $request, Role $role)
     {
-        $role = Role::with('permissions')->findOrFail($id);
-        $permissions = Permission::where('is_active', true)
-            ->where('module', '!=', 'organizations')
-            ->orderBy('module')
-            ->orderByRaw('action IS NULL, action')
-            ->get()
-            ->groupBy('module');
-        return view('roles.edit', compact('role', 'permissions'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, int $id): RedirectResponse
-    {
-        $role = Role::findOrFail($id);
-
-        // Prevent editing system roles
-        if ($role->isSystemRole() || $role->slug === 'super-admin') {
-            return redirect()->route('roles.index')
-                ->with('error', 'Cannot edit system roles.');
-        }
-
         $request->validate([
-            'name' => 'required|string|max:255|min:3',
-            'slug' => 'required|string|max:255|unique:roles,slug,' . $id . '|regex:/^[a-z0-9-]+$/',
-            'description' => 'nullable|string|max:500',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
-        ], [
-            'slug.regex' => 'Slug must contain only lowercase letters, numbers, and hyphens.',
+            'name' => 'required|max:255|unique:roles,name,' . $role->id,
+            'description' => 'nullable|string',
         ]);
 
-        $data = $request->only(['name', 'slug', 'description', 'is_active']);
-        // Prevent changing system_role flag through UI
-        $data['is_system_role'] = $role->is_system_role;
-        
-        $role->update($data);
+        // Store old values for audit
+        $oldName = $role->name;
+        $oldDescription = $role->description;
+        $oldSlug = $role->slug;
 
-        if ($request->has('permissions')) {
-            $role->permissions()->sync($request->permissions);
-        } else {
-            $role->permissions()->detach();
+        // Generate slug from name if name changed
+        $slug = $role->slug;
+        if ($oldName != $request->name) {
+            $slug = Str::slug($request->name);
+            
+            // Ensure slug is unique (excluding current role)
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Role::where('slug', $slug)->where('id', '!=', $role->id)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
         }
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Role updated successfully.');
+        $role->update([
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+        ]);
+
+        // Log audit trail for each changed field
+        if ($oldName != $request->name) {
+            RolePermissionAudit::log('updated', $role->id, null, 'name', $oldName, $request->name, "Role name changed");
+        }
+        if ($oldSlug != $slug) {
+            RolePermissionAudit::log('updated', $role->id, null, 'slug', $oldSlug, $slug, "Role slug changed");
+        }
+        if ($oldDescription != $request->description) {
+            RolePermissionAudit::log('updated', $role->id, null, 'description', $oldDescription, $request->description, "Role description changed");
+        }
+
+        return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(Role $role)
     {
-        $role = Role::findOrFail($id);
-        
-        // Prevent deleting system roles
-        if (!$role->canBeDeleted()) {
-            return redirect()->route('roles.index')
-                ->with('error', 'Cannot delete system roles.');
-        }
+        // Log audit trail before deletion
+        RolePermissionAudit::log('deleted', $role->id, null, null, json_encode($role->toArray()), null, "Role '{$role->name}' deleted");
 
         $role->delete();
-
-        return redirect()->route('roles.index')
-            ->with('success', 'Role deleted successfully.');
+        return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');
     }
 }

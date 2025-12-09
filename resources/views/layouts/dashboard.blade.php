@@ -127,20 +127,45 @@
         .sidebar-menu::-webkit-scrollbar-thumb:hover {
             background: rgba(255,255,255,0.3);
         }
+
+        /* Simple inline loader for submit buttons */
+        .btn-loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            margin-right: 6px;
+            display: inline-block;
+            vertical-align: middle;
+            animation: btn-spin 0.6s linear infinite;
+        }
+
+        @keyframes btn-spin {
+            to { transform: rotate(360deg); }
+        }
         .menu-item-header {
-            padding: 10px 20px;
-            font-size: 12px;
-            color: #888;
+            padding: 12px 20px;
+            font-size: 13px;
+            color: #f9fafb;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.06em;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
             user-select: none;
-            transition: background 0.3s;
+            transition: background 0.3s, color 0.3s;
+            background: rgba(255,255,255,0.03);
         }
         .menu-item-header:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.12);
+            color: #ffffff;
+        }
+        .menu-item-header .menu-header-icon {
+            font-size: 16px;
+            margin-right: 8px;
         }
         .menu-item-header .arrow {
             transition: transform 0.3s ease;
@@ -199,6 +224,16 @@
             justify-content: center;
             padding: 14px 0;
             gap: 0;
+        }
+        /* In collapsed mode: show only the section icon, hide text and arrow */
+        .sidebar.collapsed .menu-item-header span {
+            display: none;
+        }
+        .sidebar.collapsed .menu-item-header .arrow {
+            display: none;
+        }
+        .sidebar.collapsed .menu-item-header {
+            justify-content: center;
         }
         .sidebar.collapsed .menu-item i {
             justify-content: center;
@@ -312,27 +347,40 @@
                     <span>Dashboard</span>
                 </a>
                 
-                {{-- Super Admin Menu --}}
+                {{-- Account Settings --}}
+                <a href="{{ route('account.change-password') }}" class="menu-item" title="Change Password">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Account Settings</span>
+                </a>
+                
+                {{-- System Admin Menu (Super Admin only) --}}
                 @if(auth()->user()->isSuperAdmin())
-                    <a href="{{ route('branches.index') }}" class="menu-item" title="Branches">
-                        <i class="fas fa-sitemap"></i>
-                        <span>Branches</span>
-                    </a>
-                    
-                    <a href="{{ route('users.index') }}" class="menu-item" title="Users">
-                        <i class="fas fa-users"></i>
-                        <span>Users</span>
-                    </a>
-                    
-                    <a href="{{ route('roles.index') }}" class="menu-item" title="Roles">
-                        <i class="fas fa-user-shield"></i>
-                        <span>Roles</span>
-                    </a>
-                    
-                    <a href="{{ route('permissions.index') }}" class="menu-item" title="Permissions">
-                        <i class="fas fa-key"></i>
-                        <span>Permissions</span>
-                    </a>
+                    <div class="menu-item-header" onclick="toggleSystemAdminMenu()" id="systemAdminHeader" style="margin-top: 10px;" title="System Admin">
+                        <i class="fas fa-tools menu-header-icon"></i>
+                        <span>System Admin</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+                    <div class="menu-sub-items" id="systemAdminMenu">
+                        <a href="{{ route('branches.index') }}" class="menu-item" title="Branches">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Branches</span>
+                        </a>
+                        
+                        <a href="{{ route('users.index') }}" class="menu-item" title="Users">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                        
+                        <a href="{{ route('roles.index') }}" class="menu-item" title="Roles">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Roles</span>
+                        </a>
+                        
+                        <a href="{{ route('role-permissions.select') }}" class="menu-item" title="Role Permissions">
+                            <i class="fas fa-key"></i>
+                            <span>Role Permissions</span>
+                        </a>
+                    </div>
                 @endif
                 
                 {{-- Branch User Menu --}}
@@ -343,6 +391,13 @@
                     </a>
                 @endif
                 
+                {{-- Enquiry Sales Module --}}
+                <div class="menu-item-header" onclick="toggleEnquirySalesMenu()" id="enquirySalesHeader" style="margin-top: 10px;" title="Enquiry Sales">
+                    <i class="fas fa-question-circle menu-header-icon"></i>
+                    <span>Enquiry Sales</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <div class="menu-sub-items" id="enquirySalesMenu">
                 <a href="{{ route('quotations.index') }}" class="menu-item" title="Quotations">
                     <i class="fas fa-file-invoice-dollar"></i>
                     <span>Quotations</span>
@@ -351,50 +406,97 @@
                     <i class="fas fa-file-invoice"></i>
                     <span>Proforma Invoices</span>
                 </a>
+                </div>
 
                 {{-- Tender Sales Module --}}
                 @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('tenders', 'view'))
-                <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;">
-                    <span>Tender Sales</span>
-                    <i class="fas fa-chevron-down arrow"></i>
-                </div>
-                <div class="menu-sub-items" id="tenderSalesMenu">
-                    <a href="{{ route('tenders.index') }}" class="menu-item" title="Tenders">
-                        <i class="fas fa-gavel"></i>
-                        <span>Tenders</span>
-                    </a>
-                </div>
+                    <div class="menu-item-header" onclick="toggleTenderSalesMenu()" id="tenderSalesHeader" style="margin-top: 10px;" title="Tender Sales">
+                        <i class="fas fa-file-contract menu-header-icon"></i>
+                        <span>Tender Sales</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+                    <div class="menu-sub-items" id="tenderSalesMenu">
+                        <a href="{{ route('tenders.index') }}" class="menu-item" title="Tenders">
+                            <i class="fas fa-gavel"></i>
+                            <span>Tenders</span>
+                        </a>
+                        <a href="{{ route('customer-orders.index') }}" class="menu-item" title="Customer Orders">
+                            <i class="fas fa-file-contract"></i>
+                            <span>Customer Orders</span>
+                        </a>
+                        <a href="{{ route('tender-evaluations.index') }}" class="menu-item" title="Tender Evaluation">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Tender Evaluation</span>
+                        </a>
+                        @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('approvals', 'view'))
+                        <a href="{{ route('approvals.index', ['form' => 'customer_orders']) }}" class="menu-item" title="Pending Approvals">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Pending Approvals</span>
+                        </a>
+                        @endif
+                        <a href="{{ route('customer-complaints.index') }}" class="menu-item" title="Customer Complaint Register">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Customer Complaint Register</span>
+                        </a>
+                    </div>
                 @endif
 
-                <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader">
+                {{-- Supplier Master Module --}}
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('suppliers', 'view'))
+                    <div class="menu-item-header" onclick="toggleSupplierMenu()" id="supplierHeader" style="margin-top: 10px;" title="Supplier">
+                        <i class="fas fa-truck menu-header-icon"></i>
+                        <span>Supplier</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+                    <div class="menu-sub-items" id="supplierMenu">
+                        <a href="{{ route('suppliers.index') }}" class="menu-item" title="Suppliers">
+                            <i class="fas fa-truck"></i>
+                            <span>Suppliers</span>
+                        </a>
+                        <a href="{{ route('supplier-evaluations.index') }}" class="menu-item" title="Supplier Evaluation">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Supplier Evaluation</span>
+                        </a>
+                        <a href="{{ route('subcontractor-evaluations.index') }}" class="menu-item" title="Subcontractor Evaluation">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Subcontractor Evaluation</span>
+                        </a>
+                    </div>
+                @endif
+
+                {{-- Purchase Module --}}
+                 <div class="menu-item-header" onclick="togglePurchaseMenu()" id="purchaseHeader" style="margin-top: 10px;" title="Purchase">
+                     <i class="fas fa-shopping-cart menu-header-icon"></i>
+                    <span>Purchase</span>
+                    <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <div class="menu-sub-items" id="purchaseMenu">
+                    <a href="{{ route('purchase-indents.index') }}" class="menu-item" title="Purchase Indents">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Purchase Indents</span>
+                    </a>
+                    <a href="{{ route('purchase-orders.index') }}" class="menu-item" title="Purchase Orders">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Purchase Orders</span>
+                    </a>
+                </div>
+
+                {{-- Store Module --}}
+                 <div class="menu-item-header" onclick="toggleStoreMenu()" id="storeHeader" style="margin-top: 10px;" title="Store">
+                     <i class="fas fa-warehouse menu-header-icon"></i>
+                     <span>Store</span>
+                     <i class="fas fa-chevron-down arrow"></i>
+                 </div>
+                <div class="menu-sub-items" id="storeMenu">
+                    {{-- Add Store-related links here when available --}}
+                </div>
+
+                 <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader" title="Masters">
+                     <i class="fas fa-database menu-header-icon"></i>
                     <span>Masters</span>
                     <i class="fas fa-chevron-down arrow"></i>
                 </div>
                 <div class="menu-sub-items" id="mastersMenu">
-                    @if(auth()->user()->hasPermission('units', 'view'))
-                    <a href="{{ route('units.index') }}" class="menu-item" title="Units">
-                        <i class="fas fa-balance-scale"></i>
-                        <span>Units</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('customers', 'view'))
-                    <a href="{{ route('customers.index') }}" class="menu-item" title="Customers">
-                        <i class="fas fa-users"></i>
-                        <span>Customers</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('products', 'view'))
-                    <a href="{{ route('products.index') }}" class="menu-item" title="Products">
-                        <i class="fas fa-box"></i>
-                        <span>Products</span>
-                    </a>
-                    @endif
-                    @if(auth()->user()->hasPermission('raw-material-categories', 'view') || auth()->user()->isSuperAdmin())
-                    <a href="{{ route('raw-material-categories.index') }}" class="menu-item" title="Raw Material Categories">
-                        <i class="fas fa-layer-group"></i>
-                        <span>Raw Material Categories</span>
-                    </a>
-                    @endif
                     @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->isSuperAdmin())
                     <a href="{{ route('departments.index') }}" class="menu-item" title="Departments">
                         <i class="fas fa-building"></i>
@@ -407,11 +509,84 @@
                         <span>Designations</span>
                     </a>
                     @endif
+                    @if(auth()->user()->hasPermission('units', 'view'))
+                    <a href="{{ route('units.index') }}" class="menu-item" title="Units">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Units</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('raw-material-categories', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-material-categories.index') }}" class="menu-item" title="Raw Material Categories">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Raw Material Categories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('raw-material-sub-categories', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-material-sub-categories.index') }}" class="menu-item" title="Raw Material SubCategories">
+                        <i class="fas fa-sitemap"></i>
+                        <span>Raw Material SubCategories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('raw-materials', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('raw-materials.index') }}" class="menu-item" title="Raw Materials">
+                        <i class="fas fa-cube"></i>
+                        <span>Raw Materials</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('product-categories', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('product-categories.index') }}" class="menu-item" title="Product Categories">
+                        <i class="fas fa-tags"></i>
+                        <span>Product Categories</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('products', 'view'))
+                    <a href="{{ route('products.index') }}" class="menu-item" title="Products">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('processes', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('processes.index') }}" class="menu-item" title="Processes">
+                        <i class="fas fa-cogs"></i>
+                        <span>Processes</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('bom-processes', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('bom-processes.index') }}" class="menu-item" title="BOM Processes">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>BOM Processes</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('employees', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('employees.index') }}" class="menu-item" title="Employees">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Employees</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('customers', 'view'))
+                    <a href="{{ route('customers.index') }}" class="menu-item" title="Customers">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('production-departments', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('production-departments.index') }}" class="menu-item" title="Production Departments">
+                        <i class="fas fa-industry"></i>
+                        <span>Production Departments</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('billing-addresses', 'view') || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('billing-addresses.index') }}" class="menu-item" title="Billing Addresses">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Billing Addresses</span>
+                    </a>
+                    @endif
                 </div>
 
                 {{-- Settings Menu (Super Admin only) --}}
                 @if(auth()->user()->isSuperAdmin())
-                    <div class="menu-item-header" onclick="toggleSettingsMenu()" id="settingsHeader" style="margin-top: 10px;">
+                     <div class="menu-item-header" onclick="toggleSettingsMenu()" id="settingsHeader" style="margin-top: 10px;" title="Settings">
+                         <i class="fas fa-cog menu-header-icon"></i>
                         <span>Settings</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </div>
@@ -430,24 +605,53 @@
             <!-- Top Header -->
             <header class="top-header">
                 <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
+                    @php
+                        $user = auth()->user();
+                        $notificationCount = 0;
+                        if ($user->isSuperAdmin() || $user->hasPermission('purchase-indents', 'approve')) {
+                            $notificationCount = \App\Models\Notification::getUnreadCountForAdmins();
+                        }
+                    @endphp
+                    
+                    @if($user->isSuperAdmin() || $user->hasPermission('purchase-indents', 'approve'))
+                        <a href="{{ route('notifications.index') }}" style="position: relative; padding: 8px 12px; background: rgba(255,255,255,0.2); border-radius: 5px; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-bell"></i>
+                            @if($notificationCount > 0)
+                                <span style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">
+                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                </span>
+                            @endif
+                        </a>
+                    @endif
+                    
                     @if(auth()->user()->role)
                         <span class="role-badge">{{ auth()->user()->role->name }}</span>
                     @endif
                     
-                    {{-- Branch Selector for non-Super Admin users with multiple branches --}}
-                    @if(!auth()->user()->isSuperAdmin() && auth()->user()->branches()->where('is_active', true)->count() > 1)
+                    @php
+                        $user = auth()->user();
+                        $activeBranchId = session('active_branch_id');
+                        $activeBranchName = session('active_branch_name');
+                        // For Super Admin show all active branches; for others show only their active branches
+                        $branchesForSelector = $user->isSuperAdmin()
+                            ? \App\Models\Branch::where('is_active', true)->get()
+                            : $user->branches()->where('is_active', true)->get();
+                    @endphp
+
+                    {{-- Branch Selector (top-right) --}}
+                    @if($branchesForSelector->count() > 1)
                         <div style="position: relative;">
                             <select id="branch-selector" onchange="switchBranch(this.value)" 
                                 style="padding: 8px 30px 8px 12px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: white; font-size: 14px; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=\"white\" height=\"20\" viewBox=\"0 0 24 24\" width=\"20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M7 10l5 5 5-5z\"/></svg>'); background-repeat: no-repeat; background-position: right 8px center;">
-                                @foreach(auth()->user()->branches()->where('is_active', true)->get() as $branch)
-                                    <option value="{{ $branch->id }}" {{ session('active_branch_id') == $branch->id ? 'selected' : '' }} style="background-color: #2c3e50; color: white;">
-                                        {{ $branch->name }} @if($branch->code)({{ $branch->code }})@endif
+                                @foreach($branchesForSelector as $branch)
+                                    <option value="{{ $branch->id }}" {{ $activeBranchId == $branch->id ? 'selected' : '' }} style="background-color: #2c3e50; color: white;">
+                                        {{ $branch->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
-                    @elseif(!auth()->user()->isSuperAdmin() && session('active_branch_name'))
-                        <span class="entity-badge" style="background: #f59e0b;">{{ session('active_branch_name') }}</span>
+                    @elseif($activeBranchName)
+                        <span class="entity-badge" style="background: #f59e0b;">{{ $activeBranchName }}</span>
                     @endif
                     
                     <button class="logout-btn" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" title="Logout">
@@ -460,7 +664,6 @@
                 </div>
             </header>
             
-            @if(!auth()->user()->isSuperAdmin() && auth()->user()->branches()->where('is_active', true)->count() > 1)
             <script>
                 function switchBranch(branchId) {
                     if (branchId) {
@@ -468,13 +671,18 @@
                     }
                 }
             </script>
-            @endif
 
             <!-- Content Area -->
             <main class="content-area">
                 @if(session('success'))
                     <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 5px; margin-bottom: 20px;">
                         {{ session('success') }}
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                        {{ session('error') }}
                     </div>
                 @endif
 
@@ -487,17 +695,27 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
+            const toggleIcon = document.querySelector('.menu-toggle i');
             
             // Toggle collapsed state (show icons only)
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('sidebar-collapsed');
+            
+            // Update toggle icon based on state
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.classList.remove('fa-bars');
+                toggleIcon.classList.add('fa-chevron-right');
+            } else {
+                toggleIcon.classList.remove('fa-chevron-right');
+                toggleIcon.classList.add('fa-bars');
+            }
             
             // Remove closed class if present (for mobile)
             sidebar.classList.remove('closed');
             mainContent.classList.remove('expanded');
         }
         
-        // Handle mobile view
+        // Handle mobile view (and restore sidebar when back to desktop)
         function handleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
@@ -508,6 +726,10 @@
                 sidebar.classList.remove('collapsed');
                 mainContent.classList.add('expanded');
                 mainContent.classList.remove('sidebar-collapsed');
+            } else {
+                // On desktop widths always show sidebar (unless user manually collapses it)
+                sidebar.classList.remove('closed');
+                mainContent.classList.remove('expanded');
             }
         }
         
@@ -543,6 +765,62 @@
             }
         }
 
+        // Toggle Enquiry Sales menu
+        function toggleEnquirySalesMenu() {
+            const enquirySalesMenu = document.getElementById('enquirySalesMenu');
+            const enquirySalesHeader = document.getElementById('enquirySalesHeader');
+            
+            if (enquirySalesMenu && enquirySalesHeader) {
+                enquirySalesMenu.classList.toggle('collapsed');
+                enquirySalesHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('enquirySalesMenuCollapsed', enquirySalesMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle Supplier menu
+        function toggleSupplierMenu() {
+            const supplierMenu = document.getElementById('supplierMenu');
+            const supplierHeader = document.getElementById('supplierHeader');
+            
+            if (supplierMenu && supplierHeader) {
+                supplierMenu.classList.toggle('collapsed');
+                supplierHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('supplierMenuCollapsed', supplierMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle Purchase menu
+        function togglePurchaseMenu() {
+            const purchaseMenu = document.getElementById('purchaseMenu');
+            const purchaseHeader = document.getElementById('purchaseHeader');
+            
+            if (purchaseMenu && purchaseHeader) {
+                purchaseMenu.classList.toggle('collapsed');
+                purchaseHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('purchaseMenuCollapsed', purchaseMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle Store menu
+        function toggleStoreMenu() {
+            const storeMenu = document.getElementById('storeMenu');
+            const storeHeader = document.getElementById('storeHeader');
+            
+            if (storeMenu && storeHeader) {
+                storeMenu.classList.toggle('collapsed');
+                storeHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('storeMenuCollapsed', storeMenu.classList.contains('collapsed'));
+            }
+        }
+
         // Toggle Settings menu
         function toggleSettingsMenu() {
             const settingsMenu = document.getElementById('settingsMenu');
@@ -554,6 +832,20 @@
                 
                 // Save state to localStorage
                 localStorage.setItem('settingsMenuCollapsed', settingsMenu.classList.contains('collapsed'));
+            }
+        }
+
+        // Toggle System Admin menu
+        function toggleSystemAdminMenu() {
+            const systemAdminMenu = document.getElementById('systemAdminMenu');
+            const systemAdminHeader = document.getElementById('systemAdminHeader');
+            
+            if (systemAdminMenu && systemAdminHeader) {
+                systemAdminMenu.classList.toggle('collapsed');
+                systemAdminHeader.classList.toggle('collapsed');
+                
+                // Save state to localStorage
+                localStorage.setItem('systemAdminMenuCollapsed', systemAdminMenu.classList.contains('collapsed'));
             }
         }
 
@@ -581,6 +873,50 @@
                 }
             }
 
+            // Enquiry Sales menu
+            const enquirySalesSavedState = localStorage.getItem('enquirySalesMenuCollapsed');
+            if (enquirySalesSavedState === 'true') {
+                const enquirySalesMenu = document.getElementById('enquirySalesMenu');
+                const enquirySalesHeader = document.getElementById('enquirySalesHeader');
+                if (enquirySalesMenu && enquirySalesHeader) {
+                    enquirySalesMenu.classList.add('collapsed');
+                    enquirySalesHeader.classList.add('collapsed');
+                }
+            }
+
+            // Supplier menu
+            const supplierSavedState = localStorage.getItem('supplierMenuCollapsed');
+            if (supplierSavedState === 'true') {
+                const supplierMenu = document.getElementById('supplierMenu');
+                const supplierHeader = document.getElementById('supplierHeader');
+                if (supplierMenu && supplierHeader) {
+                    supplierMenu.classList.add('collapsed');
+                    supplierHeader.classList.add('collapsed');
+                }
+            }
+
+            // Purchase menu
+            const purchaseSavedState = localStorage.getItem('purchaseMenuCollapsed');
+            if (purchaseSavedState === 'true') {
+                const purchaseMenu = document.getElementById('purchaseMenu');
+                const purchaseHeader = document.getElementById('purchaseHeader');
+                if (purchaseMenu && purchaseHeader) {
+                    purchaseMenu.classList.add('collapsed');
+                    purchaseHeader.classList.add('collapsed');
+                }
+            }
+
+            // Store menu
+            const storeSavedState = localStorage.getItem('storeMenuCollapsed');
+            if (storeSavedState === 'true') {
+                const storeMenu = document.getElementById('storeMenu');
+                const storeHeader = document.getElementById('storeHeader');
+                if (storeMenu && storeHeader) {
+                    storeMenu.classList.add('collapsed');
+                    storeHeader.classList.add('collapsed');
+                }
+            }
+
             // Settings menu
             const settingsSavedState = localStorage.getItem('settingsMenuCollapsed');
             if (settingsSavedState === 'true') {
@@ -591,6 +927,61 @@
                     settingsHeader.classList.add('collapsed');
                 }
             }
+
+            // System Admin menu
+            const systemAdminSavedState = localStorage.getItem('systemAdminMenuCollapsed');
+            if (systemAdminSavedState === 'true') {
+                const systemAdminMenu = document.getElementById('systemAdminMenu');
+                const systemAdminHeader = document.getElementById('systemAdminHeader');
+                if (systemAdminMenu && systemAdminHeader) {
+                    systemAdminMenu.classList.add('collapsed');
+                    systemAdminHeader.classList.add('collapsed');
+                }
+            }
+
+            // Restore sidebar scroll position so it doesn't jump to top on navigation
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                const savedScroll = localStorage.getItem('sidebarScrollTop');
+                if (savedScroll !== null) {
+                    sidebar.scrollTop = parseInt(savedScroll, 10) || 0;
+                }
+                
+                // Persist scroll position while user scrolls
+                sidebar.addEventListener('scroll', function () {
+                    localStorage.setItem('sidebarScrollTop', sidebar.scrollTop);
+                });
+            }
+
+            // Global form submit loader to prevent double submits and show progress
+            document.querySelectorAll('form').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    // Prevent double submission
+                    if (form.dataset.submitting === 'true') {
+                        e.preventDefault();
+                        return;
+                    }
+                    form.dataset.submitting = 'true';
+
+                    const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                    submitButtons.forEach(function (btn) {
+                        // Skip if already processed
+                        if (btn.dataset.loadingApplied === 'true') {
+                            return;
+                        }
+                        btn.dataset.loadingApplied = 'true';
+                        btn.disabled = true;
+
+                        if (btn.tagName === 'BUTTON') {
+                            btn.dataset.originalHtml = btn.innerHTML;
+                            btn.innerHTML = '<span class="btn-loading-spinner"></span>Submitting...';
+                        } else if (btn.tagName === 'INPUT') {
+                            btn.dataset.originalValue = btn.value;
+                            btn.value = 'Submitting...';
+                        }
+                    });
+                });
+            });
         });
     </script>
     @stack('scripts')
