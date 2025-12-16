@@ -112,6 +112,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('purchase-orders/supplier/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'getSupplierDetails'])->name('purchase-orders.supplier');
     Route::get('purchase-orders/billing-address/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'getBillingAddressDetails'])->name('purchase-orders.billing-address');
 
+    // Material Inward Routes (Store Module)
+    Route::resource('material-inwards', App\Http\Controllers\MaterialInwardController::class);
+    Route::get('material-inwards/purchase-order/{id}/items', [App\Http\Controllers\MaterialInwardController::class, 'getPurchaseOrderItems'])->name('material-inwards.purchase-order.items');
+
     // Quotation Routes
     Route::resource('quotations', App\Http\Controllers\QuotationController::class);
     Route::get('quotations/customer/{id}', [App\Http\Controllers\QuotationController::class, 'getCustomerDetails'])->name('quotations.customer');

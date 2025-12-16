@@ -49,7 +49,6 @@
                                 <td style="padding:12px; text-align:center;">
                                     @if($notification->action_url)
                                         <a href="{{ $notification->action_url }}" 
-                                           onclick="markAsRead({{ $notification->id }})"
                                            style="padding:6px 12px; background:#007bff; color:white; border-radius:4px; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
                                             {{ ucfirst($notification->action_type) }}
                                             <i class="fas fa-arrow-left" style="transform: rotate(180deg);"></i>
@@ -64,17 +63,5 @@
         </div>
     @endif
 </div>
-
-<script>
-function markAsRead(notificationId) {
-    fetch(`/notifications/${notificationId}/mark-read`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-        },
-    });
-}
-</script>
 @endsection
 

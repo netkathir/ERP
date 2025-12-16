@@ -3,6 +3,18 @@
 @section('title', 'Purchase Indent - Create')
 
 @section('content')
+@php
+    $displayDate = function ($value) {
+        if (empty($value)) {
+            return '';
+        }
+        try {
+            return \Carbon\Carbon::parse($value)->format('d-m-Y');
+        } catch (\Exception $e) {
+            return $value;
+        }
+    };
+@endphp
 <div style="background:white; padding:30px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
         <h2 style="color:#333; font-size:24px; margin:0;">Create Purchase Indent</h2>
@@ -38,7 +50,8 @@
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Indent Date <span style="color:red;">*</span></label>
-                    <input type="date" name="indent_date" value="{{ old('indent_date', now()->toDateString()) }}"
+                    <input type="text" name="indent_date" id="indent_date" class="date-input" placeholder="DD-MM-YYYY" inputmode="numeric"
+                           value="{{ $displayDate(old('indent_date', now()->format('Y-m-d'))) }}"
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;" required>
                 </div>
                 <div>
@@ -80,7 +93,8 @@
                         @foreach($oldItems as $index => $oldItem)
                             <tr data-index="{{ $index }}">
                                 <td style="padding:6px 8px;">
-                                    <input type="date" name="items[{{ $index }}][created_date]" value="{{ old('items.'.$index.'.created_date', now()->toDateString()) }}"
+                                    <input type="text" name="items[{{ $index }}][created_date]" class="date-input table-date-input" placeholder="DD-MM-YYYY" inputmode="numeric"
+                                           value="{{ $displayDate(old('items.'.$index.'.created_date', now()->format('Y-m-d'))) }}"
                                            style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
@@ -100,7 +114,7 @@
                                            style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="number" step="0.001" min="0.001" name="items[{{ $index }}][quantity]" required
+                                    <input type="number" step="1" min="1" name="items[{{ $index }}][quantity]" required
                                            value="{{ old('items.'.$index.'.quantity', '') }}"
                                            style="width:90px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
                                 </td>
@@ -119,8 +133,8 @@
                                            value="{{ old('items.'.$index.'.unit_id') }}">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="date" name="items[{{ $index }}][schedule_date]" required
-                                           value="{{ old('items.'.$index.'.schedule_date') }}"
+                                    <input type="text" name="items[{{ $index }}][schedule_date]" class="date-input table-date-input" placeholder="DD-MM-YYYY" inputmode="numeric" required
+                                           value="{{ $displayDate(old('items.'.$index.'.schedule_date')) }}"
                                            style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
                                 <td style="padding:6px 8px;">
@@ -151,6 +165,9 @@
                 <small style="color:#666; display:block; margin-top:10px;">
                     Use <strong>+</strong> to add new item rows and <strong>-</strong> to remove rows.
                 </small>
+                <div style="margin-top:15px; padding-top:15px; border-top:1px solid #dee2e6; text-align:left;">
+                    <strong style="color:#333; font-size:14px;">Total Items: <span id="totalItemsCount">0</span></strong>
+                </div>
             </div>
         </div>
 
@@ -175,6 +192,9 @@
         </div>
     </form>
 </div>
+
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 @include('purchase.purchase_indents.partials.scripts')
 @endsection

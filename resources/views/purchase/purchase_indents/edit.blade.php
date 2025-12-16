@@ -3,6 +3,19 @@
 @section('title', 'Purchase Indent - Edit')
 
 @section('content')
+@php
+    $displayDate = function ($value) {
+        if (empty($value)) {
+            return '';
+        }
+        try {
+            return \Carbon\Carbon::parse($value)->format('d-m-Y');
+        } catch (\Exception $e) {
+            return $value;
+        }
+    };
+@endphp
+@php $isApproved = ($indent->status === 'Approved'); @endphp
 <div style="background:white; padding:30px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
         <h2 style="color:#333; font-size:24px; margin:0;">Edit Purchase Indent</h2>
@@ -39,7 +52,8 @@
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Indent Date <span style="color:red;">*</span></label>
-                    <input type="date" name="indent_date" value="{{ old('indent_date', optional($indent->indent_date)->toDateString()) }}"
+                    <input type="text" name="indent_date" id="indent_date" class="date-input" placeholder="DD-MM-YYYY"
+                           value="{{ $displayDate(old('indent_date', optional($indent->indent_date)->format('Y-m-d'))) }}"
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;" required>
                 </div>
                 <div>
@@ -91,14 +105,18 @@
                             @php
                                 $arrayItem = is_array($item) ? $item : $item->toArray();
                             @endphp
-                            <tr data-index="{{ $index }}">
+                             <tr data-index="{{ $index }}">
                                 <td style="padding:6px 8px;">
-                                    <input type="date" name="items[{{ $index }}][created_date]" value="{{ $arrayItem['created_date'] ?? now()->toDateString() }}"
-                                           style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                     <input type="text" name="items[{{ $index }}][created_date]" class="date-input table-date-input" placeholder="DD-MM-YYYY"
+                                            value="{{ $displayDate($arrayItem['created_date'] ?? now()->format('Y-m-d')) }}"
+                                           style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;" {{ $isApproved ? 'disabled' : '' }}>
+                                     @if($isApproved)
+                                         <input type="hidden" name="items[{{ $index }}][created_date]" value="{{ $displayDate($arrayItem['created_date'] ?? now()->format('Y-m-d')) }}">
+                                     @endif
                                 </td>
                                 <td style="padding:6px 8px;">
                                     <select name="items[{{ $index }}][raw_material_id]" class="item-select" required
-                                            style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                            style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;" {{ $isApproved ? 'disabled' : '' }}>
                                         <option value="">Select Item</option>
                                         @foreach($rawMaterials as $rm)
                                             <option value="{{ $rm->id }}" {{ ($arrayItem['raw_material_id'] ?? null) == $rm->id ? 'selected' : '' }}>
@@ -106,16 +124,25 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    @if($isApproved)
+                                        <input type="hidden" name="items[{{ $index }}][raw_material_id]" value="{{ $arrayItem['raw_material_id'] ?? '' }}">
+                                    @endif
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="text" name="items[{{ $index }}][item_description]" class="item-description"
-                                           value="{{ $arrayItem['item_description'] ?? '' }}"
-                                           style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                     <input type="text" name="items[{{ $index }}][item_description]" class="item-description"
+                                            value="{{ $arrayItem['item_description'] ?? '' }}"
+                                           style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;" {{ $isApproved ? 'disabled' : '' }}>
+                                     @if($isApproved)
+                                         <input type="hidden" name="items[{{ $index }}][item_description]" value="{{ $arrayItem['item_description'] ?? '' }}">
+                                     @endif
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="number" step="0.001" min="0.001" name="items[{{ $index }}][quantity]" required
-                                           value="{{ $arrayItem['quantity'] ?? '' }}"
-                                           style="width:90px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
+                                     <input type="number" step="1" min="1" name="items[{{ $index }}][quantity]" required
+                                            value="{{ isset($arrayItem['quantity']) ? (int)round((float)$arrayItem['quantity']) : '' }}"
+                                            style="width:90px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;" {{ $isApproved ? 'disabled' : '' }}>
+                                     @if($isApproved)
+                                         <input type="hidden" name="items[{{ $index }}][quantity]" value="{{ isset($arrayItem['quantity']) ? (int)round((float)$arrayItem['quantity']) : '' }}">
+                                     @endif
                                 </td>
                                 <td style="padding:6px 8px;">
                                     <select class="unit-select"
@@ -132,18 +159,24 @@
                                            value="{{ $arrayItem['unit_id'] ?? null }}">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="date" name="items[{{ $index }}][schedule_date]" required
-                                           value="{{ $arrayItem['schedule_date'] ?? null }}"
-                                           style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                     <input type="text" name="items[{{ $index }}][schedule_date]" class="date-input table-date-input" placeholder="DD-MM-YYYY" required
+                                            value="{{ $displayDate($arrayItem['schedule_date'] ?? null) }}"
+                                           style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;" {{ $isApproved ? 'disabled' : '' }}>
+                                     @if($isApproved)
+                                         <input type="hidden" name="items[{{ $index }}][schedule_date]" value="{{ $displayDate($arrayItem['schedule_date'] ?? null) }}">
+                                     @endif
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="text" name="items[{{ $index }}][special_instructions]" required
-                                           value="{{ $arrayItem['special_instructions'] ?? '' }}"
-                                           style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                     <input type="text" name="items[{{ $index }}][special_instructions]" required
+                                            value="{{ $arrayItem['special_instructions'] ?? '' }}"
+                                           style="width:220px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;" {{ $isApproved ? 'disabled' : '' }}>
+                                     @if($isApproved)
+                                         <input type="hidden" name="items[{{ $index }}][special_instructions]" value="{{ $arrayItem['special_instructions'] ?? '' }}">
+                                     @endif
                                 </td>
                                 <td style="padding:6px 8px;">
                                     <select name="items[{{ $index }}][supplier_id]" class="supplier-select" required
-                                            style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
+                                            style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;" {{ $isApproved ? 'disabled' : '' }}>
                                         <option value="">Select Supplier</option>
                                         @foreach($suppliers as $supplier)
                                             <option value="{{ $supplier->id }}" {{ ($arrayItem['supplier_id'] ?? null) == $supplier->id ? 'selected' : '' }}>
@@ -151,6 +184,9 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    @if($isApproved)
+                                        <input type="hidden" name="items[{{ $index }}][supplier_id]" value="{{ $arrayItem['supplier_id'] ?? '' }}">
+                                    @endif
                                 </td>
                                 <td style="padding:6px 8px;">
                                     <input type="text" name="items[{{ $index }}][po_status]"
@@ -181,10 +217,14 @@
                                            value="{{ $arrayItem['po_remarks'] ?? '' }}"
                                            style="width:180px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px;">
                                 </td>
-                                <td style="padding:6px 8px; text-align:center;">
-                                    <button type="button" class="btn-add-row" style="padding:4px 8px; border:none; border-radius:4px; background:#28a745; color:white; cursor:pointer;">+</button>
-                                    <button type="button" class="btn-remove-row" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:white; cursor:pointer;">-</button>
-                                </td>
+                                @if(!$isApproved)
+                                    <td style="padding:6px 8px; text-align:center;">
+                                        <button type="button" class="btn-add-row" style="padding:4px 8px; border:none; border-radius:4px; background:#28a745; color:white; cursor:pointer;">+</button>
+                                        <button type="button" class="btn-remove-row" style="padding:4px 8px; border:none; border-radius:4px; background:#dc3545; color:white; cursor:pointer;">-</button>
+                                    </td>
+                                @else
+                                    <td></td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
@@ -193,6 +233,9 @@
                 <small style="color:#666; display:block; margin-top:10px;">
                     Use <strong>+</strong> to add new item rows and <strong>-</strong> to remove rows.
                 </small>
+                <div style="margin-top:15px; padding-top:15px; border-top:1px solid #dee2e6; text-align:left;">
+                    <strong style="color:#333; font-size:14px;">Total Items: <span id="totalItemsCount">0</span></strong>
+                </div>
             </div>
         </div>
 
@@ -217,6 +260,9 @@
         </div>
     </form>
 </div>
+
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 @include('purchase.purchase_indents.partials.scripts')
 @endsection

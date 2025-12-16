@@ -108,12 +108,12 @@
                             </th>
                             <th style="padding:12px; text-align:left; color:#333; font-weight:600; white-space:nowrap;">
                                 <span style="display:inline-flex; align-items:center; gap:5px;">
-                                    Purchase Indent Raised User Name
+                                    Purchase Indent No
                                     @php
-                                        $newSortOrder = ($currentSortBy == 'created_by' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
+                                        $newSortOrder = ($currentSortBy == 'indent_no' && $currentSortOrder == 'desc') ? 'asc' : 'desc';
                                     @endphp
-                                    <a href="#" class="sort-link" data-sort-by="created_by" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
-                                        @if($currentSortBy == 'created_by')
+                                    <a href="#" class="sort-link" data-sort-by="indent_no" data-sort-order="{{ $newSortOrder }}" style="text-decoration:none; color:#333; display:inline-flex; align-items:center;">
+                                        @if($currentSortBy == 'indent_no')
                                             @if($currentSortOrder == 'desc')
                                                 <i class="fas fa-sort-down"></i>
                                             @else
@@ -204,17 +204,23 @@
                             @endphp
                             <tr style="border-bottom:1px solid #dee2e6;">
                                 <td style="padding:10px 12px; text-align:center; color:#666;">{{ ($indents->currentPage() - 1) * $indents->perPage() + $index + 1 }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ optional($indent->creator)->name ?? 'N/A' }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ $indent->indent_no ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $raisedBy ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $itemsList }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $indent->status }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $poStatus }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ optional($indent->created_at)->format('d-m-Y') ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; text-align:center;">
-                                    <a href="{{ route('purchase-orders.create', ['purchase_indent_id' => $indent->id]) }}"
-                                       style="padding:6px 10px; background:#007bff; color:white; border-radius:4px; font-size:12px; text-decoration:none; display:inline-block;">
-                                        Access PO
-                                    </a>
+                                    @if($indent->status === 'Approved')
+                                        <a href="{{ route('purchase-orders.create', ['purchase_indent_id' => $indent->id]) }}"
+                                           style="padding:6px 10px; background:#007bff; color:white; border-radius:4px; font-size:12px; text-decoration:none; display:inline-block;">
+                                            Access PO
+                                        </a>
+                                    @else
+                                        <span style="padding:6px 10px; background:#6c757d; color:white; border-radius:4px; font-size:12px; display:inline-block; cursor:not-allowed; opacity:0.6;">
+                                            Access PO
+                                        </span>
+                                    @endif
                                 </td>
                                 <td style="padding:10px 12px; text-align:center;">
                                     <div style="display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:nowrap;">

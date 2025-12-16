@@ -488,10 +488,16 @@
                      <i class="fas fa-chevron-down arrow"></i>
                  </div>
                 <div class="menu-sub-items" id="storeMenu">
-                    {{-- Add Store-related links here when available --}}
+                    @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('material-inwards', 'view'))
+                    <a href="{{ route('material-inwards.index') }}" class="menu-item" title="Material Inward">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>Material Inward</span>
+                    </a>
+                    @endif
                 </div>
 
-                 <div class="menu-item-header" onclick="toggleMastersMenu()" id="mastersHeader" title="Masters">
+                 <div class="menu-item-header" on
+                 click="toggleMastersMenu()" id="mastersHeader" title="Masters">
                      <i class="fas fa-database menu-header-icon"></i>
                     <span>Masters</span>
                     <i class="fas fa-chevron-down arrow"></i>

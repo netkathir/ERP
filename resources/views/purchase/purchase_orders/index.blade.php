@@ -207,17 +207,46 @@
                     <tbody>
                         @foreach($purchaseOrders as $index => $po)
                             @php
-                                // Get Material Inward Status from the latest item's delivery_status
-                                $itemsWithStatus = $po->items->whereNotNull('delivery_status');
-                                $materialInwardStatus = $itemsWithStatus->isNotEmpty() ? $itemsWithStatus->last()->delivery_status : 'N/A';
+                                // Calculate Material Inward Status based on PO Qty vs Received Qty
+                                $allYetToReceive = true;
+                                $allFullyReceived = true;
+                                $hasAnyReceived = false;
+                                
+                                foreach ($po->items as $poItem) {
+                                    // Sum total received_qty for this PO item from all Material Inward Items
+                                    $totalReceivedQty = (float) \App\Models\MaterialInwardItem::where('purchase_order_item_id', $poItem->id)
+                                        ->sum('received_qty');
+                                    
+                                    $poQty = (float) $poItem->po_quantity;
+                                    
+                                    if ($totalReceivedQty > 0) {
+                                        $allYetToReceive = false;
+                                        $hasAnyReceived = true;
+                                    }
+                                    
+                                    if ($totalReceivedQty != $poQty) {
+                                        $allFullyReceived = false;
+                                    }
+                                }
+                                
+                                // Determine overall status
+                                if ($po->items->isEmpty()) {
+                                    $materialInwardStatus = 'N/A';
+                                } elseif ($allYetToReceive) {
+                                    $materialInwardStatus = 'Yet to Receive';
+                                } elseif ($allFullyReceived) {
+                                    $materialInwardStatus = 'Fully Received';
+                                } else {
+                                    $materialInwardStatus = 'Partially Received';
+                                }
                             @endphp
                             <tr style="border-bottom:1px solid #dee2e6;">
                                 <td style="padding:10px 12px; text-align:center; color:#666;">{{ ($purchaseOrders->currentPage() - 1) * $purchaseOrders->perPage() + $index + 1 }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $po->po_no }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ $po->supplier->supplier_name ?? 'N/A' }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ $po->purchaseIndent->indent_no ?? 'N/A' }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ optional($po->supplier)->supplier_name ?? 'N/A' }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ optional($po->purchaseIndent)->indent_no ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; color:#333;">{{ $materialInwardStatus }}</td>
-                                <td style="padding:10px 12px; color:#333;">{{ optional($po->purchaseIndent->creator)->name ?? 'N/A' }}</td>
+                                <td style="padding:10px 12px; color:#333;">{{ optional(optional($po->purchaseIndent)->creator)->name ?? 'N/A' }}</td>
                                 <td style="padding:10px 12px; text-align:center;">
                                     <a href="{{ route('purchase-orders.show', $po->id) }}"
                                        style="padding:6px 10px; background:#17a2b8; color:white; border-radius:4px; font-size:12px; text-decoration:none; margin-right:4px;">

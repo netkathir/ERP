@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\FileUploadHelper;
+use Carbon\Carbon;
 
 class PurchaseIndentController extends Controller
 {
@@ -312,6 +313,11 @@ class PurchaseIndentController extends Controller
     {
         $today = now()->toDateString();
 
+        $request->merge([
+            'indent_date' => $this->normalizeDate($request->input('indent_date')),
+            'items' => $this->normalizeItemDates($request->input('items', [])),
+        ]);
+
         return $request->validate([
             'indent_date' => 'required|date',
             'remarks' => 'nullable|string',
@@ -319,7 +325,7 @@ class PurchaseIndentController extends Controller
             'items' => 'required|array|min:1',
             'items.*.raw_material_id' => 'required|exists:raw_materials,id',
             'items.*.item_description' => 'nullable|string',
-            'items.*.quantity' => 'required|numeric|min:0.001',
+            'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_id' => 'required|exists:units,id',
             'items.*.schedule_date' => 'required|date|after_or_equal:' . $today,
             'items.*.special_instructions' => 'required|string',
@@ -331,6 +337,38 @@ class PurchaseIndentController extends Controller
             'items.*.delivery_status' => 'nullable|string|max:255',
             'items.*.po_remarks' => 'nullable|string',
         ]);
+    }
+
+    protected function normalizeDate(?string $value): ?string
+    {
+        if (empty($value)) {
+            return $value;
+        }
+
+        try {
+            if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $value)) {
+                return Carbon::createFromFormat('d-m-Y', $value)->format('Y-m-d');
+            }
+
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $value;
+        }
+    }
+
+    protected function normalizeItemDates(array $items): array
+    {
+        foreach ($items as $index => $item) {
+            if (isset($item['created_date'])) {
+                $items[$index]['created_date'] = $this->normalizeDate($item['created_date']);
+            }
+
+            if (isset($item['schedule_date'])) {
+                $items[$index]['schedule_date'] = $this->normalizeDate($item['schedule_date']);
+            }
+        }
+
+        return $items;
     }
 
     public function approve($id)

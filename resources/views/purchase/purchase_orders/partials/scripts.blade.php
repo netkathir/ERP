@@ -90,6 +90,9 @@
     </div>
 </div>
 
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const tableBody = document.querySelector('#itemsTable tbody');
@@ -97,10 +100,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const shipToSelect = document.getElementById('ship_to');
     const supplierSelect = document.getElementById('supplier_id');
     const billingAddressSelect = document.getElementById('billing_address_id');
+    const purchaseOrderForm = document.getElementById('purchaseOrderForm');
     
     const customers = @json($customers);
     const suppliers = @json($suppliers);
     const billingAddresses = @json($billingAddresses);
+    const selectedShipTo = @json(old('ship_to', $purchaseOrder->ship_to ?? null));
+    const selectedCustomerId = @json(old('customer_id', $purchaseOrder->customer_id ?? null));
+    const selectedSubcontractorId = @json(old('subcontractor_id', $purchaseOrder->subcontractor_id ?? null));
+    const selectedCompanyId = @json(old('company_id', $purchaseOrder->company_id ?? null));
     
     // Route URLs for API calls - using route helper to handle subdirectory installations
     // Generate route URLs with placeholder ID, then replace in JavaScript
@@ -192,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         // Store items globally for dropdown population
                         purchaseIndentItems = Array.isArray(data) ? data : [];
                         
-                        // Clear existing rows except first
+                        // Always refresh item rows based on the newly selected Purchase Indent
                         const rows = tableBody.querySelectorAll('tr');
                         for (let i = 1; i < rows.length; i++) {
                             rows[i].remove();
@@ -260,6 +268,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         option.textContent = customer.company_name;
                         select.appendChild(option);
                     });
+                    if (selectedCustomerId) {
+                        select.value = selectedCustomerId;
+                    }
                 } else if (shipTo === 'Subcontractor') {
                     label.textContent = 'Subcontractor Name';
                     select.name = 'subcontractor_id';
@@ -269,6 +280,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         option.textContent = supplier.supplier_name;
                         select.appendChild(option);
                     });
+                    if (selectedSubcontractorId) {
+                        select.value = selectedSubcontractorId;
+                    }
                 } else if (shipTo === 'Company') {
                     label.textContent = 'Company Name';
                     select.name = 'company_id';
@@ -278,6 +292,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         option.textContent = billing.company_name;
                         select.appendChild(option);
                     });
+                    if (selectedCompanyId) {
+                        select.value = selectedCompanyId;
+                    }
                 }
             } else {
                 dynamicField.style.display = 'none';
@@ -371,6 +388,81 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Function to convert date from DD-MM-YYYY to YYYY-MM-DD
+    function toIsoDate(value) {
+        if (!value) return '';
+        const parts = value.split('-');
+        if (parts.length === 3) {
+            const [day, month, year] = parts;
+            if (day.length === 2 && month.length === 2 && year.length === 4) {
+                return `${year}-${month}-${day}`;
+            }
+        }
+        const parsed = new Date(value);
+        return isNaN(parsed.getTime()) ? value : parsed.toISOString().slice(0, 10);
+    }
+
+    // Function to initialize date pickers for expected delivery date fields
+    function initializeExpectedDeliveryDatePickers() {
+        const dateInputs = document.querySelectorAll('.expected_delivery_date:not([data-fp-initialized])');
+        dateInputs.forEach(function(input) {
+            // Skip if input is readonly (disabled state)
+            if (input.readOnly) {
+                return;
+            }
+            
+            // Parse existing value if it's in DD-MM-YYYY format
+            let initialDate = null;
+            const currentValue = input.value;
+            if (currentValue && currentValue.match(/^\d{2}-\d{2}-\d{4}$/)) {
+                const [day, month, year] = currentValue.split('-');
+                initialDate = new Date(year, month - 1, day);
+            }
+            
+            const fp = flatpickr(input, {
+                dateFormat: "d-m-Y",
+                allowInput: true,
+                clickOpens: true,
+                placeholder: "DD-MM-YYYY",
+                defaultDate: initialDate || (currentValue ? currentValue : null)
+            });
+            
+            // Ensure the value is properly formatted after initialization
+            if (currentValue && currentValue.match(/^\d{2}-\d{2}-\d{4}$/)) {
+                input.value = currentValue;
+            }
+            
+            input.setAttribute('data-fp-initialized', 'true');
+        });
+    }
+
+    // Warranty Expiry Date Picker (DD-MM-YYYY)
+    function initializeWarrantyExpiryDatePickers() {
+        const dateInputs = document.querySelectorAll('.warranty-expiry-date:not([data-fp-initialized])');
+        dateInputs.forEach(function(input) {
+            if (input.readOnly) {
+                return;
+            }
+
+            let initialDate = null;
+            const currentValue = input.value;
+            if (currentValue && currentValue.match(/^\d{2}-\d{2}-\d{4}$/)) {
+                const [day, month, year] = currentValue.split('-');
+                initialDate = new Date(year, month - 1, day);
+            }
+
+            flatpickr(input, {
+                dateFormat: "d-m-Y",
+                allowInput: true,
+                clickOpens: true,
+                placeholder: "DD-MM-YYYY",
+                defaultDate: initialDate || (currentValue ? currentValue : null)
+            });
+
+            input.setAttribute('data-fp-initialized', 'true');
+        });
+    }
+
     // Row Management Functions
     function getNextIndex() {
         const rows = tableBody.querySelectorAll('tr');
@@ -394,6 +486,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Handle PO Quantity field separately (must be empty, not 0, since min="1")
             if (input.classList.contains('po_quantity')) {
+                input.value = '';
+            } else if (input.classList.contains('expected_delivery_date')) {
+                // Clear date input and remove Flatpickr initialization
+                input.value = '';
+                input.removeAttribute('data-fp-initialized');
+            } else if (input.classList.contains('approved_quantity') || 
+                       input.classList.contains('already_raised_po_qty') || 
+                       input.classList.contains('qty_in_kg') || 
+                       input.classList.contains('price') || 
+                       input.classList.contains('amount')) {
+                // Set these fields to blank instead of 0
                 input.value = '';
             } else if (input.type === 'number' || input.type === 'date') {
                 input.value = input.type === 'date' ? '' : 0;
@@ -425,6 +528,15 @@ document.addEventListener('DOMContentLoaded', function () {
         populateItemNameDropdowns(newRow);
         
         attachRowEvents(newRow);
+        
+        // Initialize date picker for the new row's expected delivery date
+        const clonedDateInput = newRow.querySelector('.expected_delivery_date');
+        if (clonedDateInput) {
+            clonedDateInput.removeAttribute('data-fp-initialized');
+            // Initialize the date picker for this new row
+            initializeExpectedDeliveryDatePickers();
+        }
+        
         return newRow;
     }
 
@@ -491,6 +603,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Add change event listener only if it doesn't exist yet
                 if (!hasListener) {
                     itemNameSelect.addEventListener('change', function() {
+                        const selectedValue = this.value;
+                        const currentRow = this.closest('tr');
+                        
+                        // Check for duplicate item selection
+                        if (selectedValue) {
+                            const allItemSelects = tableBody.querySelectorAll('.item_name');
+                            let isDuplicate = false;
+                            
+                            allItemSelects.forEach(function(select) {
+                                const otherRow = select.closest('tr');
+                                // Skip the current row and check other rows
+                                if (otherRow !== currentRow && select.value === selectedValue) {
+                                    isDuplicate = true;
+                                }
+                            });
+                            
+                            if (isDuplicate) {
+                                alert('Item already chosen. Please select a different item.');
+                                // Reset to empty selection
+                                this.value = '';
+                                
+                                // Clear related fields in the row
+                                const row = this.closest('tr');
+                                const purchaseIndentItemId = row.querySelector('.purchase_indent_item_id');
+                                const rawMaterialId = row.querySelector('.raw_material_id');
+                                const itemDescription = row.querySelector('.item_description');
+                                const approvedQuantity = row.querySelector('.approved_quantity');
+                                const alreadyRaisedQty = row.querySelector('.already_raised_po_qty');
+                                const unitId = row.querySelector('.unit_id');
+                                const unitSymbol = row.querySelector('.unit_symbol');
+                                
+                                if (purchaseIndentItemId) purchaseIndentItemId.value = '';
+                                if (rawMaterialId) rawMaterialId.value = '';
+                                if (itemDescription) itemDescription.value = '';
+                                if (approvedQuantity) approvedQuantity.value = '';
+                                if (alreadyRaisedQty) alreadyRaisedQty.value = '';
+                                if (unitId) unitId.value = '';
+                                if (unitSymbol) unitSymbol.value = '';
+                                
+                                calculateRowAmount(row);
+                                calculateTotals();
+                                return;
+                            }
+                        }
+                        
                         const selectedOption = this.options[this.selectedIndex];
                         if (selectedOption && selectedOption.dataset.itemId) {
                             const row = this.closest('tr');
@@ -588,6 +745,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 
                 const approvedQty = parseFloat(approvedQtyInput.value) || 0;
+                
+                // Simple validation: PO Quantity should not be greater than Approved Qty
+                if (poQty > approvedQty) {
+                    alert('PO Quantity should not be greater than Approved Qty.');
+                    this.value = approvedQty > 0 ? Math.floor(approvedQty) : '';
+                    calculateRowAmount(row);
+                    calculateTotals();
+                    return;
+                }
+                
                 const alreadyRaised = parseFloat(alreadyRaisedInput.value) || 0;
                 const remainingQty = approvedQty - alreadyRaised;
                 const purchaseIndentItemId = purchaseIndentItemIdInput ? purchaseIndentItemIdInput.value : null;
@@ -648,6 +815,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 let poQty = parseInt(this.value) || 0;
                 const approvedQty = parseFloat(approvedQtyInput.value) || 0;
+                
+                // Simple validation: PO Quantity should not be greater than Approved Qty
+                if (poQty > approvedQty && approvedQty > 0) {
+                    alert('PO Quantity should not be greater than Approved Qty.');
+                    this.value = Math.floor(approvedQty);
+                    calculateRowAmount(row);
+                    calculateTotals();
+                    return;
+                }
+                
                 const alreadyRaised = parseFloat(alreadyRaisedInput.value) || 0;
                 const remainingQty = approvedQty - alreadyRaised;
                 const purchaseIndentItemId = purchaseIndentItemIdInput ? purchaseIndentItemIdInput.value : null;
@@ -796,17 +973,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const igstSection = document.getElementById('igst_section');
             
             if (taxType === 'cgst_sgst') {
-                cgstSection.style.display = 'flex';
-                sgstSection.style.display = 'flex';
-                igstSection.style.display = 'none';
-                // Clear IGST values
+                // Clear IGST values when CGST/SGST is selected
                 document.getElementById('igst_percent').value = '0';
                 document.getElementById('igst').value = '0.00';
             } else {
-                cgstSection.style.display = 'none';
-                sgstSection.style.display = 'none';
-                igstSection.style.display = 'flex';
-                // Clear CGST/SGST values
+                // Clear CGST/SGST values when IGST is selected
                 document.getElementById('cgst_percent').value = '0';
                 document.getElementById('cgst_amount').value = '0.00';
                 document.getElementById('sgst_percent').value = '0';
@@ -828,20 +999,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (gstAmountInput) {
-        gstAmountInput.addEventListener('input', function() {
-            // If GST amount is manually entered, calculate percentage
-            const subtotal = Array.from(tableBody.querySelectorAll('tr')).reduce((sum, row) => {
-                return sum + (parseFloat(row.querySelector('.amount').value) || 0);
-            }, 0);
-            
-            if (subtotal > 0) {
-                const gstPercent = (parseFloat(this.value) / subtotal) * 100;
-                document.getElementById('gst_percent').value = gstPercent.toFixed(2);
-            }
-            calculateTotals();
-        });
-    }
+    // GST amount is derived from GST% and cannot be manually edited
 
     if (discountPercentInput) {
         discountPercentInput.addEventListener('input', function() {
@@ -866,6 +1024,78 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Attach events to existing rows
     tableBody.querySelectorAll('tr').forEach(attachRowEvents);
+    
+    // Auto-trigger purchase indent selection if pre-selected from query parameter
+    // Only do this in create mode, not edit mode (edit mode already has items loaded)
+    if (purchaseIndentSelect && purchaseIndentSelect.value) {
+        // Check if we're in edit mode by checking if there are existing items with data
+        const existingRows = tableBody.querySelectorAll('tr');
+        const hasExistingItems = Array.from(existingRows).some(row => {
+            const itemNameSelect = row.querySelector('.item_name');
+            return itemNameSelect && itemNameSelect.value && itemNameSelect.value !== '';
+        });
+        
+        // Only trigger change event if we're in create mode (no existing items)
+        if (!hasExistingItems) {
+            // Trigger change event to load items automatically
+            purchaseIndentSelect.dispatchEvent(new Event('change'));
+        } else {
+            // In edit mode, calculate totals on page load to ensure Gross Amount is displayed correctly
+            calculateTotals();
+        }
+    } else {
+        // Check if we're in edit mode without purchase indent (items already loaded)
+        const existingRows = tableBody.querySelectorAll('tr');
+        const hasExistingItems = Array.from(existingRows).some(row => {
+            const amountInput = row.querySelector('.amount');
+            return amountInput && amountInput.value && parseFloat(amountInput.value) > 0;
+        });
+        if (hasExistingItems) {
+            // Calculate totals on page load for edit mode
+            calculateTotals();
+        }
+    }
+
+    // Initialize date pickers for existing rows
+    initializeExpectedDeliveryDatePickers();
+    initializeWarrantyExpiryDatePickers();
+
+    // Preselect Ship To and related entity on load
+    if (shipToSelect && selectedShipTo) {
+        shipToSelect.value = selectedShipTo;
+        shipToSelect.dispatchEvent(new Event('change'));
+        const shipToSelectEl = document.getElementById('ship_to_select');
+        if (shipToSelectEl) {
+            shipToSelectEl.dispatchEvent(new Event('change'));
+        }
+    }
+    initializeWarrantyExpiryDatePickers();
+
+    // Convert dates to ISO format before form submission
+    if (purchaseOrderForm) {
+        purchaseOrderForm.addEventListener('submit', function() {
+            const dateInputs = purchaseOrderForm.querySelectorAll('.expected_delivery_date');
+            dateInputs.forEach(function(input) {
+                const fpInstance = input._flatpickr;
+                if (fpInstance) {
+                    const value = input.value;
+                    if (value) {
+                        input.value = toIsoDate(value);
+                    }
+                } else {
+                    input.value = toIsoDate(input.value);
+                }
+            });
+
+            const warrantyInputs = purchaseOrderForm.querySelectorAll('.warranty-expiry-date');
+            warrantyInputs.forEach(function(input) {
+                const value = input.value;
+                if (value) {
+                    input.value = toIsoDate(value);
+                }
+            });
+        });
+    }
 });
 </script>
 

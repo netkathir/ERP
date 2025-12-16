@@ -76,15 +76,33 @@ class PurchaseOrderController extends Controller
                       ->distinct();
                 break;
             case 'material_inward_status':
-                // Material Inward Status is based on delivery_status from items
-                // We'll use a subquery to get the latest delivery status
+                // Material Inward Status is based on PO Qty vs Received Qty from Material Inward Items
+                // Sorting by status string alphabetically: "Fully Received", "N/A", "Partially Received", "Yet to Receive"
+                // The actual status calculation happens in the view, but we sort by a simplified check here
+                // to maintain sorting functionality
                 $query->orderByRaw("(
-                    SELECT delivery_status 
-                    FROM purchase_order_items 
-                    WHERE purchase_order_items.purchase_order_id = purchase_orders.id 
-                    AND delivery_status IS NOT NULL
-                    ORDER BY id DESC 
-                    LIMIT 1
+                    SELECT 
+                        CASE 
+                            WHEN NOT EXISTS (SELECT 1 FROM purchase_order_items WHERE purchase_order_id = purchase_orders.id) THEN 'N/A'
+                            WHEN NOT EXISTS (
+                                SELECT 1 FROM material_inward_items mii
+                                INNER JOIN purchase_order_items poi ON mii.purchase_order_item_id = poi.id
+                                WHERE poi.purchase_order_id = purchase_orders.id AND mii.received_qty > 0
+                            ) THEN 'Yet to Receive'
+                            WHEN (
+                                SELECT COUNT(*) FROM purchase_order_items poi2
+                                WHERE poi2.purchase_order_id = purchase_orders.id
+                                AND (
+                                    SELECT COALESCE(SUM(mii2.received_qty), 0) 
+                                    FROM material_inward_items mii2 
+                                    WHERE mii2.purchase_order_item_id = poi2.id
+                                ) = poi2.po_quantity
+                            ) = (
+                                SELECT COUNT(*) FROM purchase_order_items poi3
+                                WHERE poi3.purchase_order_id = purchase_orders.id
+                            ) THEN 'Fully Received'
+                            ELSE 'Partially Received'
+                        END
                 ) {$sortOrder}");
                 break;
             case 'purchase_indent_raised_user':
@@ -104,7 +122,7 @@ class PurchaseOrderController extends Controller
         return view('purchase.purchase_orders.index', compact('purchaseOrders'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $user = auth()->user();
 
@@ -113,12 +131,15 @@ class PurchaseOrderController extends Controller
         }
 
         $poNo = $this->generatePONo();
+        
+        // Get purchase_indent_id from query parameter if provided
+        $selectedPurchaseIndentId = $request->get('purchase_indent_id');
 
         // Get only approved purchase indents that still have available quantity
         $purchaseIndentQuery = PurchaseIndent::where('status', 'Approved')
             ->with('items');
         $purchaseIndentQuery = $this->applyBranchFilter($purchaseIndentQuery, PurchaseIndent::class);
-        $allApprovedIndents = $purchaseIndentQuery->orderBy('indent_no')->get();
+        $allApprovedIndents = $purchaseIndentQuery->orderBy('id', 'desc')->get();
 
         // Filter out purchase indents where all items are fully used
         $purchaseIndents = $allApprovedIndents->filter(function ($indent) {
@@ -189,7 +210,8 @@ class PurchaseOrderController extends Controller
             'rawMaterialsData',
             'units',
             'branches',
-            'selectedBranchId'
+            'selectedBranchId',
+            'selectedPurchaseIndentId'
         ));
     }
 
@@ -513,6 +535,14 @@ class PurchaseOrderController extends Controller
 
             $po->updated_by_id = $user->id;
 
+            if ($request->boolean('remove_upload')) {
+                if ($po->upload_path) {
+                    Storage::disk('public')->delete($po->upload_path);
+                }
+                $po->upload_path = null;
+                $po->upload_original_name = null;
+            }
+
             if ($request->hasFile('upload')) {
                 if ($po->upload_path) {
                     Storage::disk('public')->delete($po->upload_path);
@@ -784,9 +814,9 @@ class PurchaseOrderController extends Controller
             'billing_email' => 'nullable|email|max:255',
             'billing_gst_no' => 'nullable|string|max:50',
             'branch_id' => 'nullable|exists:branches,id',
-            'tax_type' => 'nullable|in:cgst_sgst,igst',
+            'tax_type' => 'required|in:cgst_sgst,igst',
             'gst' => 'nullable|numeric|min:0',
-            'gst_percent' => 'nullable|numeric|min:0|max:100',
+            'gst_percent' => 'required|numeric|min:0|max:100',
             'sgst' => 'nullable|numeric|min:0',
             'cgst_percent' => 'nullable|numeric|min:0|max:100',
             'cgst_amount' => 'nullable|numeric|min:0',
@@ -805,12 +835,13 @@ class PurchaseOrderController extends Controller
             'insurance_of_goods_damages' => 'nullable|string',
             'warranty_expiry' => 'nullable|date',
             'upload' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:5120',
+            'remove_upload' => 'nullable|boolean',
             'remarks' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.purchase_indent_item_id' => 'nullable|exists:purchase_indent_items,id',
             'items.*.raw_material_id' => 'nullable|exists:raw_materials,id',
             'items.*.item_name' => 'required|string|max:255',
-            'items.*.item_description' => 'required|string',
+            'items.*.item_description' => 'nullable|string',
             'items.*.pack_details' => 'nullable|string',
             'items.*.approved_quantity' => 'nullable|numeric|min:0',
             'items.*.already_raised_po_qty' => 'nullable|numeric|min:0',
@@ -842,13 +873,18 @@ class PurchaseOrderController extends Controller
             'items.required' => 'Please add at least one product item.',
             'items.min' => 'Please add at least one product item.',
             'items.*.item_name.required' => 'Item name is required for all product rows.',
-            'items.*.item_description.required' => 'Item description is required for all product rows.',
             'items.*.po_quantity.required' => 'PO Quantity is required for all product rows.',
             'items.*.po_quantity.integer' => 'PO Quantity must be a whole number (no decimals allowed).',
             'items.*.po_quantity.min' => 'PO Quantity must be at least 1 for all product rows.',
             'items.*.price.required' => 'Price is required for all product rows.',
             'items.*.price.min' => 'Price must be 0 or greater for all product rows.',
             'items.*.expected_delivery_date.after_or_equal' => 'Expected delivery date cannot be in the past.',
+            'tax_type.required' => 'Please select a GST Type.',
+            'tax_type.in' => 'Invalid GST Type selected.',
+            'gst_percent.required' => 'GST percentage is required.',
+            'gst_percent.numeric' => 'GST percentage must be a valid number.',
+            'gst_percent.min' => 'GST percentage must be 0 or greater.',
+            'gst_percent.max' => 'GST percentage cannot exceed 100.',
         ];
 
         return $request->validate($rules, $messages);

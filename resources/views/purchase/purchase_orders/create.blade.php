@@ -63,7 +63,7 @@
                             style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;" {{ $purchaseIndents->count() == 0 ? 'disabled' : '' }}>
                         <option value="">Select Purchase Indent</option>
                         @forelse($purchaseIndents as $indent)
-                            <option value="{{ $indent->id }}">{{ $indent->indent_no }}</option>
+                            <option value="{{ $indent->id }}" {{ (isset($selectedPurchaseIndentId) && $selectedPurchaseIndentId == $indent->id) ? 'selected' : '' }}>{{ $indent->indent_no }}</option>
                         @empty
                             <option value="" disabled>No approved purchase indents available</option>
                         @endforelse
@@ -284,7 +284,7 @@
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Name <span style="color:red;">*</span></th>
-                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Description <span style="color:red;">*</span></th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Description</th>
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Pack Details <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Approved Qty</th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Already Raised PO Qty</th>
@@ -309,7 +309,7 @@
                                 </select>
                             </td>
                             <td style="padding:6px 8px;">
-                                <input type="text" name="items[0][item_description]" class="item_description" required readonly
+                                <input type="text" name="items[0][item_description]" class="item_description" readonly
                                        style="width:150px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; background:#f8f9fa;">
                             </td>
                             <td style="padding:6px 8px;">
@@ -329,7 +329,7 @@
                                        style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right;">
                             </td>
                             <td style="padding:6px 8px;">
-                                <input type="date" name="items[0][expected_delivery_date]" class="expected_delivery_date"
+                                <input type="text" name="items[0][expected_delivery_date]" class="expected_delivery_date date-input" placeholder="DD-MM-YYYY"
                                        style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
                             </td>
                             <td style="padding:6px 8px;">
@@ -370,120 +370,98 @@
             </div>
         </div>
 
-        {{-- Amount Calculation Section --}}
+                        {{-- Amount Calculation Section --}}
         <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
             <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
                 <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Amount Calculation</h3>
             </div>
-            <div style="padding:20px; display:flex; justify-content:flex-end;">
-                {{-- Right aligned summary block (design only, names/IDs unchanged) --}}
-                <div style="width:380px; display:flex; flex-direction:column; gap:10px;">
+            <div style="padding:20px; display:grid; grid-template-columns:1fr 440px; gap:20px; align-items:flex-start;">
+                {{-- GST Type --}}
+                <div style="display:flex; gap:30px; align-items:center; justify-content:center; width:100%;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#333; cursor:pointer;">
+                        <input type="radio" name="tax_type" id="tax_type_cgst_sgst" value="cgst_sgst" checked required style="cursor:pointer;">
+                        <span>CGST and SGST</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#333; cursor:pointer;">
+                        <input type="radio" name="tax_type" id="tax_type_igst" value="igst" required style="cursor:pointer;">
+                        <span>IGST</span>
+                    </label>
+                </div>
+
+                {{-- Amount summary --}}
+                <div style="width:100%; display:flex; flex-direction:column; gap:10px;">
                     {{-- Gross Amount (Total of items) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:13px;">Gross Amount:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" id="total" value="0" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">Total:</label>
+                        <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                        <input type="text" id="total" value="0" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                     </div>
 
                     {{-- Overall Discount (%) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Overall Discount (%):</label>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">Discount:</label>
                         <input type="number" step="0.01" min="0" name="discount_percent" id="discount_percent"
                                value="0"
-                               style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                    </div>
-
-                    {{-- GST Type below Discount (%) --}}
-                    <div style="display:flex; align-items:flex-start; gap:12px; margin-top:2px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">GST Type:</label>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <label style="display:flex; align-items:center; gap:6px; font-size:14px; cursor:pointer;">
-                                <input type="radio" name="tax_type" id="tax_type_cgst_sgst" value="cgst_sgst" checked style="cursor:pointer;">
-                                <span>CGST &amp; SGST</span>
-                            </label>
-                            <label style="display:flex; align-items:center; gap:6px; font-size:14px; cursor:pointer;">
-                                <input type="radio" name="tax_type" id="tax_type_igst" value="igst" style="cursor:pointer;">
-                                <span>IGST</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {{-- Discount Amount --}}
-                    <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Discount Amount:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="number" step="0.01" min="0" name="discount" id="discount" value="0"
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                        </div>
+                               style="width:80px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;"
+                               placeholder="Enter in (%)">
+                        <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                        <input type="number" step="0.01" min="0" name="discount" id="discount" value="0"
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right; background:#f8f9fa;"
+                               placeholder="Discount Amount">
                     </div>
 
                     {{-- GST (rate & amount) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">GST (% / Amt):</label>
-                        <div style="display:flex; gap:6px;">
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">GST <span style="color:red;">*</span></label>
+                        <div style="display:flex; gap:10px; align-items:center; flex:1;">
                             <input type="number" step="0.01" min="0" name="gst_percent" id="gst_percent" placeholder="%"
-                                   style="width:70px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                            <input type="number" step="0.01" min="0" name="gst" id="gst" placeholder="Amount"
-                                   style="width:90px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
+                                   required
+                                   style="width:80px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
+                            <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                            <input type="number" step="0.01" min="0" name="gst" id="gst" readonly
+                                   style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right; background:#f8f9fa;">
                         </div>
                     </div>
 
                     {{-- CGST row (amount only for display) --}}
                     <div id="cgst_section" style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">CGST:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" id="cgst_amount" value="0.00" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
-                        {{-- hidden percentage element kept for calculations --}}
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">CGST:</label>
+                        <input type="text" id="cgst_amount" value="0.00" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                         <input type="hidden" id="cgst_percent" value="0">
                     </div>
 
                     {{-- SGST row --}}
                     <div id="sgst_section" style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">SGST:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" name="sgst" id="sgst" value="0.00" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">SGST:</label>
+                        <input type="text" name="sgst" id="sgst" value="0.00" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                         <input type="hidden" id="sgst_percent" value="0">
                     </div>
 
                     {{-- IGST row --}}
-                    <div id="igst_section" style="display:none; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">IGST:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" name="igst" id="igst" value="0.00" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                    <div id="igst_section" style="display:flex; align-items:center; gap:12px;">
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">IGST:</label>
+                        <input type="text" name="igst" id="igst" value="0.00" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                         <input type="hidden" id="igst_percent" value="0">
                     </div>
 
                     {{-- Total Tax (sum of CGST+SGST or IGST) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Total Tax:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" id="total_tax" value="0.00" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">Total Tax:</label>
+                        <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                        <input type="text" id="total_tax" value="0.00" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                     </div>
 
                     {{-- Net Amount --}}
                     <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
-                        <label style="flex:1; color:#333; font-weight:600; font-size:14px;">Net Amount:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; font-weight:600; color:#444;">₹</span>
-                            <input type="text" name="net_amount" id="net_amount" value="0" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right; font-weight:600; color:#4a4a4a;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:700; font-size:13px;">Net Amount:</label>
+                        <span style="width:30px; font-size:13px; font-weight:600; color:#444; text-align:center;">Rs.</span>
+                        <input type="text" name="net_amount" id="net_amount" value="0" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right; font-weight:600; color:#4a4a4a;">
                     </div>
                 </div>
             </div>
@@ -515,54 +493,28 @@
                     <textarea name="inspection" rows="3"
                               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('inspection') }}</textarea>
                 </div>
-            </div>
-        </div>
-
-        {{-- Transport and Warranty Information Section --}}
-        <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
-                <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Transport and Warranty Information</h3>
-            </div>
-            <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                 <div>
                     <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Name of Transport</label>
                     <input type="text" name="name_of_transport"
+                           value="{{ old('name_of_transport') }}"
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
                 </div>
                 <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Transport Certificate</label>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Test Certificate</label>
                     <input type="text" name="transport_certificate"
+                           value="{{ old('transport_certificate') }}"
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
                 </div>
                 <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Insurance of Goods/Damages</label>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Incase Of Failure/Damage</label>
                     <textarea name="insurance_of_goods_damages" rows="3"
                               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('insurance_of_goods_damages') }}</textarea>
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Warranty Expiry</label>
-                    <input type="date" name="warranty_expiry"
+                    <input type="text" name="warranty_expiry" class="warranty-expiry-date" placeholder="DD-MM-YYYY"
+                           value="{{ old('warranty_expiry') ? \Carbon\Carbon::parse(old('warranty_expiry'))->format('d-m-Y') : '' }}"
                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                </div>
-            </div>
-        </div>
-
-        {{-- File Upload and Remarks --}}
-        <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
-                <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Additional Information</h3>
-            </div>
-            <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Upload Document</label>
-                    <input type="file" name="upload" accept=".pdf,.doc,.docx,.xls,.xlsx"
-                           style="width:100%; padding:8px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-                    <small style="color:#666;">Attach supporting document (PDF, DOC, DOCX, XLS, XLSX).</small>
-                </div>
-                <div>
-                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Remarks</label>
-                    <textarea name="remarks" rows="3"
-                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('remarks') }}</textarea>
                 </div>
             </div>
         </div>
@@ -578,6 +530,16 @@
     </form>
 </div>
 
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 @include('purchase.purchase_orders.partials.scripts')
 @endsection
+
+
+
+
+
+
+
 

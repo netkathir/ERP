@@ -7,9 +7,6 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
         <h2 style="color:#333; font-size:24px; margin:0;">Purchase Order Details</h2>
         <div style="display:flex; gap:10px;">
-            <a href="{{ route('purchase-orders.edit', $purchaseOrder->id) }}" style="padding:10px 20px; background:#ffc107; color:#212529; text-decoration:none; border-radius:5px; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
-                <i class="fas fa-edit"></i> Edit
-            </a>
             <a href="{{ route('purchase-orders.index') }}" style="padding:10px 20px; background:#6c757d; color:white; text-decoration:none; border-radius:5px; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
                 <i class="fas fa-list"></i> List
             </a>
@@ -128,6 +125,13 @@
             <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Amount Calculation</h3>
         </div>
         <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:20px;">
+            @php
+                // Calculate Total (Gross Amount) from items if not stored
+                $totalAmount = $purchaseOrder->total;
+                if (!$totalAmount || $totalAmount == 0) {
+                    $totalAmount = $purchaseOrder->items->sum('amount');
+                }
+            @endphp
             <div>
                 <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">GST</label>
                 <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">₹{{ number_format($purchaseOrder->gst, 2) }}</div>
@@ -138,7 +142,7 @@
             </div>
             <div>
                 <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Total</label>
-                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">₹{{ number_format($purchaseOrder->total, 2) }}</div>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">₹{{ number_format($totalAmount, 2) }}</div>
             </div>
             <div>
                 <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Discount</label>
@@ -151,16 +155,58 @@
         </div>
     </div>
 
-    @if($purchaseOrder->remarks)
+    @if(
+        $purchaseOrder->freight_charges ||
+        $purchaseOrder->terms_of_payment ||
+        $purchaseOrder->special_conditions ||
+        $purchaseOrder->inspection ||
+        $purchaseOrder->name_of_transport ||
+        $purchaseOrder->transport_certificate ||
+        $purchaseOrder->insurance_of_goods_damages ||
+        $purchaseOrder->warranty_expiry
+    )
+    {{-- Terms and Conditions --}}
     <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
         <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
-            <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Remarks</h3>
+            <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Terms and Conditions</h3>
         </div>
-        <div style="padding:20px;">
-            <p style="margin:0; color:#333;">{{ $purchaseOrder->remarks }}</p>
+        <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Freight/Charges</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->freight_charges ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Terms of Payment</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->terms_of_payment ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Special Conditions</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->special_conditions ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Inspection</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->inspection ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Name of Transport</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->name_of_transport ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Test Certificate</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->transport_certificate ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Incase Of Failure/Damage</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ $purchaseOrder->insurance_of_goods_damages ?? 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:#666; font-weight:500; font-size:12px;">Warranty Expiry</label>
+                <div style="padding:10px; background:#f8f9fa; border-radius:5px; color:#333;">{{ optional($purchaseOrder->warranty_expiry)->format('d-m-Y') ?? 'N/A' }}</div>
+            </div>
         </div>
     </div>
     @endif
+
 </div>
 @endsection
 

@@ -3,6 +3,18 @@
 @section('title', 'Purchase Order - Edit')
 
 @section('content')
+@php
+    $displayExpectedDate = function ($value) {
+        if (empty($value)) {
+            return '';
+        }
+        try {
+            return \Carbon\Carbon::parse($value)->format('d-m-Y');
+        } catch (\Exception $e) {
+            return $value;
+        }
+    };
+@endphp
 <div style="background:white; padding:30px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
         <h2 style="color:#333; font-size:24px; margin:0;">Edit Purchase Order</h2>
@@ -305,7 +317,7 @@
                     <thead>
                         <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Name <span style="color:red;">*</span></th>
-                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Description <span style="color:red;">*</span></th>
+                            <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Item Description</th>
                             <th style="padding:10px; text-align:left; color:#333; font-size:12px;">Pack Details <span style="color:red;">*</span></th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Approved Qty</th>
                             <th style="padding:10px; text-align:right; color:#333; font-size:12px;">Already Raised PO Qty</th>
@@ -337,7 +349,7 @@
                                     </select>
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="text" name="items[{{ $index }}][item_description]" class="item_description" required
+                                    <input type="text" name="items[{{ $index }}][item_description]" class="item_description"
                                            value="{{ old('items.'.$index.'.item_description', $item->item_description) }}"
                                            readonly
                                            style="width:150px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; background:#f8f9fa;">
@@ -367,8 +379,8 @@
                                            style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <input type="date" name="items[{{ $index }}][expected_delivery_date]" class="expected_delivery_date"
-                                           value="{{ old('items.'.$index.'.expected_delivery_date', optional($item->expected_delivery_date)->format('Y-m-d')) }}"
+                                    <input type="text" name="items[{{ $index }}][expected_delivery_date]" class="expected_delivery_date date-input" placeholder="DD-MM-YYYY"
+                                           value="{{ old('items.'.$index.'.expected_delivery_date', $displayExpectedDate($item->expected_delivery_date)) }}"
                                            {{ $isDisabled ? 'readonly' : '' }}
                                            style="width:140px; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px; {{ $isDisabled ? 'background:#f8f9fa;' : '' }}">
                                 </td>
@@ -408,9 +420,9 @@
                                         <option value="PO Not Placed" {{ $item->po_status == 'PO Not Placed' ? 'selected' : '' }}>PO Not Placed</option>
                                     </select>
                                 </td>
-                                <td style="padding:6px 8px; text-align:center;">
-                                    <button type="button" onclick="removeRow(this)" style="padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:5px; font-size:12px; cursor:pointer;">
-                                        <i class="fas fa-trash"></i>
+                            <td style="padding:6px 8px; text-align:center;">
+                                <button type="button" onclick="removeRow(this)" style="padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:5px; font-size:12px; cursor:pointer;">
+                                    <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -420,135 +432,163 @@
             </div>
         </div>
 
-        {{-- Amount Calculation Section --}}
+        @php
+            $subtotal = $purchaseOrder->items->sum('amount');
+            $discountPercent = $purchaseOrder->discount_percent ?? ($subtotal > 0 ? ($purchaseOrder->discount / $subtotal) * 100 : 0);
+            $gstPercent = $purchaseOrder->gst_percent ?? 0;
+            $taxTypeValue = old('tax_type', ($purchaseOrder->sgst > 0 ? 'cgst_sgst' : 'igst'));
+            $totalTax = $taxTypeValue === 'cgst_sgst'
+                ? (($purchaseOrder->gst / 2) + $purchaseOrder->sgst)
+                : ($purchaseOrder->gst + $purchaseOrder->sgst);
+        @endphp
+
+                        {{-- Amount Calculation Section --}}
         <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
             <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
                 <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Amount Calculation</h3>
             </div>
-            <div style="padding:20px; display:flex; justify-content:flex-end;">
-                @php
-                    $subtotal = $purchaseOrder->items->sum('amount');
-                    $discountPercent = $subtotal > 0 ? ($purchaseOrder->discount / $subtotal) * 100 : 0;
-                    $gstPercent = $subtotal > 0 ? (($purchaseOrder->gst + $purchaseOrder->sgst) / $subtotal) * 100 : 0;
-                    $taxTypeValue = old('tax_type', ($purchaseOrder->sgst > 0 ? 'cgst_sgst' : 'igst'));
-                @endphp
-                {{-- Right aligned summary block (design only, names/IDs unchanged) --}}
-                <div style="width:380px; display:flex; flex-direction:column; gap:10px;">
+            <div style="padding:20px; display:grid; grid-template-columns:1fr 440px; gap:20px; align-items:flex-start;">
+                {{-- GST Type --}}
+                <div style="display:flex; gap:30px; align-items:center; justify-content:center; width:100%;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#333; cursor:pointer;">
+                        <input type="radio" name="tax_type" id="tax_type_cgst_sgst" value="cgst_sgst" {{ $taxTypeValue == 'cgst_sgst' ? 'checked' : '' }} required style="cursor:pointer;">
+                        <span>CGST and SGST</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:#333; cursor:pointer;">
+                        <input type="radio" name="tax_type" id="tax_type_igst" value="igst" {{ $taxTypeValue == 'igst' ? 'checked' : '' }} required style="cursor:pointer;">
+                        <span>IGST</span>
+                    </label>
+                </div>
+
+                {{-- Amount summary --}}
+                <div style="width:100%; display:flex; flex-direction:column; gap:10px;">
                     {{-- Gross Amount (Total of items) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Gross Amount:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" id="total" value="{{ old('total', number_format($purchaseOrder->total, 2)) }}" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">Total:</label>
+                        <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                        <input type="text" id="total" value="{{ old('total', number_format($subtotal, 2)) }}" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                     </div>
 
                     {{-- Overall Discount (%) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Overall Discount (%):</label>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">Discount:</label>
                         <input type="number" step="0.01" min="0" name="discount_percent" id="discount_percent"
                                value="{{ old('discount_percent', number_format($discountPercent, 2)) }}"
-                               style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                    </div>
-
-                    {{-- GST Type below Discount (%) --}}
-                    <div style="display:flex; align-items:flex-start; gap:12px; margin-top:2px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">GST Type:</label>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <label style="display:flex; align-items:center; gap:6px; font-size:14px; cursor:pointer;">
-                                <input type="radio" name="tax_type" id="tax_type_cgst_sgst" value="cgst_sgst" {{ $taxTypeValue == 'cgst_sgst' ? 'checked' : '' }} style="cursor:pointer;">
-                                <span>CGST &amp; SGST</span>
-                            </label>
-                            <label style="display:flex; align-items:center; gap:6px; font-size:14px; cursor:pointer;">
-                                <input type="radio" name="tax_type" id="tax_type_igst" value="igst" {{ $taxTypeValue == 'igst' ? 'checked' : '' }} style="cursor:pointer;">
-                                <span>IGST</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {{-- Discount Amount --}}
-                    <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Discount Amount:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="number" step="0.01" min="0" name="discount" id="discount"
-                                   value="{{ old('discount', number_format($purchaseOrder->discount, 2)) }}"
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                        </div>
+                               style="width:80px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;"
+                               placeholder="Enter in (%)">
+                        <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                        <input type="number" step="0.01" min="0" name="discount" id="discount"
+                               value="{{ old('discount', number_format($purchaseOrder->discount, 2)) }}"
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right; background:#f8f9fa;"
+                               placeholder="Discount Amount">
                     </div>
 
                     {{-- GST (rate & amount) --}}
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">GST (% / Amt):</label>
-                        <div style="display:flex; gap:6px;">
-                            <input type="number" step="0.01" min="0" name="gst_percent" id="gst_percent" placeholder="%"
-                                   value="{{ old('gst_percent', number_format($gstPercent, 2)) }}"
-                                   style="width:70px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                            <input type="number" step="0.01" min="0" name="gst" id="gst" placeholder="Amount"
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">GST <span style="color:red;">*</span></label>
+                        <div style="display:flex; gap:10px; align-items:center; flex:1;">
+                            <input type="number" step="0.01" min="0" name="gst_percent" id="gst_percent" placeholder="%" required
+                                   value="{{ old('gst_percent', $purchaseOrder->gst_percent ?? '0') }}"
+                                   style="width:80px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
+                            <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                            <input type="number" step="0.01" min="0" name="gst" id="gst" readonly
                                    value="{{ old('gst', number_format($purchaseOrder->gst, 2)) }}"
-                                   style="width:90px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right;">
-                        </div>
+                                   style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; text-align:right; background:#f8f9fa;">
+                    </div>
                     </div>
 
                     {{-- CGST row (amount only for display) --}}
                     <div id="cgst_section" style="display:{{ $taxTypeValue == 'cgst_sgst' ? 'flex' : 'none' }}; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">CGST:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" id="cgst_amount" value="{{ $taxTypeValue == 'cgst_sgst' ? number_format($purchaseOrder->gst / 2, 2) : '0.00' }}" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
-                        {{-- hidden percentage element kept for calculations --}}
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">CGST:</label>
+                        <input type="text" id="cgst_amount" value="{{ $taxTypeValue == 'cgst_sgst' ? number_format($purchaseOrder->gst / 2, 2) : '0.00' }}" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                         <input type="hidden" id="cgst_percent" value="{{ $taxTypeValue == 'cgst_sgst' ? number_format($gstPercent / 2, 2) : '0' }}">
                     </div>
 
                     {{-- SGST row --}}
                     <div id="sgst_section" style="display:{{ $taxTypeValue == 'cgst_sgst' ? 'flex' : 'none' }}; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">SGST:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" name="sgst" id="sgst" value="{{ old('sgst', number_format($purchaseOrder->sgst, 2)) }}" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">SGST:</label>
+                        <input type="text" name="sgst" id="sgst" value="{{ old('sgst', number_format($purchaseOrder->sgst, 2)) }}" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                         <input type="hidden" id="sgst_percent" value="{{ $taxTypeValue == 'cgst_sgst' ? number_format($gstPercent / 2, 2) : '0' }}">
                     </div>
 
                     {{-- IGST row --}}
-                    <div id="igst_section" style="display:{{ $taxTypeValue == 'igst' ? 'flex' : 'none' }}; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">IGST:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" name="igst" id="igst" value="{{ old('igst', number_format($purchaseOrder->gst + $purchaseOrder->sgst, 2)) }}" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                    <div id="igst_section" style="display:flex; align-items:center; gap:12px;">
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">IGST:</label>
+                        <input type="text" name="igst" id="igst" value="{{ old('igst', number_format($purchaseOrder->gst + $purchaseOrder->sgst, 2)) }}" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                         <input type="hidden" id="igst_percent" value="{{ $taxTypeValue == 'igst' ? number_format($gstPercent, 2) : '0' }}">
                     </div>
 
                     {{-- Total Tax (sum of CGST+SGST or IGST) --}}
-                    @php
-                        $totalTax = $taxTypeValue == 'cgst_sgst'
-                            ? ($purchaseOrder->gst / 2) + $purchaseOrder->sgst
-                            : ($purchaseOrder->gst + $purchaseOrder->sgst);
-                    @endphp
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <label style="flex:1; color:#333; font-weight:500; font-size:14px;">Total Tax:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; color:#444;">₹</span>
-                            <input type="text" id="total_tax" value="{{ number_format($totalTax, 2) }}" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:600; font-size:13px;">Total Tax:</label>
+                        <span style="width:30px; font-size:13px; color:#444; text-align:center;">Rs.</span>
+                        <input type="text" id="total_tax" value="{{ number_format($totalTax, 2) }}" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right;">
                     </div>
 
                     {{-- Net Amount --}}
                     <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
-                        <label style="flex:1; color:#333; font-weight:600; font-size:14px;">Net Amount:</label>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:13px; font-weight:600; color:#444;">₹</span>
-                            <input type="text" name="net_amount" id="net_amount" value="{{ old('net_amount', number_format($purchaseOrder->net_amount, 2)) }}" readonly
-                                   style="width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right; font-weight:600; color:#4a4a4a;">
-                        </div>
+                        <label style="flex:0 0 120px; color:#333; font-weight:700; font-size:13px;">Net Amount:</label>
+                        <span style="width:30px; font-size:13px; font-weight:600; color:#444; text-align:center;">Rs.</span>
+                        <input type="text" name="net_amount" id="net_amount" value="{{ old('net_amount', number_format($purchaseOrder->net_amount, 2)) }}" readonly
+                               style="flex:1; min-width:140px; padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#f8f9fa; text-align:right; font-weight:600; color:#4a4a4a;">
                     </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Terms and Conditions Section --}}
+        <div style="background:white; border:1px solid #dee2e6; border-radius:5px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background:#f8f9fa; padding:15px 20px; border-bottom:1px solid #dee2e6; border-radius:5px 5px 0 0;">
+                <h3 style="margin:0; color:#667eea; font-size:18px; font-weight:600;">Terms and Conditions</h3>
+            </div>
+            <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Freight/Charges</label>
+                    <textarea name="freight_charges" rows="3"
+                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('freight_charges', $purchaseOrder->freight_charges) }}</textarea>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Terms of Payment</label>
+                    <textarea name="terms_of_payment" rows="3"
+                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('terms_of_payment', $purchaseOrder->terms_of_payment) }}</textarea>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Special Conditions</label>
+                    <textarea name="special_conditions" rows="3"
+                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('special_conditions', $purchaseOrder->special_conditions) }}</textarea>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Inspection</label>
+                    <textarea name="inspection" rows="3"
+                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('inspection', $purchaseOrder->inspection) }}</textarea>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Name of Transport</label>
+                    <input type="text" name="name_of_transport"
+                           value="{{ old('name_of_transport', $purchaseOrder->name_of_transport) }}"
+                           style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Test Certificate</label>
+                    <input type="text" name="transport_certificate"
+                           value="{{ old('transport_certificate', $purchaseOrder->transport_certificate) }}"
+                           style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Incase Of Failure/Damage</label>
+                    <textarea name="insurance_of_goods_damages" rows="3"
+                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px; resize:vertical;">{{ old('insurance_of_goods_damages', $purchaseOrder->insurance_of_goods_damages) }}</textarea>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:6px; color:#333; font-weight:500;">Warranty Expiry</label>
+                    <input type="text" name="warranty_expiry" class="warranty-expiry-date" placeholder="DD-MM-YYYY"
+                           value="{{ old('warranty_expiry', optional($purchaseOrder->warranty_expiry)->format('d-m-Y')) }}"
+                           style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
                 </div>
             </div>
         </div>
@@ -564,6 +604,15 @@
     </form>
 </div>
 
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 @include('purchase.purchase_orders.partials.scripts')
 @endsection
+
+
+
+
+
+
 

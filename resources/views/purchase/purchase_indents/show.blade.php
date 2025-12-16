@@ -37,34 +37,27 @@
         </div>
         <div style="padding:20px;">
             <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:20px;">
-                <div>
-                    <strong>Indent No:</strong>
-                    <p style="margin:5px 0; color:#555;">{{ $indent->indent_no }}</p>
+                <div style="margin-bottom:10px;">
+                    <strong>Indent No:</strong> {{ $indent->indent_no }}
                 </div>
-                <div>
-                    <strong>Indent Date:</strong>
-                    <p style="margin:5px 0; color:#555;">{{ optional($indent->indent_date)->format('d-m-Y') }}</p>
+                <div style="margin-bottom:10px;">
+                    <strong>Indent Date:</strong> {{ optional($indent->indent_date)->format('d-m-Y') }}
                 </div>
-                <div>
-                    <strong>Created By:</strong>
-                    <p style="margin:5px 0; color:#555;">{{ optional($indent->creator)->name }}</p>
+                <div style="margin-bottom:10px;">
+                    <strong>Created By:</strong> {{ optional($indent->creator)->name }}
                 </div>
-                <div>
-                    <strong>Status:</strong>
-                    <p style="margin:5px 0; color:#555;">{{ $indent->status }}</p>
+                <div style="margin-bottom:10px;">
+                    <strong>Status:</strong> {{ $indent->status }}
                 </div>
-                <div style="grid-column:1 / span 2;">
-                    <strong>Remarks:</strong>
-                    <p style="margin:5px 0; color:#555;">{{ $indent->remarks }}</p>
+                <div style="grid-column:1 / span 2; margin-bottom:10px;">
+                    <strong>Remarks:</strong> {{ $indent->remarks }}
                 </div>
                 @if($indent->upload_path)
-                <div style="grid-column:1 / span 2;">
-                    <strong>Attachment:</strong>
-                    <p style="margin:5px 0;">
-                        <a href="{{ asset('storage/'.$indent->upload_path) }}" target="_blank">
-                            {{ $indent->upload_original_name }}
-                        </a>
-                    </p>
+                <div style="grid-column:1 / span 2; margin-bottom:10px;">
+                    <strong>Attachment:</strong> 
+                    <a href="{{ asset('storage/'.$indent->upload_path) }}" target="_blank">
+                        {{ $indent->upload_original_name }}
+                    </a>
                 </div>
                 @endif
             </div>
@@ -99,7 +92,7 @@
                         <tr style="border-bottom:1px solid #eee;">
                             <td style="padding:8px 10px;">{{ optional($item->rawMaterial)->name }}</td>
                             <td style="padding:8px 10px;">{{ $item->item_description }}</td>
-                            <td style="padding:8px 10px; text-align:right;">{{ $item->quantity }}</td>
+                            <td style="padding:8px 10px; text-align:right;">{{ (int)round((float)$item->quantity) }}</td>
                             <td style="padding:8px 10px;">{{ optional($item->unit)->symbol ?? optional($item->unit)->name }}</td>
                             <td style="padding:8px 10px;">{{ optional($item->schedule_date)->format('d-m-Y') }}</td>
                             <td style="padding:8px 10px;">{{ optional($item->supplier)->supplier_name }}</td>
@@ -113,6 +106,9 @@
                     @endforeach
                 </tbody>
             </table>
+            <div style="margin-top:15px; padding-top:15px; border-top:1px solid #dee2e6; text-align:left;">
+                <strong style="color:#333; font-size:14px;">Total Items: {{ $indent->items->count() }}</strong>
+            </div>
         </div>
     </div>
 </div>
