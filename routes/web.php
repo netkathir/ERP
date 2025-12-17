@@ -116,6 +116,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('material-inwards', App\Http\Controllers\MaterialInwardController::class);
     Route::get('material-inwards/purchase-order/{id}/items', [App\Http\Controllers\MaterialInwardController::class, 'getPurchaseOrderItems'])->name('material-inwards.purchase-order.items');
 
+    // QC Material Inward Routes (Store Module)
+    Route::resource('qc-material-inwards', App\Http\Controllers\QcMaterialInwardController::class);
+    Route::get('qc-material-inwards/purchase-order/{id}/material-inwards', [App\Http\Controllers\QcMaterialInwardController::class, 'getMaterialInwardsByPO'])->name('qc-material-inwards.purchase-order.material-inwards');
+    Route::get('qc-material-inwards/material-inward/{id}/items', [App\Http\Controllers\QcMaterialInwardController::class, 'getMaterialInwardItems'])->name('qc-material-inwards.material-inward.items');
+
     // Quotation Routes
     Route::resource('quotations', App\Http\Controllers\QuotationController::class);
     Route::get('quotations/customer/{id}', [App\Http\Controllers\QuotationController::class, 'getCustomerDetails'])->name('quotations.customer');

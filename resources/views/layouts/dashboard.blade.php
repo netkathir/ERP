@@ -494,6 +494,12 @@
                         <span>Material Inward</span>
                     </a>
                     @endif
+                    @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission('qc-material-inwards', 'view'))
+                    <a href="{{ route('qc-material-inwards.index') }}" class="menu-item" title="QC Material Inward">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>QC Material Inward</span>
+                    </a>
+                    @endif
                 </div>
 
                  <div class="menu-item-header" on

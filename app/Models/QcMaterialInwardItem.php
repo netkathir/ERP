@@ -5,40 +5,47 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MaterialInwardItem extends Model
+class QcMaterialInwardItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'material_inward_id',
+        'qc_material_inward_id',
+        'material_inward_item_id',
         'purchase_order_item_id',
         'raw_material_id',
         'item_description',
-        'po_qty',
-        'pending_qty',
-        'unit_id',
         'received_qty',
         'received_qty_in_kg',
+        'unit_id',
         'batch_no',
-        'cost_per_unit',
-        'total',
         'supplier_invoice_no',
         'invoice_date',
+        'given_qty',
+        'accepted_qty',
+        'rejected_qty',
+        'rejection_reason',
+        'qc_completed',
     ];
 
     protected $casts = [
-        'po_qty' => 'decimal:3',
-        'pending_qty' => 'decimal:3',
         'received_qty' => 'decimal:3',
         'received_qty_in_kg' => 'decimal:3',
-        'cost_per_unit' => 'decimal:2',
-        'total' => 'decimal:2',
+        'given_qty' => 'decimal:3',
+        'accepted_qty' => 'decimal:3',
+        'rejected_qty' => 'decimal:3',
         'invoice_date' => 'date',
+        'qc_completed' => 'boolean',
     ];
 
-    public function materialInward()
+    public function qcMaterialInward()
     {
-        return $this->belongsTo(MaterialInward::class);
+        return $this->belongsTo(QcMaterialInward::class);
+    }
+
+    public function materialInwardItem()
+    {
+        return $this->belongsTo(MaterialInwardItem::class);
     }
 
     public function purchaseOrderItem()
@@ -54,10 +61,5 @@ class MaterialInwardItem extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class);
-    }
-
-    public function qcMaterialInwardItems()
-    {
-        return $this->hasMany(QcMaterialInwardItem::class);
     }
 }

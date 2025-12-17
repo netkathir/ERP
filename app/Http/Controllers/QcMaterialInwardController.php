@@ -270,8 +270,8 @@ class QcMaterialInwardController extends Controller
             'material_inward_id' => 'required|exists:material_inwards,id',
             'items' => 'required|array|min:1',
             'items.*.material_inward_item_id' => 'required|exists:material_inward_items,id',
-            'items.*.accepted_qty' => 'required|numeric|min:0',
-            'items.*.rejected_qty' => 'required|numeric|min:0',
+            'items.*.accepted_qty' => 'required|integer|min:0',
+            'items.*.rejected_qty' => 'required|integer|min:0',
             'items.*.rejection_reason' => 'nullable|string',
         ];
 
@@ -279,8 +279,10 @@ class QcMaterialInwardController extends Controller
             'purchase_order_id.required' => 'Please select a Purchase Order.',
             'material_inward_id.required' => 'Please select an MRN No.',
             'items.*.accepted_qty.required' => 'Accepted Qty is required for all items.',
+            'items.*.accepted_qty.integer' => 'Accepted Qty must be a whole number.',
             'items.*.accepted_qty.min' => 'Accepted Qty must be 0 or greater.',
             'items.*.rejected_qty.required' => 'Rejected Qty is required for all items.',
+            'items.*.rejected_qty.integer' => 'Rejected Qty must be a whole number.',
             'items.*.rejected_qty.min' => 'Rejected Qty must be 0 or greater.',
         ];
 
@@ -290,12 +292,12 @@ class QcMaterialInwardController extends Controller
         // And if Rejected Qty > 0, Rejection Reason is required
         foreach ($validated['items'] as $index => $item) {
             $materialInwardItem = MaterialInwardItem::findOrFail($item['material_inward_item_id']);
-            $receivedQty = (float) $materialInwardItem->received_qty;
-            $acceptedQty = (float) $item['accepted_qty'];
-            $rejectedQty = (float) $item['rejected_qty'];
+            $receivedQty = (int) round((float) $materialInwardItem->received_qty);
+            $acceptedQty = (int) $item['accepted_qty'];
+            $rejectedQty = (int) $item['rejected_qty'];
 
             // Check if Accepted + Rejected = Received
-            if (abs($acceptedQty + $rejectedQty - $receivedQty) > 0.001) {
+            if ($acceptedQty + $rejectedQty !== $receivedQty) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     "items.{$index}.accepted_qty" => "Accepted Qty + Rejected Qty must equal Received Qty ({$receivedQty})."
                 ]);
@@ -312,13 +314,16 @@ class QcMaterialInwardController extends Controller
             $validated['items'][$index]['purchase_order_item_id'] = $materialInwardItem->purchase_order_item_id;
             $validated['items'][$index]['raw_material_id'] = $materialInwardItem->raw_material_id;
             $validated['items'][$index]['item_description'] = $materialInwardItem->item_description;
-            $validated['items'][$index]['received_qty'] = $materialInwardItem->received_qty;
+            $validated['items'][$index]['received_qty'] = (int) round((float) $materialInwardItem->received_qty);
             $validated['items'][$index]['received_qty_in_kg'] = $materialInwardItem->received_qty_in_kg;
             $validated['items'][$index]['unit_id'] = $materialInwardItem->unit_id;
             $validated['items'][$index]['batch_no'] = $materialInwardItem->batch_no;
             $validated['items'][$index]['supplier_invoice_no'] = $materialInwardItem->supplier_invoice_no;
             $validated['items'][$index]['invoice_date'] = $materialInwardItem->invoice_date;
-            $validated['items'][$index]['given_qty'] = $materialInwardItem->received_qty; // Given qty = received qty
+            $validated['items'][$index]['given_qty'] = (int) round((float) $materialInwardItem->received_qty); // Given qty = received qty
+            // Ensure accepted_qty and rejected_qty are stored as integers
+            $validated['items'][$index]['accepted_qty'] = (int) $acceptedQty;
+            $validated['items'][$index]['rejected_qty'] = (int) $rejectedQty;
         }
 
         return $validated;

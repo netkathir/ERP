@@ -131,5 +131,10 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(User::class, 'updated_by_id');
     }
+
+    public function materialInwards()
+    {
+        return $this->hasMany(MaterialInward::class);
+    }
 }
 
