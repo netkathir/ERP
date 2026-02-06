@@ -302,7 +302,7 @@ class WorkOrderController extends Controller
                     'type' => 'customer_order',
                     'po_no' => $poNo,
                     'customer_po_no' => $o->customer_po_no ?? '',
-                    'tender_no' => $o->tender?->tender_no ?? '',
+                    'tender_no' => $o->tender ? $o->tender->tender_no : '',
                 ];
             }
         } else {
@@ -344,8 +344,8 @@ class WorkOrderController extends Controller
         $id = (int) $request->get('raw_material_id');
         $rm = RawMaterial::with('unit')->find($id);
         return response()->json([
-            'unit_id' => $rm?->unit_id,
-            'unit_symbol' => $rm?->unit?->symbol ?? 'N/A',
+            'unit_id' => $rm ? $rm->unit_id : null,
+            'unit_symbol' => ($rm && $rm->unit && $rm->unit->symbol) ? $rm->unit->symbol : 'N/A',
         ]);
     }
 
@@ -422,13 +422,15 @@ class WorkOrderController extends Controller
         $woQuery = $this->applyBranchFilter($woQuery, WorkOrder::class);
         $existingWorkOrders = $woQuery->limit(100)->get();
 
-        $rawMaterialsData = $rawMaterials->mapWithKeys(fn ($r) => [
-            $r->id => [
-                'name' => trim(($r->name ?? '') . ($r->grade ? ' - ' . $r->grade : '')),
-                'unit_symbol' => $r->unit?->symbol ?? 'N/A',
-                'unit_id' => $r->unit_id,
-            ],
-        ]);
+        $rawMaterialsData = $rawMaterials->mapWithKeys(function ($r) {
+            return [
+                $r->id => [
+                    'name' => trim(($r->name ?? '') . ($r->grade ? ' - ' . $r->grade : '')),
+                    'unit_symbol' => ($r->unit && $r->unit->symbol) ? $r->unit->symbol : 'N/A',
+                    'unit_id' => $r->unit_id,
+                ],
+            ];
+        });
 
         $viewOnly = func_num_args() >= 3 && func_get_arg(2) === true;
 

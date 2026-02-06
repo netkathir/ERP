@@ -75,7 +75,7 @@
             @if($isEdit)
                 <div>
                     <label style="display:block; margin-bottom:6px; font-weight:500;">Existing Work Order No</label>
-                    <input type="text" value="{{ $workOrder->existingWorkOrder?->work_order_no ?? '-- None --' }}" readonly style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; background:#e5e7eb;">
+                    <input type="text" value="{{ optional($workOrder->existingWorkOrder)->work_order_no ?? '-- None --' }}" readonly style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; background:#e5e7eb;">
                 </div>
             @else
                 <div style="display:flex; gap:15px; align-items:flex-end;">
@@ -261,9 +261,9 @@
                 <div><label style="display:block; margin-bottom:6px; font-weight:500;">Nature of work</label><input type="text" name="nature_of_work" value="{{ old('nature_of_work', $workOrder->nature_of_work) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
                 <div><label style="display:block; margin-bottom:6px; font-weight:500;">Batch no</label><input type="text" name="batch_no" value="{{ old('batch_no', $workOrder->batch_no) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
                 <div><label style="display:block; margin-bottom:6px; font-weight:500;">Drawing No</label><input type="text" name="drawing_no" value="{{ old('drawing_no', $workOrder->drawing_no) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
-                <div><label style="display:block; margin-bottom:6px; font-weight:500;">Completion date</label><input type="date" name="completion_date" value="{{ old('completion_date', $workOrder->completion_date?->format('Y-m-d')) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
+                <div><label style="display:block; margin-bottom:6px; font-weight:500;">Completion date</label><input type="date" name="completion_date" value="{{ old('completion_date', optional($workOrder->completion_date)->format('Y-m-d')) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
                 <div><label style="display:block; margin-bottom:6px; font-weight:500;">Layup sequence</label><input type="text" name="layup_sequence" value="{{ old('layup_sequence', $workOrder->layup_sequence) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
-                <div><label style="display:block; margin-bottom:6px; font-weight:500;">Date</label><input type="date" name="work_order_date" value="{{ old('work_order_date', $workOrder->work_order_date?->format('Y-m-d') ?? now()->format('Y-m-d')) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
+                <div><label style="display:block; margin-bottom:6px; font-weight:500;">Date</label><input type="date" name="work_order_date" value="{{ old('work_order_date', $workOrder->work_order_date ? $workOrder->work_order_date->format('Y-m-d') : now()->format('Y-m-d')) }}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></div>
             </div>
         </div>
 
@@ -282,7 +282,14 @@
                         </tr>
                     </thead>
                     <tbody id="rawMaterialsBody">
-                        @php $rmRows = old('raw_materials', $workOrder->rawMaterials->map(fn($rm) => ['raw_material_id' => $rm->raw_material_id, 'work_order_quantity' => $rm->work_order_quantity])->toArray() ?: [['raw_material_id'=>'','work_order_quantity'=>'']]); @endphp
+                        @php
+                            $rmRows = old('raw_materials', $workOrder->rawMaterials->map(function ($rm) {
+                                return [
+                                    'raw_material_id' => $rm->raw_material_id,
+                                    'work_order_quantity' => $rm->work_order_quantity,
+                                ];
+                            })->toArray() ?: [['raw_material_id' => '', 'work_order_quantity' => '']]);
+                        @endphp
                         @foreach($rmRows as $idx => $row)
                         <tr data-rm-idx="{{ $idx }}">
                             <td style="padding:8px;">{{ $idx + 1 }}</td>
@@ -290,12 +297,19 @@
                                 <select name="raw_materials[{{ $idx }}][raw_material_id]" class="rm-select" style="width:100%; min-width:180px; padding:8px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}>
                                     <option value="">Select</option>
                                     @foreach($rawMaterials as $rm)
-                                        <option value="{{ $rm->id }}" data-unit="{{ $rm->unit?->symbol ?? 'N/A' }}" data-unit-id="{{ $rm->unit_id ?? '' }}" {{ ($row['raw_material_id'] ?? '') == $rm->id ? 'selected' : '' }}>{{ $rm->name }} @if($rm->grade) - {{ $rm->grade }} @endif</option>
+                                        @php
+                                            $unitSymbol = ($rm->unit && $rm->unit->symbol) ? $rm->unit->symbol : 'N/A';
+                                        @endphp
+                                        <option value="{{ $rm->id }}" data-unit="{{ $unitSymbol }}" data-unit-id="{{ $rm->unit_id ?? '' }}" {{ ($row['raw_material_id'] ?? '') == $rm->id ? 'selected' : '' }}>{{ $rm->name }} @if($rm->grade) - {{ $rm->grade }} @endif</option>
                                     @endforeach
                                 </select>
                             </td>
                             <td style="padding:8px;"><input type="number" step="0.01" min="0" name="raw_materials[{{ $idx }}][work_order_quantity]" value="{{ $row['work_order_quantity'] ?? '' }}" style="width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;"{{ $dis }}></td>
-                            <td style="padding:8px;"><span class="rm-uom">{{ $rawMaterials->firstWhere('id', $row['raw_material_id'] ?? 0)?->unit?->symbol ?? 'N/A' }}</span></td>
+                            @php
+                                $rmModel = $rawMaterials->firstWhere('id', $row['raw_material_id'] ?? 0);
+                                $uomSymbol = ($rmModel && $rmModel->unit && $rmModel->unit->symbol) ? $rmModel->unit->symbol : 'N/A';
+                            @endphp
+                            <td style="padding:8px;"><span class="rm-uom">{{ $uomSymbol }}</span></td>
                             <td style="padding:8px;">@if(!$viewOnly)<button type="button" class="rm-remove" style="background:#dc3545; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button>@endif</td>
                         </tr>
                         @endforeach
@@ -313,7 +327,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
             <div>
                 <label style="display:block; margin-bottom:4px; font-weight:500;">Created by</label>
-                <input type="text" value="{{ $viewOnly ? ($workOrder->creator?->name ?? '') : (auth()->user()->name ?? '') }}" readonly style="padding:10px; border:1px solid #ddd; border-radius:6px; background:#f8f9fa;">
+                <input type="text" value="{{ $viewOnly ? (optional($workOrder->creator)->name ?? '') : (auth()->user()->name ?? '') }}" readonly style="padding:10px; border:1px solid #ddd; border-radius:6px; background:#f8f9fa;">
             </div>
             <div style="display:flex; gap:10px;">
                 <a href="{{ route('work-orders.index') }}" style="padding:12px 24px; background:#6c757d; color:white; text-decoration:none; border-radius:6px; font-weight:500;">List</a>

@@ -1,7 +1,10 @@
 @extends('layouts.dashboard')
 
 @section('title', 'Production Work Order - ERP System')
-
+echo "<pre>";
+print_r("apoajpfojdiofhdisofgosdgn");
+echo "</pre>";
+exit;
 @section('content')
 <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="margin-bottom: 15px;">

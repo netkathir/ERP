@@ -59,6 +59,8 @@ class WorkOrder extends Model
         'no_of_quantity' => 'decimal:2',
     ];
 
+    /* ===================== Relationships ===================== */
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);
@@ -89,50 +91,74 @@ class WorkOrder extends Model
         return $this->hasMany(WorkOrderRawMaterial::class)->orderBy('sr_no');
     }
 
+    /**
+     * Worker relationship (Employee / Sub-Contractor)
+     * NOTE: Relationship methods should not return conditionally,
+     * so this is kept for reference only.
+     */
     public function worker()
     {
         if ($this->worker_type === 'Employee') {
             return $this->belongsTo(Employee::class, 'worker_id');
         }
+
         if ($this->worker_type === 'Sub-Contractor') {
             return $this->belongsTo(Supplier::class, 'worker_id');
         }
+
         return null;
     }
+
+    /* ===================== Accessors ===================== */
 
     public function getWorkerNameAttribute()
     {
-        if (!$this->worker_id) {
+        if (!$this->worker_id || !$this->worker_type) {
             return null;
         }
+
         if ($this->worker_type === 'Employee') {
-            return Employee::find($this->worker_id)?->name;
+            $employee = Employee::find($this->worker_id);
+            return $employee ? $employee->name : null;
         }
+
         if ($this->worker_type === 'Sub-Contractor') {
-            return Supplier::find($this->worker_id)?->supplier_name;
+            $supplier = Supplier::find($this->worker_id);
+            return $supplier ? $supplier->supplier_name : null;
         }
+
         return null;
     }
 
+    /* ===================== Helpers ===================== */
+
     /**
      * Generate next work order number based on sales type and PO.
-     * Tender: T-{YY}/{Customer PO No}/{001} e.g. T-26/1234/001
-     * Enquiry: ENQ-{YY}/{Enquiry PO No}/{001} e.g. ENQ-26/1234/001
+     *
+     * Tender  : T-YY/PO/001  → T-26/1234/001
+     * Enquiry : ENQ-YY/PO/001 → ENQ-26/1234/001
      */
     public static function generateWorkOrderNo(string $salesType, ?string $poRef): string
     {
         $year = date('y');
-        $prefix = $salesType === 'Tender' ? 'T' : 'ENQ';
-        $poPart = preg_replace('/[^0-9A-Za-z]/', '', (string) ($poRef ?? '0')) ?: '0';
+        $prefix = ($salesType === 'Tender') ? 'T' : 'ENQ';
+
+        $poPart = preg_replace('/[^0-9A-Za-z]/', '', (string) $poRef);
+        $poPart = $poPart !== '' ? $poPart : '0';
+
         $pattern = $prefix . '-' . $year . '/' . $poPart . '/%';
+
         $last = static::where('sales_type', $salesType)
             ->where('work_order_no', 'like', $pattern)
             ->orderByDesc('id')
             ->value('work_order_no');
+
         $seq = 1;
-        if ($last && preg_match('/\/(\d+)$/', $last, $m)) {
-            $seq = (int) $m[1] + 1;
+
+        if ($last && preg_match('/\/(\d+)$/', $last, $matches)) {
+            $seq = ((int) $matches[1]) + 1;
         }
+
         return sprintf('%s-%s/%s/%03d', $prefix, $year, $poPart, $seq);
     }
 }

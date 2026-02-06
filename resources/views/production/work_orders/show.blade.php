@@ -105,9 +105,17 @@
                         @foreach($workOrder->rawMaterials as $rm)
                         <tr style="border-bottom: 1px solid #dee2e6;">
                             <td style="padding: 10px;">{{ $loop->iteration }}</td>
-                            <td style="padding: 10px;">{{ $rm->rawMaterial->name ?? 'N/A' }} @if($rm->rawMaterial?->grade) - {{ $rm->rawMaterial->grade }} @endif</td>
+                            <td style="padding: 10px;">{{ $rm->rawMaterial->name ?? 'N/A' }} @if(optional($rm->rawMaterial)->grade) - {{ $rm->rawMaterial->grade }} @endif</td>
                             <td style="padding: 10px; text-align: right;">{{ $rm->work_order_quantity }}</td>
-                            <td style="padding: 10px;">{{ $rm->rawMaterial?->unit?->symbol ?? $rm->unit?->symbol ?? 'N/A' }}</td>
+                            @php
+                                $symbol = 'N/A';
+                                if ($rm->rawMaterial && $rm->rawMaterial->unit && $rm->rawMaterial->unit->symbol) {
+                                    $symbol = $rm->rawMaterial->unit->symbol;
+                                } elseif ($rm->unit && $rm->unit->symbol) {
+                                    $symbol = $rm->unit->symbol;
+                                }
+                            @endphp
+                            <td style="padding: 10px;">{{ $symbol }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -128,7 +136,7 @@
         </div>
         @endif
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666; font-size: 13px;">
-            Created by: {{ $workOrder->creator?->name ?? 'N/A' }} on {{ $workOrder->created_at->format('d-m-Y H:i') }}
+            Created by: {{ optional($workOrder->creator)->name ?? 'N/A' }} on {{ $workOrder->created_at->format('d-m-Y H:i') }}
         </div>
     </div>
 </div>
